@@ -1,7 +1,7 @@
 import { getGameBySlug, incrementPlayCount, getRecommendedGames } from "@/app/(site)/actions"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
 import { GameCard } from "@/components/site/GameCard"
 
 interface GamePageProps {
@@ -52,12 +52,12 @@ export default async function GamePage({ params }: GamePageProps) {
     <div className="space-y-6">
       {/* 面包屑导航 */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href={`/${locale}`} className="hover:text-foreground transition-colors">
+        <Link href="/" className="hover:text-foreground transition-colors">
           {t.home}
         </Link>
         <span>/</span>
         <Link
-          href={`/${locale}/games/category/${game.category.slug}`}
+          href={`/games/category/${game.category.slug}`}
           className="hover:text-foreground transition-colors"
         >
           {game.category.name}
@@ -76,7 +76,7 @@ export default async function GamePage({ params }: GamePageProps) {
                 <h1 className="text-3xl font-bold mb-2">{game.title}</h1>
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <Link
-                    href={`/${locale}/games/category/${game.category.slug}`}
+                    href={`/games/category/${game.category.slug}`}
                     className="px-3 py-1 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
                   >
                     {game.category.name}
@@ -103,7 +103,7 @@ export default async function GamePage({ params }: GamePageProps) {
                 {game.tags.map((tag) => (
                   <Link
                     key={tag.slug}
-                    href={`/${locale}/games/tags/${tag.slug}`}
+                    href={`/games/tags/${tag.slug}`}
                     className="text-sm px-2 py-1 bg-accent/50 hover:bg-accent text-accent-foreground rounded transition-colors"
                   >
                     {tag.name}
@@ -120,7 +120,9 @@ export default async function GamePage({ params }: GamePageProps) {
               className="w-full h-full border-0"
               allowFullScreen
               title={game.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock allow-orientation-lock"
+              loading="lazy"
             />
           </div>
 
