@@ -31,7 +31,7 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
   }
 
   return (
-    <header className="bg-background border-b border-gray-200 dark:border-gray-800 py-4 z-50 shadow-sm flex-shrink-0">
+    <header className="bg-card py-4 z-50 shadow-sm flex-shrink-0">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo 和品牌关键词 */}
