@@ -30,7 +30,7 @@ export default async function EditGamePage({
     tagIds: game.tagIds,
     isFeatured: game.isFeatured,
     isPublished: game.isPublished,
-    metadata: game.metadata || undefined,
+    metadata: (typeof game.metadata === 'object' && game.metadata !== null) ? game.metadata as Record<string, unknown> : undefined,
     translations: game.translations.map((t) => ({
       locale: t.locale as 'en' | 'zh' | 'es' | 'fr',
       title: t.title,

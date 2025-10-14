@@ -17,7 +17,7 @@ const gameSchema = z.object({
   tagIds: z.array(z.string()).default([]),
   isFeatured: z.boolean().default(false),
   isPublished: z.boolean().default(false),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   translations: z.array(
     z.object({
       locale: z.enum(['en', 'zh', 'es', 'fr']),
@@ -64,7 +64,7 @@ export async function createGame(data: GameFormData) {
         categoryId: validated.categoryId,
         isFeatured: validated.isFeatured,
         isPublished: validated.isPublished,
-        metadata: validated.metadata || null,
+        ...(validated.metadata && { metadata: validated.metadata }),
         translations: {
           create: validated.translations,
         },
@@ -84,7 +84,7 @@ export async function createGame(data: GameFormData) {
     return { success: true, data: game }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message }
+      return { success: false, error: error.issues[0].message }
     }
     console.error('创建游戏失败:', error)
     return { success: false, error: '创建游戏失败，请稍后重试' }
@@ -172,7 +172,7 @@ export async function updateGame(id: string, data: GameFormData) {
           categoryId: validated.categoryId,
           isFeatured: validated.isFeatured,
           isPublished: validated.isPublished,
-          metadata: validated.metadata || null,
+          ...(validated.metadata && { metadata: validated.metadata }),
           translations: {
             create: validated.translations,
           },
@@ -194,7 +194,7 @@ export async function updateGame(id: string, data: GameFormData) {
     return { success: true, data: game }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message }
+      return { success: false, error: error.issues[0].message }
     }
     console.error('更新游戏失败:', error)
     return { success: false, error: '更新游戏失败，请稍后重试' }

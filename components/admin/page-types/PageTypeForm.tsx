@@ -210,7 +210,7 @@ export function PageTypeForm({ pageType, mode }: PageTypeFormProps) {
               </Label>
               <Select
                 value={selectedType}
-                onValueChange={(value) => setValue("type", value as any)}
+                onValueChange={(value) => setValue("type", value as "GAME_LIST" | "STATIC_CONTENT" | "MIXED")}
               >
                 <SelectTrigger className={errors.type ? "border-red-500" : ""}>
                   <SelectValue placeholder="选择页面类型" />

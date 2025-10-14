@@ -133,7 +133,7 @@ export function GameForm({ initialData, isEdit = false }: GameFormProps) {
       const formData = initialData ? {
         ...initialData,
         translations: languages.map(locale => {
-          const translation = initialData.translations?.find((t: any) => t.locale === locale.code)
+          const translation = initialData.translations?.find((t: { locale: string }) => t.locale === locale.code)
           return {
             locale: locale.code,
             title: translation?.title || '',

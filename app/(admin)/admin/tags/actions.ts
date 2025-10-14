@@ -44,7 +44,7 @@ export async function createTag(data: TagFormData) {
     revalidatePath("/admin/tags")
     return { success: true, data: tag }
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: error.errors[0].message }
+    if (error instanceof z.ZodError) return { success: false, error: error.issues[0].message }
     console.error("创建标签失败:", error)
     return { success: false, error: "创建失败，请稍后重试" }
   }
@@ -74,7 +74,7 @@ export async function updateTag(tagId: string, data: TagFormData) {
     revalidatePath(`/admin/tags/${tagId}`)
     return { success: true, data: tag }
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: error.errors[0].message }
+    if (error instanceof z.ZodError) return { success: false, error: error.issues[0].message }
     console.error("更新标签失败:", error)
     return { success: false, error: "更新失败，请稍后重试" }
   }

@@ -93,7 +93,7 @@ export async function createLanguage(data: LanguageFormData) {
     return { success: true, data: language }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message }
+      return { success: false, error: error.issues[0].message }
     }
     console.error("创建语言失败:", error)
     return { success: false, error: "创建失败，请稍后重试" }
@@ -141,7 +141,7 @@ export async function updateLanguage(languageId: string, data: LanguageFormData)
     return { success: true, data: language }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message }
+      return { success: false, error: error.issues[0].message }
     }
     console.error("更新语言失败:", error)
     return { success: false, error: "更新失败，请稍后重试" }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, Trash2, Plus } from "lucide-react"
+import { Pencil, Plus } from "lucide-react"
 import { DeleteCategoryButton } from "@/components/admin/categories/DeleteCategoryButton"
 import { ToggleCategoryStatus } from "@/components/admin/categories/ToggleCategoryStatus"
 

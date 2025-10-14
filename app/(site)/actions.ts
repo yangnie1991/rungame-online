@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db"
 import { cache } from "react"
-import { getTranslatedField, buildLocaleCondition, DEFAULT_LOCALE } from "@/lib/i18n-helpers"
+import { getTranslatedField, buildLocaleCondition } from "@/lib/i18n-helpers"
 
 /**
  * 获取默认语言
@@ -728,7 +728,13 @@ export async function getPageTypeGames(pageTypeSlug: string, locale: string, pag
   if (!pageType) return null
 
   // 根据页面类型配置查询条件和排序
-  let gamesQuery: any = {
+  const gamesQuery: {
+    where: Record<string, unknown>
+    skip: number
+    take: number
+    include: Record<string, unknown>
+    orderBy?: unknown
+  } = {
     where: { isPublished: true },
     skip,
     take: limit,
@@ -797,13 +803,13 @@ export async function getPageTypeGames(pageTypeSlug: string, locale: string, pag
       metaTitle: getTranslatedField(pageType.translations, locale, "metaTitle", ""),
       metaDescription: getTranslatedField(pageType.translations, locale, "metaDescription", ""),
     },
-    games: games.map((game: any) => ({
+    games: games.map((game) => ({
       slug: game.slug,
       thumbnail: game.thumbnail,
       title: getTranslatedField(game.translations, locale, "title", "Untitled"),
       description: getTranslatedField(game.translations, locale, "description", ""),
       category: getTranslatedField(game.category.translations, locale, "name", ""),
-      tags: game.tags.map((t: any) => getTranslatedField(t.tag.translations, locale, "name", t.tag.slug)),
+      tags: game.tags.map((t) => getTranslatedField(t.tag.translations, locale, "name", t.tag.slug)),
     })),
     pagination: {
       currentPage: page,

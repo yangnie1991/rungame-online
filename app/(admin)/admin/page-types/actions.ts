@@ -88,7 +88,7 @@ export async function createPageType(data: PageTypeFormData) {
     return { success: true, data: pageType }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message }
+      return { success: false, error: error.issues[0].message }
     }
     console.error("创建页面类型失败:", error)
     return { success: false, error: "创建失败，请稍后重试" }
@@ -150,7 +150,7 @@ export async function updatePageType(pageTypeId: string, data: PageTypeFormData)
     return { success: true, data: pageType }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message }
+      return { success: false, error: error.issues[0].message }
     }
     console.error("更新页面类型失败:", error)
     return { success: false, error: "更新失败，请稍后重试" }
