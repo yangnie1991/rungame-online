@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/* Admin 专用样式 - 强制亮色模式 */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* 强制亮色模式，禁用暗色模式 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Admin body 样式 */
+body {
+  background: #f3f4f6;
+  color: #171717;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* 确保所有文本默认为深色 */
+* {
+  color: inherit;
+}
+
+/* Admin 表格样式增强 */
+.admin-table {
+  color: #171717;
+}
+
+.admin-table th {
+  color: #374151;
+  font-weight: 600;
+}
+
+.admin-table td {
+  color: #1f2937;
+}
+
+/* Admin 卡片样式 */
+.admin-card {
+  background: #ffffff;
+  color: #171717;
+}
+
+/* Admin 标题样式 */
+h1, h2, h3, h4, h5, h6 {
+  color: #111827 !important;
+}
+
+/* Admin 文本样式 */
+.text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.text-gray-900 {
+  color: #111827 !important;
+}
+
+/* Admin 表单样式 */
+input, textarea, select {
+  color: #111827 !important;
+  background: #ffffff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Admin 按钮文字 */
+button {
+  color: inherit;
+}
+
+/* 确保徽章文字清晰 */
+.badge {
+  font-weight: 500;
+}
+
+/* ==================== Sidebar 深色主题样式 ==================== */
+/* Sidebar 容器 */
+aside {
+  color-scheme: dark !important;
+}
+
+/* Sidebar 所有元素继承颜色 */
+aside * {
+  color: inherit;
+}
+
+/* Sidebar 标题强制白色 */
+aside h1,
+aside h2 {
+  color: #ffffff !important;
+}
+
+/* Sidebar 副标题和描述 */
+aside p {
+  color: #94a3b8 !important;
+}
+
+/* Sidebar 链接默认颜色 */
+aside a {
+  color: #cbd5e1 !important;
+}
+
+/* Sidebar 激活状态链接（蓝色背景时白色文字） */
+aside a[class*="bg-blue"] {
+  color: #ffffff !important;
+}
+
+/* Sidebar 悬停状态链接 */
+aside a:hover {
+  color: #ffffff !important;
+}
+
+/* Sidebar 图标 */
+aside svg {
+  color: currentColor !important;
+}
+
+/* Sidebar 边框颜色 */
+aside [class*="border-slate"] {
+  border-color: #1e293b !important;
+}
+
+/* Sidebar 底部文字 */
+aside .text-slate-500,
+aside [class*="text-slate-500"] {
+  color: #64748b !important;
+}
+
+aside .text-slate-400,
+aside [class*="text-slate-400"] {
+  color: #94a3b8 !important;
+}
+
+aside .text-slate-300,
+aside [class*="text-slate-300"] {
+  color: #cbd5e1 !important;
+}

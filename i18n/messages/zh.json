@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "siteTitle": "RunGame - 免费在线小游戏",
+    "siteDescription": "畅玩海量免费在线小游戏，无需下载，无需注册，即点即玩！",
+    "homeTitle": "RunGame - 免费在线小游戏",
+    "homeDescription": "畅玩海量免费在线小游戏，无需下载，无需注册，即点即玩！",
+    "allGamesTitle": "所有游戏 - RunGame",
+    "allGamesDescription": "浏览所有在线游戏",
+    "categoryTitle": "{name}游戏 - RunGame",
+    "tagTitle": "{name}游戏 - RunGame",
+    "gameNotFound": "游戏未找到"
+  },
+  "common": {
+    "home": "首页",
+    "games": "游戏",
+    "categories": "分类",
+    "tags": "标签",
+    "allGames": "所有游戏",
+    "viewAll": "查看全部",
+    "playNow": "立即游戏",
+    "plays": "次播放",
+    "noGames": "暂无游戏",
+    "loading": "加载中...",
+    "gamesCount": "{count}个游戏"
+  },
+  "home": {
+    "hero": "免费在线小游戏",
+    "heroDesc": "海量游戏，即点即玩，无需下载",
+    "featured": "精选游戏",
+    "viewAll": "查看所有游戏",
+    "categories": "分类浏览"
+  },
+  "games": {
+    "title": "所有游戏",
+    "description": "浏览我们完整的在线游戏集合",
+    "noGamesYet": "暂无游戏"
+  },
+  "game": {
+    "aboutThisGame": "关于本游戏",
+    "howToPlay": "游戏说明",
+    "gameDetails": "游戏详情",
+    "category": "分类",
+    "rating": "评分",
+    "plays": "播放次数",
+    "addedOn": "添加时间",
+    "featuredGame": "精选游戏",
+    "playFullScreen": "全屏游戏"
+  },
+  "category": {
+    "noGamesYet": "此分类暂无游戏"
+  },
+  "tag": {
+    "noGamesYet": "此标签暂无游戏"
+  },
+  "footer": {
+    "description": "免费在线游戏平台，畅玩精选小游戏",
+    "quickLinks": "快速链接",
+    "gameCategories": "游戏分类",
+    "about": "关于我们",
+    "privacy": "隐私政策",
+    "terms": "服务条款",
+    "copyright": "© {year} RunGame. 版权所有"
+  }
+}

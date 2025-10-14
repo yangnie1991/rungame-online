@@ -1,0 +1,387 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 游戏分类（主表 - 仅存储非翻译字段）
+model Category {
+  id           String                 @id @default(cuid())
+  slug         String                 @unique
+  icon         String?                // 分类图标（emoji或图片URL）
+  sortOrder    Int                    @default(0) @map("sort_order")
+  isEnabled    Boolean                @default(true) @map("is_enabled")  // 是否启用
+  createdAt    DateTime               @default(now()) @map("created_at")
+
+  games        Game[]
+  translations CategoryTranslation[]
+
+  @@map("categories")
+  @@index([slug])
+  @@index([sortOrder])
+  @@index([isEnabled])
+}
+
+// 分类翻译表
+model CategoryTranslation {
+  id              String   @id @default(cuid())
+  categoryId      String   @map("category_id")
+  locale          String
+  name            String
+  description     String?
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description")
+
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("category_translations")
+  @@unique([categoryId, locale])
+  @@index([locale])
+}
+
+// 游戏标签（主表）
+model Tag {
+  id           String           @id @default(cuid())
+  slug         String           @unique
+  icon         String?          // 标签图标（emoji或图片URL）
+  isEnabled    Boolean          @default(true) @map("is_enabled")  // 是否启用
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  games        GameTag[]
+  translations TagTranslation[]
+
+  @@map("tags")
+  @@index([slug])
+  @@index([isEnabled])
+}
+
+// 标签翻译表
+model TagTranslation {
+  id     String @id @default(cuid())
+  tagId  String @map("tag_id")
+  locale String
+  name   String
+
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@map("tag_translations")
+  @@unique([tagId, locale])
+  @@index([locale])
+}
+
+// 游戏主体（主表 - 仅存储非翻译字段）
+model Game {
+  id           String            @id @default(cuid())
+  slug         String            @unique
+  thumbnail    String
+  banner       String?
+  embedUrl     String            @map("embed_url")
+  gameUrl      String            @map("game_url") // 改名使其更清晰
+  width        Int               @default(800)
+  height       Int               @default(600)
+  categoryId   String            @map("category_id")
+  isFeatured   Boolean           @default(false) @map("is_featured")
+  isPublished  Boolean           @default(false) @map("is_published")
+  playCount    Int               @default(0) @map("play_count")
+  rating       Float             @default(0)
+  ratingCount  Int               @default(0) @map("rating_count")
+  metadata     Json?             // 额外的游戏元数据
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  publishedAt  DateTime?         @map("published_at")
+
+  category     Category          @relation(fields: [categoryId], references: [id])
+  tags         GameTag[]
+  translations GameTranslation[]
+  views        GameView[]
+
+  @@map("games")
+  @@index([slug])
+  @@index([categoryId])
+  @@index([isFeatured])
+  @@index([isPublished])
+  @@index([playCount])
+}
+
+// 游戏翻译表
+model GameTranslation {
+  id              String   @id @default(cuid())
+  gameId          String   @map("game_id")
+  locale          String
+  title           String
+  description     String?
+  longDescription String?  @map("long_description") @db.Text
+  instructions    String?  @db.Text
+  keywords        String?
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  game            Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@map("game_translations")
+  @@unique([gameId, locale])
+  @@index([locale])
+}
+
+// 游戏-标签关联表
+model GameTag {
+  gameId String @map("game_id")
+  tagId  String @map("tag_id")
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, tagId])
+  @@map("game_tags")
+  @@index([gameId])
+  @@index([tagId])
+}
+
+// UI文本翻译表（为后续扩展准备，目前只存储英文）
+model UiTranslation {
+  id        String   @id @default(cuid())
+  keyName   String   @map("key_name")
+  locale    String   @default("en")
+  value     String   @db.Text
+  context   String?  // 上下文说明，帮助理解翻译用途
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("ui_translations")
+  @@unique([keyName, locale])
+  @@index([locale])
+  @@index([keyName])
+}
+
+// 游戏访问统计（用于 recently played 功能）
+model GameView {
+  id        String   @id @default(cuid())
+  gameId    String   @map("game_id")
+  sessionId String   @map("session_id") // 用于匿名用户追踪
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@map("game_views")
+  @@index([gameId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@unique([gameId, sessionId, createdAt]) // 防止同一会话短时间重复统计
+}
+
+// 页面类型主表（存储非翻译字段）
+model PageType {
+  id              String                 @id @default(cuid())
+  slug            String                 @unique           // 页面标识符：most-played, trending, new 等
+  type            String                                   // 页面类型：GAME_LIST, STATIC_CONTENT, MIXED
+  icon            String?                                  // 页面类型图标（emoji或图片URL）
+  isEnabled       Boolean                @default(true)   @map("is_enabled")
+  sortOrder       Int                    @default(0)      @map("sort_order")
+
+  // 游戏列表配置（当type为GAME_LIST时使用）
+  gameListConfig  Json?                  @map("game_list_config")  // 游戏筛选和排序配置
+
+  // 页面布局配置
+  layoutConfig    Json?                  @map("layout_config")     // 页面布局设置
+
+  // 缓存配置
+  cacheConfig     Json?                  @map("cache_config")      // 缓存策略配置
+
+  // 时间戳
+  createdAt       DateTime               @default(now())  @map("created_at")
+  updatedAt       DateTime               @updatedAt       @map("updated_at")
+
+  // 关联关系
+  translations    PageTypeTranslation[]
+  contentBlocks   PageContentBlock[]
+
+  @@map("page_types")
+  @@index([slug])
+  @@index([type])
+  @@index([isEnabled])
+  @@index([sortOrder])
+}
+
+// 页面类型翻译表
+model PageTypeTranslation {
+  id              String     @id @default(cuid())
+  pageTypeId      String     @map("page_type_id")
+  locale          String
+
+  // 基础信息
+  title           String                              // 页面标题
+  subtitle        String?                             // 页面副标题
+  description     String?    @db.Text                 // 页面描述
+
+  // SEO元信息
+  metaTitle       String?    @map("meta_title")       // SEO标题
+  metaDescription String?    @map("meta_description")  // SEO描述
+  metaKeywords    String?    @map("meta_keywords")    // SEO关键词
+
+  // Open Graph标签
+  ogTitle         String?    @map("og_title")
+  ogDescription   String?    @map("og_description")
+  ogImage         String?    @map("og_image")
+
+  // 结构化数据
+  schemaData      Json?      @map("schema_data")      // Schema.org结构化数据
+
+  // 时间戳
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt      @map("updated_at")
+
+  // 关联关系
+  pageType        PageType   @relation(fields: [pageTypeId], references: [id], onDelete: Cascade)
+
+  @@map("page_type_translations")
+  @@unique([pageTypeId, locale])
+  @@index([locale])
+}
+
+// 页面内容块表（支持灵活的页面内容组织）
+model PageContentBlock {
+  id              String                      @id @default(cuid())
+  pageTypeId      String                      @map("page_type_id")
+
+  // 内容块配置
+  blockType       String                      @map("block_type")        // HERO, GAME_GRID, TEXT, BANNER, CUSTOM
+  blockKey        String                      @map("block_key")         // 内容块唯一标识
+  sortOrder       Int                         @default(0) @map("sort_order")
+  isEnabled       Boolean                     @default(true) @map("is_enabled")
+
+  // 配置数据
+  config          Json?                       // 内容块配置（布局、样式等）
+  conditions      Json?                       // 显示条件（设备类型、用户类型等）
+
+  // 时间戳
+  createdAt       DateTime                    @default(now()) @map("created_at")
+  updatedAt       DateTime                    @updatedAt @map("updated_at")
+
+  // 关联关系
+  pageType        PageType                    @relation(fields: [pageTypeId], references: [id], onDelete: Cascade)
+  translations    PageContentBlockTranslation[]
+
+  @@map("page_content_blocks")
+  @@unique([pageTypeId, blockKey])
+  @@index([pageTypeId])
+  @@index([blockType])
+  @@index([sortOrder])
+}
+
+// 页面内容块翻译表
+model PageContentBlockTranslation {
+  id              String           @id @default(cuid())
+  blockId         String           @map("block_id")
+  locale          String
+
+  // 内容数据
+  title           String?                             // 内容块标题
+  content         String?          @db.Text           // 内容块内容
+  buttonText      String?          @map("button_text") // 按钮文本
+  buttonUrl       String?          @map("button_url")  // 按钮链接
+
+  // 额外数据
+  metadata        Json?                               // 其他元数据
+
+  // 时间戳
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  // 关联关系
+  contentBlock    PageContentBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@map("page_content_block_translations")
+  @@unique([blockId, locale])
+  @@index([locale])
+}
+
+// 语言管理表
+model Language {
+  id            String    @id @default(cuid())
+  code          String    @unique                       // ISO 639-1 语言代码：en, zh, es等
+  name          String                                  // 英文名称：English, Chinese, Spanish
+  nameCn        String    @default("") @map("name_cn") // 中文名称：英语, 中文, 西班牙语
+  nativeName    String    @map("native_name")          // 原生语言名称：English, 中文, Español
+  flag          String?                                 // 旗帜emoji：🇬🇧, 🇨🇳, 🇪🇸
+  localeCode    String    @map("locale_code")          // 完整区域代码：en-US, zh-CN, es-ES
+  isDefault     Boolean   @default(false) @map("is_default")  // 是否为默认语言
+  isEnabled     Boolean   @default(true) @map("is_enabled")   // 是否启用
+  sortOrder     Int       @default(0) @map("sort_order")      // 排序顺序
+  direction     String    @default("ltr")               // 文字方向：ltr, rtl
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("languages")
+  @@index([code])
+  @@index([isEnabled])
+  @@index([isDefault])
+  @@index([sortOrder])
+}
+
+// 管理员用户
+model Admin {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  name        String?
+  role        String    @default("ADMIN") // ADMIN, SUPER_ADMIN
+  isActive    Boolean   @default(true) @map("is_active")
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  apiKeys     ApiKey[]
+
+  @@map("admins")
+  @@index([email])
+}
+
+// API密钥管理
+model ApiKey {
+  id            String    @id @default(cuid())
+  key           String    @unique                 // sk_xxx格式的API key
+  name          String                            // API key名称/描述
+  adminId       String    @map("admin_id")        // 创建者ID
+  type          String    @default("DISPLAY")     // API Key类型：DISPLAY, ADMIN
+
+  // 权限配置
+  scopes        String[]  @default([])            // 权限范围：read:games, write:games等
+
+  // 安全配置
+  allowedIPs    String[]  @default([]) @map("allowed_ips")      // IP白名单
+  allowedDomains String[] @default([]) @map("allowed_domains")  // 域名白名单
+  allowedOrigins String[] @default([]) @map("allowed_origins")  // Origin白名单
+
+  // 使用限制
+  rateLimit     Int       @default(1000) @map("rate_limit")     // 每小时请求限制
+  dailyLimit    Int?      @map("daily_limit")                   // 每日请求限制
+  totalLimit    Int?      @map("total_limit")                   // 总请求限制
+
+  // 状态管理
+  isActive      Boolean   @default(true) @map("is_active")
+  expiresAt     DateTime? @map("expires_at")                    // 过期时间
+
+  // 使用统计
+  usageCount    Int       @default(0) @map("usage_count")       // 总使用次数
+  lastUsedAt    DateTime? @map("last_used_at")                  // 最后使用时间
+  lastUsedIP    String?   @map("last_used_ip")                  // 最后使用IP
+
+  // 时间戳
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  admin         Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+  @@index([key])
+  @@index([adminId])
+  @@index([isActive])
+  @@index([type])
+  @@index([lastUsedAt])
+}

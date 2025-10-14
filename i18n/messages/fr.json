@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "siteTitle": "RunGame - Jeux en Ligne Gratuits",
+    "siteDescription": "Jouez à des milliers de jeux en ligne gratuits instantanément. Pas de téléchargements, pas d'inscription requise.",
+    "homeTitle": "RunGame - Jeux en Ligne Gratuits",
+    "homeDescription": "Jouez à des milliers de jeux en ligne gratuits instantanément. Pas de téléchargements, pas d'inscription requise.",
+    "allGamesTitle": "Tous les Jeux - RunGame",
+    "allGamesDescription": "Parcourir tous les jeux en ligne",
+    "categoryTitle": "Jeux {name} - RunGame",
+    "tagTitle": "Jeux {name} - RunGame",
+    "gameNotFound": "Jeu Non Trouvé"
+  },
+  "common": {
+    "home": "Accueil",
+    "games": "Jeux",
+    "categories": "Catégories",
+    "tags": "Tags",
+    "allGames": "Tous les Jeux",
+    "viewAll": "Voir Tout",
+    "playNow": "Jouer Maintenant",
+    "plays": "parties",
+    "noGames": "Aucun jeu disponible",
+    "loading": "Chargement...",
+    "gamesCount": "{count} jeux"
+  },
+  "home": {
+    "hero": "Jeux en Ligne Gratuits",
+    "heroDesc": "Des milliers de jeux, jeu instantané, pas de téléchargements nécessaires",
+    "featured": "Jeux en Vedette",
+    "viewAll": "Voir Tous les Jeux",
+    "categories": "Parcourir par Catégorie"
+  },
+  "games": {
+    "title": "Tous les Jeux",
+    "description": "Parcourir notre collection complète de jeux en ligne",
+    "noGamesYet": "Aucun jeu disponible pour le moment."
+  },
+  "game": {
+    "aboutThisGame": "À Propos de Ce Jeu",
+    "howToPlay": "Comment Jouer",
+    "gameDetails": "Détails du Jeu",
+    "category": "Catégorie",
+    "rating": "Note",
+    "plays": "Parties",
+    "addedOn": "Ajouté",
+    "featuredGame": "Jeu en Vedette",
+    "playFullScreen": "Jouer en Plein Écran"
+  },
+  "category": {
+    "noGamesYet": "Aucun jeu disponible dans cette catégorie pour le moment."
+  },
+  "tag": {
+    "noGamesYet": "Aucun jeu avec ce tag pour le moment."
+  },
+  "footer": {
+    "description": "Plateforme de jeux en ligne gratuits, jouez à des mini-jeux sélectionnés",
+    "quickLinks": "Liens Rapides",
+    "gameCategories": "Catégories de Jeux",
+    "about": "À Propos de Nous",
+    "privacy": "Politique de Confidentialité",
+    "terms": "Conditions d'Utilisation",
+    "copyright": "© {year} RunGame. Tous droits réservés."
+  }
+}

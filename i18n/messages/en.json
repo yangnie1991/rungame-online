@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "siteTitle": "RunGame - Free Online Games",
+    "siteDescription": "Play thousands of free online games instantly. No downloads, no registration required.",
+    "homeTitle": "RunGame - Free Online Games",
+    "homeDescription": "Play thousands of free online games instantly. No downloads, no registration required.",
+    "allGamesTitle": "All Games - RunGame",
+    "allGamesDescription": "Browse all available online games",
+    "categoryTitle": "{name} Games - RunGame",
+    "tagTitle": "{name} Games - RunGame",
+    "gameNotFound": "Game Not Found"
+  },
+  "common": {
+    "home": "Home",
+    "games": "Games",
+    "categories": "Categories",
+    "tags": "Tags",
+    "allGames": "All Games",
+    "viewAll": "View All",
+    "playNow": "Play Now",
+    "plays": "plays",
+    "noGames": "No games available",
+    "loading": "Loading...",
+    "gamesCount": "{count} games"
+  },
+  "home": {
+    "hero": "Play Free Online Games",
+    "heroDesc": "Thousands of games, instant play, no downloads needed",
+    "featured": "Featured Games",
+    "viewAll": "View All Games",
+    "categories": "Browse by Category"
+  },
+  "games": {
+    "title": "All Games",
+    "description": "Browse our complete collection of online games",
+    "noGamesYet": "No games available yet."
+  },
+  "game": {
+    "aboutThisGame": "About This Game",
+    "howToPlay": "How to Play",
+    "gameDetails": "Game Details",
+    "category": "Category",
+    "rating": "Rating",
+    "plays": "Plays",
+    "addedOn": "Added",
+    "featuredGame": "Featured Game",
+    "playFullScreen": "Play in Full Screen"
+  },
+  "category": {
+    "noGamesYet": "No games available in this category yet."
+  },
+  "tag": {
+    "noGamesYet": "No games with this tag yet."
+  },
+  "footer": {
+    "description": "Free online games platform, play selected mini games",
+    "quickLinks": "Quick Links",
+    "gameCategories": "Game Categories",
+    "about": "About Us",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "copyright": "© {year} RunGame. All rights reserved."
+  }
+}
