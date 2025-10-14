@@ -82,21 +82,26 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
                 </span>
                 <span className="ml-1">▾</span>
               </button>
-              <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-popover border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-card border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 <div className="py-1">
-                  {languages.map((lang) => (
-                    <Link
-                      key={lang.code}
-                      href={pathname}
-                      locale={lang.code as "en" | "zh" | "es" | "fr"}
-                      className={`block px-4 py-2 text-sm hover:bg-accent transition-colors ${
-                        lang.code === currentLocale ? "bg-accent" : ""
-                      }`}
-                    >
-                      {lang.flag && <span className="mr-2">{lang.flag}</span>}
-                      {lang.nativeName}
-                    </Link>
-                  ))}
+                  {languages.map((lang) => {
+                    const isActive = lang.code === currentLocale
+                    return (
+                      <Link
+                        key={lang.code}
+                        href={pathname}
+                        locale={lang.code as "en" | "zh" | "es" | "fr"}
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          isActive
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        {lang.flag && <span className="mr-2">{lang.flag}</span>}
+                        {lang.nativeName}
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
             </div>
