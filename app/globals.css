@@ -1,26 +1,168 @@
 @import "tailwindcss";
 
+/* 🎮 2025年赛博游戏夜景主题配色系统 - 基于全球Top10游戏网站分析 */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 基础背景层次 - 现代灰蓝色调 */
+  --background: 248 250 252; /* #F8FAFC - Slate-50 极淡蓝灰主背景 */
+  --foreground: 15 23 42; /* #0F172A - Slate-900 深蓝黑主文字 */
+
+  /* 卡片 */
+  --card: 255 255 255; /* #FFFFFF - 纯白提升层 */
+  --card-foreground: 15 23 42; /* #0F172A - Slate-900 */
+
+  /* 主色调 - 现代游戏风格 */
+  --primary: 59 130 246; /* #3B82F6 - Blue-500 清爽蓝色 */
+  --primary-foreground: 255 255 255; /* white */
+
+  /* 次要色 */
+  --secondary: 241 245 249; /* #F1F5F9 - Slate-100 次级背景 */
+  --secondary-foreground: 15 23 42; /* #0F172A - Slate-900 */
+
+  /* 强调色 - 翡翠绿成功色 */
+  --accent: 16 185 129; /* #10B981 - Emerald-500 翡翠绿 */
+  --accent-foreground: 255 255 255; /* white */
+
+  /* 热门色 - 琥珀橙 */
+  --hot: 245 158 11; /* #F59E0B - Amber-500 琥珀橙热门 */
+  --hot-foreground: 255 255 255; /* white */
+
+  /* 静音色 */
+  --muted: 241 245 249; /* #F1F5F9 - Slate-100 */
+  --muted-foreground: 100 116 139; /* #64748B - Slate-500 浅蓝灰第三级 */
+
+  /* 边框 */
+  --border: 226 232 240; /* #E2E8F0 - Slate-200 淡边框 */
+  --input: 203 213 225; /* #CBD5E1 - Slate-300 默认边框 */
+  --ring: 59 130 246; /* #3B82F6 - Blue-500 与 primary 一致 */
+
+  /* 状态色 - 现代游戏色彩 */
+  --success: 16 185 129; /* #10B981 - Emerald-500 成功绿 */
+  --warning: 245 158 11; /* #F59E0B - Amber-500 警告橙 */
+  --destructive: 239 68 68; /* #EF4444 - Red-500 错误红 */
+  --info: 59 130 246; /* #3B82F6 - Blue-500 信息蓝 */
+
+  /* 圆角 */
+  --radius: 0.5rem;
+}
+
+/* 暗色主题（夜间模式） - 专业赛博游戏风格 */
+.dark {
+  /* 基础背景层次 - 专业暗色调 */
+  --background: 15 15 35; /* #0F0F23 - 深紫黑背景 */
+  --foreground: 248 250 252; /* #F8FAFC - Slate-50 柔和白色文字 */
+
+  /* 深色模式卡片 */
+  --card: 26 26 46; /* #1A1A2E - 次级深蓝背景 */
+  --card-foreground: 248 250 252; /* #F8FAFC - Slate-50 */
+
+  /* 深色模式主色调 - 电光蓝 */
+  --primary: 0 212 255; /* #00D4FF - 电光蓝主调 */
+  --primary-foreground: 15 15 35; /* #0F0F23 - 深色背景 */
+
+  /* 深色模式次要色 */
+  --secondary: 22 33 62; /* #16213E - 第三级背景 */
+  --secondary-foreground: 248 250 252; /* #F8FAFC - Slate-50 */
+
+  /* 深色模式强调色 - 霓虹绿 */
+  --accent: 0 255 136; /* #00FF88 - 霓虹绿强调 */
+  --accent-foreground: 15 15 35; /* #0F0F23 */
+
+  /* 深色模式热门色 - 霓虹红 */
+  --hot: 255 71 87; /* #FF4757 - 霓虹红热门 */
+  --hot-foreground: 255 255 255; /* white */
+
+  /* 深色模式静音色 */
+  --muted: 51 65 85; /* #334155 - Slate-700 */
+  --muted-foreground: 148 163 184; /* #94A3B8 - Slate-400 */
+
+  /* 深色模式边框 */
+  --border: 51 65 85; /* #334155 - Slate-700 柔和边框 */
+  --input: 71 85 105; /* #475569 - Slate-600 默认边框 */
+  --ring: 0 212 255; /* #00D4FF - 电光蓝 */
+
+  /* 深色模式状态色 - 霓虹游戏色彩 */
+  --success: 0 255 136; /* #00FF88 - 霓虹绿 */
+  --warning: 255 215 0; /* #FFD700 - Gold 警告金 */
+  --destructive: 255 71 87; /* #FF4757 - 霓虹红 */
+  --info: 0 212 255; /* #00D4FF - 电光蓝 */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* 颜色系统 */
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--foreground));
+  --color-success: rgb(var(--success));
+  --color-warning: rgb(var(--warning));
+  --color-info: rgb(var(--info));
+
+  /* 字体 */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* 圆角 */
+  --radius: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* 基础样式 */
+html {
+  scroll-behavior: smooth;
+  color-scheme: light dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-background);
+  color: var(--color-foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 自定义滚动条（仅 Webkit 浏览器） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--primary));
+}
+
+/* 选中文本样式 */
+::selection {
+  background: rgb(var(--primary) / 0.3);
+  color: rgb(var(--foreground));
+}
+
+::-moz-selection {
+  background: rgb(var(--primary) / 0.3);
+  color: rgb(var(--foreground));
 }

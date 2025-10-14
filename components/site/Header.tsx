@@ -36,11 +36,11 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
         <div className="flex items-center justify-between">
           {/* Logo 和品牌关键词 */}
           <div className="flex items-center space-x-6">
-            <h1 className="text-2xl font-bold">
+            <div className="text-2xl font-bold">
               <Link href="/" className="text-primary hover:opacity-90 transition-opacity">
                 🎮 RunGame
               </Link>
-            </h1>
+            </div>
             <div className="hidden md:flex items-center space-x-4 text-sm text-muted-foreground">
               <span className="font-medium">Free Online Games</span>
               <span className="text-muted-foreground/50">|</span>

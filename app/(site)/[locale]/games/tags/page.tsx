@@ -1,6 +1,6 @@
 import { getAllTags } from "@/app/(site)/actions"
 import type { Metadata } from "next"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
 
 interface AllTagsPageProps {
   params: Promise<{ locale: string }>
@@ -35,7 +35,7 @@ export default async function AllTagsPage({ params }: AllTagsPageProps) {
     <div className="space-y-6">
       {/* 面包屑导航 */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href={`/${locale}`} className="hover:text-foreground transition-colors">
+        <Link href="/" className="hover:text-foreground transition-colors">
           {t.home}
         </Link>
         <span>/</span>
@@ -53,7 +53,7 @@ export default async function AllTagsPage({ params }: AllTagsPageProps) {
         {tags.map((tag) => (
           <Link
             key={tag.slug}
-            href={`/${locale}/games/tags/${tag.slug}`}
+            href={`/games/tags/${tag.slug}`}
             className="inline-flex items-center gap-2 px-4 py-2 bg-accent/50 hover:bg-accent text-accent-foreground rounded-full transition-all hover:scale-105"
           >
             {tag.icon && <span>{tag.icon}</span>}

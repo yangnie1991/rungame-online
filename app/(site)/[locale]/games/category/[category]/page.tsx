@@ -2,7 +2,8 @@ import { getGamesByCategory } from "@/app/(site)/actions"
 import { GameSection } from "@/components/site/GameSection"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
+import { generateCategorySEOMetadata } from "@/lib/seo-helpers"
 
 interface CategoryPageProps {
   params: Promise<{ locale: string; category: string }>
@@ -19,10 +20,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     }
   }
 
-  return {
-    title: `${data.category.name} Games`,
-    description: data.category.description || `Play the best ${data.category.name} games online for free`,
-  }
+  // 使用统一的 SEO 元数据生成函数
+  return generateCategorySEOMetadata({
+    categoryName: data.category.name,
+    description: data.category.description || `Play ${data.pagination.totalGames}+ free ${data.category.name.toLowerCase()} games on RunGame. Browser games, no downloads required!`,
+    locale,
+    slug: category,
+    gameCount: data.pagination.totalGames,
+  })
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
@@ -91,7 +96,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         <div className="flex items-center justify-center space-x-4 py-8">
           {page > 1 && (
             <Link
-              href={`/${locale}/games/category/${category}?page=${page - 1}`}
+              href={`/games/category/${category}?page=${page - 1}`}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               {t.previous}
@@ -104,7 +109,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
           {data.pagination.hasMore && (
             <Link
-              href={`/${locale}/games/category/${category}?page=${page + 1}`}
+              href={`/games/category/${category}?page=${page + 1}`}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               {t.next}

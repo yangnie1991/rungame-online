@@ -48,7 +48,7 @@ export function SiteFooter({ locale }: FooterProps) {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
-                  href={`/${locale}/category/action`}
+                  href={`/games/category/action`}
                   className="hover:text-primary transition-colors"
                 >
                   动作游戏
@@ -56,7 +56,7 @@ export function SiteFooter({ locale }: FooterProps) {
               </li>
               <li>
                 <Link
-                  href={`/${locale}/category/puzzle`}
+                  href={`/games/category/puzzle`}
                   className="hover:text-primary transition-colors"
                 >
                   益智游戏
