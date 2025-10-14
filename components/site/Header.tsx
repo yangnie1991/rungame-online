@@ -88,7 +88,7 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
                     <Link
                       key={lang.code}
                       href={pathname}
-                      locale={lang.code as any}
+                      locale={lang.code as "en" | "zh" | "es" | "fr"}
                       className={`block px-4 py-2 text-sm hover:bg-accent transition-colors ${
                         lang.code === currentLocale ? "bg-accent" : ""
                       }`}

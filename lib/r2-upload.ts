@@ -187,7 +187,7 @@ export async function fileExistsInR2(key: string): Promise<boolean> {
 
     await r2Client.send(command)
     return true
-  } catch (error) {
+  } catch {
     return false
   }
 }

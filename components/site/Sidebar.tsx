@@ -32,14 +32,13 @@ interface PageTypeItem {
 }
 
 interface SidebarProps {
-  locale: string
   mainNavItems: NavItem[]
   categories: CategoryItem[]
   tags: TagItem[]
   pageTypes: PageTypeItem[]
 }
 
-export function Sidebar({ locale, mainNavItems, categories, tags, pageTypes }: SidebarProps) {
+export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarProps) {
   const pathname = usePathname()
 
   // 判断导航项是否为当前页面

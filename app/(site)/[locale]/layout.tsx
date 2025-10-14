@@ -66,7 +66,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               <div className="flex w-full flex-1 overflow-hidden">
                 {/* Left Sidebar - 左侧分类导航栏 */}
                 <Sidebar
-                  locale={locale}
                   mainNavItems={mainNavItems}
                   pageTypes={pageTypesData.map((pt) => ({
                     slug: pt.slug,
