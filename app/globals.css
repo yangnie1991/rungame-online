@@ -3,6 +3,7 @@
 /* 🎮 2025年赛博游戏夜景主题配色系统 - 基于全球Top10游戏网站分析 */
 
 :root {
+  /* ===== Tailwind 内置变量 ===== */
   /* 基础背景层次 - 现代灰蓝色调 */
   --background: 248 250 252; /* #F8FAFC - Slate-50 极淡蓝灰主背景 */
   --foreground: 15 23 42; /* #0F172A - Slate-900 深蓝黑主文字 */
@@ -23,10 +24,6 @@
   --accent: 16 185 129; /* #10B981 - Emerald-500 翡翠绿 */
   --accent-foreground: 255 255 255; /* white */
 
-  /* 热门色 - 琥珀橙 */
-  --hot: 245 158 11; /* #F59E0B - Amber-500 琥珀橙热门 */
-  --hot-foreground: 255 255 255; /* white */
-
   /* 静音色 */
   --muted: 241 245 249; /* #F1F5F9 - Slate-100 */
   --muted-foreground: 100 116 139; /* #64748B - Slate-500 浅蓝灰第三级 */
@@ -37,17 +34,49 @@
   --ring: 59 130 246; /* #3B82F6 - Blue-500 与 primary 一致 */
 
   /* 状态色 - 现代游戏色彩 */
-  --success: 16 185 129; /* #10B981 - Emerald-500 成功绿 */
-  --warning: 245 158 11; /* #F59E0B - Amber-500 警告橙 */
   --destructive: 239 68 68; /* #EF4444 - Red-500 错误红 */
-  --info: 59 130 246; /* #3B82F6 - Blue-500 信息蓝 */
 
   /* 圆角 */
   --radius: 0.5rem;
+
+  /* ===== 自定义游戏主题变量 ===== */
+  /* 基础背景层次 - 完整的多层级背景系统 */
+  --bg-primary: #F8FAFC;        /* 极淡蓝灰主背景 Slate-50 */
+  --bg-secondary: #F1F5F9;      /* 次级背景 Slate-100 */
+  --bg-tertiary: #E2E8F0;       /* 第三级背景 Slate-200 */
+  --bg-elevated: #FFFFFF;       /* 纯白提升层 */
+
+  /* 品牌主题色 - 游戏风格 */
+  --brand-primary: #3B82F6;     /* 清爽蓝色 Blue-500 */
+  --brand-secondary: #06B6D4;   /* 青蓝辅助 Cyan-500 */
+  --accent-gaming: #10B981;     /* 翡翠绿成功 Emerald-500 */
+  --accent-hot: #F59E0B;        /* 琥珀橙热门 Amber-500 */
+
+  /* 文字层次 - 高对比度 */
+  --text-primary: #0F172A;      /* 深蓝黑主文字 Slate-900 */
+  --text-secondary: #475569;    /* 中蓝灰次级 Slate-600 */
+  --text-tertiary: #64748B;     /* 浅蓝灰第三级 Slate-500 */
+  --text-disabled: #94A3B8;     /* 禁用文字 Slate-400 */
+
+  /* 边框与分割线 */
+  --border-subtle: #E2E8F0;     /* 淡边框 Slate-200 */
+  --border-default: #CBD5E1;    /* 默认边框 Slate-300 */
+  --border-strong: #94A3B8;     /* 强边框 Slate-400 */
+
+  /* 状态色 - 完整的状态系统 */
+  --status-success: #10B981;    /* 成功绿 Emerald-500 */
+  --status-warning: #F59E0B;    /* 警告橙 Amber-500 */
+  --status-error: #EF4444;      /* 错误红 Red-500 */
+  --status-info: #3B82F6;       /* 信息蓝 Blue-500 */
+
+  /* 特殊效果 */
+  --shadow-color: rgba(59, 130, 246, 0.1);  /* 清爽蓝阴影 */
+  --overlay-bg: rgba(0, 0, 0, 0.5);
 }
 
 /* 暗色主题（夜间模式） - 专业赛博游戏风格 */
 .dark {
+  /* ===== Tailwind 内置变量 ===== */
   /* 基础背景层次 - 专业暗色调 */
   --background: 15 15 35; /* #0F0F23 - 深紫黑背景 */
   --foreground: 248 250 252; /* #F8FAFC - Slate-50 柔和白色文字 */
@@ -68,10 +97,6 @@
   --accent: 0 255 136; /* #00FF88 - 霓虹绿强调 */
   --accent-foreground: 15 15 35; /* #0F0F23 */
 
-  /* 深色模式热门色 - 霓虹红 */
-  --hot: 255 71 87; /* #FF4757 - 霓虹红热门 */
-  --hot-foreground: 255 255 255; /* white */
-
   /* 深色模式静音色 */
   --muted: 51 65 85; /* #334155 - Slate-700 */
   --muted-foreground: 148 163 184; /* #94A3B8 - Slate-400 */
@@ -81,15 +106,47 @@
   --input: 71 85 105; /* #475569 - Slate-600 默认边框 */
   --ring: 0 212 255; /* #00D4FF - 电光蓝 */
 
-  /* 深色模式状态色 - 霓虹游戏色彩 */
-  --success: 0 255 136; /* #00FF88 - 霓虹绿 */
-  --warning: 255 215 0; /* #FFD700 - Gold 警告金 */
+  /* 深色模式状态色 */
   --destructive: 255 71 87; /* #FF4757 - 霓虹红 */
-  --info: 0 212 255; /* #00D4FF - 电光蓝 */
+
+  /* ===== 自定义游戏主题变量 ===== */
+  /* 基础背景层次 - 赛博暗色系统 */
+  --bg-primary: #0F0F23;        /* 深紫黑背景 */
+  --bg-secondary: #1A1A2E;      /* 次级深蓝背景 */
+  --bg-tertiary: #16213E;       /* 第三级背景 */
+  --bg-elevated: #0E3460;       /* 提升层背景 */
+
+  /* 品牌主题色 - 霓虹游戏风格 */
+  --brand-primary: #00D4FF;     /* 电光蓝主调 */
+  --brand-secondary: #7C3AED;   /* 紫罗兰辅助 Violet-600 */
+  --accent-gaming: #00FF88;     /* 霓虹绿强调 */
+  --accent-hot: #FF4757;        /* 霓虹红热门 */
+
+  /* 文字层次 */
+  --text-primary: #F8FAFC;      /* 柔和白色文字 Slate-50 */
+  --text-secondary: #CBD5E1;    /* 次级灰色文字 Slate-300 */
+  --text-tertiary: #94A3B8;     /* 第三级文字 Slate-400 */
+  --text-disabled: #64748B;     /* 禁用文字 Slate-500 */
+
+  /* 边框与分割线 */
+  --border-subtle: #334155;     /* 柔和边框 Slate-700 */
+  --border-default: #475569;    /* 默认边框 Slate-600 */
+  --border-strong: #64748B;     /* 强边框 Slate-500 */
+
+  /* 状态色 - 霓虹游戏色彩 */
+  --status-success: #00FF88;    /* 成功绿 霓虹绿 */
+  --status-warning: #FFD700;    /* 警告金 Gold */
+  --status-error: #FF4757;      /* 错误红 霓虹红 */
+  --status-info: #00D4FF;       /* 信息蓝 电光蓝 */
+
+  /* 特殊效果 */
+  --shadow-color: rgba(0, 212, 255, 0.2);   /* 电光蓝阴影 */
+  --glow-gaming: 0 0 20px rgba(0, 255, 136, 0.3);  /* 霓虹绿发光 */
+  --overlay-bg: rgba(0, 0, 0, 0.7);
 }
 
 @theme inline {
-  /* 颜色系统 */
+  /* ===== Tailwind 内置颜色 ===== */
   --color-background: rgb(var(--background));
   --color-foreground: rgb(var(--foreground));
   --color-card: rgb(var(--card));
@@ -107,9 +164,36 @@
   --color-ring: rgb(var(--ring));
   --color-destructive: rgb(var(--destructive));
   --color-destructive-foreground: rgb(var(--foreground));
-  --color-success: rgb(var(--success));
-  --color-warning: rgb(var(--warning));
-  --color-info: rgb(var(--info));
+
+  /* ===== 自定义游戏主题颜色 (直接映射HEX值，Tailwind 4自动支持) ===== */
+  /* 背景色 */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-elevated: var(--bg-elevated);
+
+  /* 品牌色 */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-accent-gaming: var(--accent-gaming);
+  --color-accent-hot: var(--accent-hot);
+
+  /* 文字色 */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-disabled: var(--text-disabled);
+
+  /* 边框色 */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+
+  /* 状态色 */
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-error: var(--status-error);
+  --color-status-info: var(--status-info);
 
   /* 字体 */
   --font-sans: var(--font-geist-sans);
@@ -166,3 +250,32 @@ body {
   background: rgb(var(--primary) / 0.3);
   color: rgb(var(--foreground));
 }
+
+/* ===== 自定义游戏主题工具类 ===== */
+/* 这些工具类可以直接在组件中使用，如: className="bg-brand-primary text-gaming" */
+
+/* 背景色工具类 */
+.bg-brand-primary { background-color: var(--brand-primary); }
+.bg-brand-secondary { background-color: var(--brand-secondary); }
+.bg-gaming { background-color: var(--accent-gaming); }
+.bg-hot { background-color: var(--accent-hot); }
+
+/* 文字色工具类 */
+.text-brand { color: var(--brand-primary); }
+.text-gaming { color: var(--accent-gaming); }
+.text-hot { color: var(--accent-hot); }
+
+/* 边框色工具类 */
+.border-brand { border-color: var(--brand-primary); }
+.border-gaming { border-color: var(--accent-gaming); }
+
+/* 状态色工具类 */
+.text-success { color: var(--status-success); }
+.text-warning { color: var(--status-warning); }
+.text-error { color: var(--status-error); }
+.text-info { color: var(--status-info); }
+
+.bg-success { background-color: var(--status-success); }
+.bg-warning { background-color: var(--status-warning); }
+.bg-error { background-color: var(--status-error); }
+.bg-info { background-color: var(--status-info); }
