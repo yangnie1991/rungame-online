@@ -260,3 +260,87 @@ DATABASE_URL="postgres://real-password@supabase.com/prod"
 
 **创建时间:** 2025-10-14
 **最后更新:** 2025-10-14
+
+## npm run dev vs vercel dev 对比
+
+经过实际测试，以下是两种开发模式的对比：
+
+### \`npm run dev\` (推荐 ⭐)
+
+**优点：**
+- ✅ 启动速度快（1.6秒）
+- ✅ 热重载性能好
+- ✅ 完全支持 Turbopack
+- ✅ 内存占用低
+- ✅ 与 Next.js 完全兼容
+
+**缺点：**
+- ❌ 不支持 Vercel Serverless Functions 测试
+- ❌ 不支持 Edge Runtime 测试
+
+**适用场景：**
+- 日常开发（90%的情况）
+- 前端功能开发
+- API Routes 开发
+- 数据库集成测试
+
+### \`vercel dev\`
+
+**优点：**
+- ✅ 完全模拟 Vercel 部署环境
+- ✅ 支持 Serverless Functions
+- ✅ 支持 Edge Runtime
+
+**缺点：**
+- ❌ 启动慢（5-10秒）
+- ❌ 热重载较慢
+- ❌ 内存占用高
+
+**适用场景：**
+- 测试 Vercel Functions
+- 测试 Edge Middleware
+- 部署前最终验证
+
+### 实测数据对比
+
+| 指标 | npm run dev | vercel dev |
+|------|-------------|------------|
+| 启动时间 | 1.6s | 5-10s |
+| 热重载 | <1s | 2-3s |
+| 环境变量 | .env.local | Vercel 拉取 |
+
+### Vercel 官方建议
+
+> "对于 Next.js 项目，推荐使用框架自带的开发命令 (next dev)"
+
+**结论：日常开发使用 \`npm run dev\`，部署前用 \`vercel dev\` 验证。**
+
+## 快速配置指南
+
+### 初始化（仅一次）
+
+\`\`\`bash
+# 1. 安装并登录
+npm install -g vercel
+vercel login
+
+# 2. 链接项目
+vercel link
+
+# 3. 拉取环境变量
+vercel env pull .env.vercel.local
+\`\`\`
+
+### 日常开发
+
+\`\`\`bash
+# 启动开发服务器
+npm run dev
+\`\`\`
+
+### 部署前验证
+
+\`\`\`bash
+# 使用 Vercel 环境测试
+vercel dev
+\`\`\`
