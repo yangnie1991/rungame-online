@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site/Header"
 import { Sidebar } from "@/components/site/Sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme/theme-provider"
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics"
 import { getEnabledLanguages, getAllCategories, getAllTags, getAllPageTypes } from "../actions"
 import { routing } from "@/i18n/routing"
 import "@/app/globals.css"
@@ -50,6 +51,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className}>
+        {/* Google Analytics - 使用 afterInteractive 策略，不阻塞首屏渲染 */}
+        <GoogleAnalytics gaId="G-DXC4W78DF6" />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -109,5 +112,9 @@ export async function generateMetadata({ params }: LocaleLayoutProps) {
   return {
     title: t("siteTitle"),
     description: t("siteDescription"),
+    // 添加 Google Analytics 脚本到 head
+    other: {
+      'google-site-verification': 'your-verification-code', // 如果需要
+    },
   }
 }

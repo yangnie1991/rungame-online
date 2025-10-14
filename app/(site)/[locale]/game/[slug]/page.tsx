@@ -1,4 +1,4 @@
-import { getGameBySlug, incrementPlayCount, getRecommendedGames } from "@/app/(site)/actions"
+import { getGameBySlug, getRecommendedGames } from "@/app/(site)/actions"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { Link } from "@/i18n/routing"
@@ -121,7 +121,7 @@ export default async function GamePage({ params }: GamePageProps) {
               allowFullScreen
               title={game.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock allow-orientation-lock"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-pointer-lock allow-orientation-lock allow-modals allow-presentation allow-storage-access-by-user-activation"
               loading="lazy"
             />
           </div>
