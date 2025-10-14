@@ -22,9 +22,7 @@ export async function deletePageType(pageTypeId: string) {
 // 创建/更新页面类型的验证 Schema
 const pageTypeSchema = z.object({
   slug: z.string().min(1, "标识符不能为空").regex(/^[a-z0-9-]+$/, "标识符只能包含小写字母、数字和连字符"),
-  type: z.enum(["GAME_LIST", "STATIC_CONTENT", "MIXED"], {
-    required_error: "请选择页面类型"
-  }),
+  type: z.enum(["GAME_LIST", "STATIC_CONTENT", "MIXED"]),
   icon: z.string().optional(),
   isEnabled: z.boolean().default(true),
   sortOrder: z.number().int().min(0, "排序值不能为负数").default(0),

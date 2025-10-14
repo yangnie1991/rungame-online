@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 // Zod Schema for Game form validation
 const gameSchema = z.object({
@@ -64,7 +65,7 @@ export async function createGame(data: GameFormData) {
         categoryId: validated.categoryId,
         isFeatured: validated.isFeatured,
         isPublished: validated.isPublished,
-        ...(validated.metadata && { metadata: validated.metadata }),
+        ...(validated.metadata && { metadata: validated.metadata as Prisma.InputJsonValue }),
         translations: {
           create: validated.translations,
         },
@@ -172,7 +173,7 @@ export async function updateGame(id: string, data: GameFormData) {
           categoryId: validated.categoryId,
           isFeatured: validated.isFeatured,
           isPublished: validated.isPublished,
-          ...(validated.metadata && { metadata: validated.metadata }),
+          ...(validated.metadata && { metadata: validated.metadata as Prisma.InputJsonValue }),
           translations: {
             create: validated.translations,
           },

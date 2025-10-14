@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   }
 
   return {
-    title: `${category.name} Games - RunGame`,
-    description: category.description || `Browse all ${category.name} games`,
+    title: `${category.category.name} Games - RunGame`,
+    description: category.category.description || `Browse all ${category.category.name} games`,
   }
 }
 
@@ -42,23 +42,23 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <span>/</span>
         <span>Categories</span>
         <span>/</span>
-        <span>{category.name}</span>
+        <span>{category.category.name}</span>
       </div>
 
       {/* Category Header */}
       <div className="space-y-3">
         <div className="flex items-center gap-3">
-          {category.icon && <span className="text-5xl">{category.icon}</span>}
+          {category.category.icon && <span className="text-5xl">{category.category.icon}</span>}
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold">{category.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold">{category.category.name}</h1>
             <p className="text-muted-foreground mt-1">
               {category.games.length} game{category.games.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
 
-        {category.description && (
-          <p className="text-lg text-muted-foreground max-w-3xl">{category.description}</p>
+        {category.category.description && (
+          <p className="text-lg text-muted-foreground max-w-3xl">{category.category.description}</p>
         )}
       </div>
 
