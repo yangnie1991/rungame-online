@@ -17,6 +17,10 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   }
 }
 
+// 使用动态SSR渲染，每10分钟重新验证缓存
+// 这样既保证SEO友好，又能提升性能
+export const revalidate = 600 // 10分钟
+
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params
 

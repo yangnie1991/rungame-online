@@ -101,13 +101,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   )
 }
 
-// 生成静态参数（用于静态生成所有语言版本）
-export async function generateStaticParams() {
-  return routing.locales.map((locale) => ({
-    locale,
-  }))
-}
-
 // 生成metadata
 export async function generateMetadata({ params }: LocaleLayoutProps) {
   const { locale } = await params
