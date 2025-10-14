@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { LoginForm } from "@/components/admin/LoginForm"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -10,7 +11,9 @@ export default function LoginPage() {
           <CardDescription>请输入您的凭据以访问管理后台</CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm />
+          <Suspense fallback={<div>加载中...</div>}>
+            <LoginForm />
+          </Suspense>
         </CardContent>
       </Card>
     </div>
