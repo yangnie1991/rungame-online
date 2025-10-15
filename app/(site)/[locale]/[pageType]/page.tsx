@@ -252,7 +252,7 @@ function renderStaticContentPage(data: any, locale: string) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* 面包屑导航 */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
         <Link href={`/${locale}`} className="hover:text-foreground transition-colors">
@@ -264,38 +264,72 @@ function renderStaticContentPage(data: any, locale: string) {
         </span>
       </nav>
 
-      {/* 页面标题 */}
-      <div className="space-y-2">
-        <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-2">
-          {data.pageType.icon && <span>{data.pageType.icon}</span>}
+      {/* 页面标题区域 */}
+      <div className="space-y-3 pb-6 border-b border-border">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold flex items-center gap-3">
+          {data.pageType.icon && <span className="text-4xl md:text-5xl">{data.pageType.icon}</span>}
           {data.pageType.title}
         </h1>
         {data.pageType.subtitle && (
-          <p className="text-xl text-muted-foreground">{data.pageType.subtitle}</p>
+          <p className="text-lg md:text-xl text-muted-foreground">{data.pageType.subtitle}</p>
         )}
       </div>
 
-      {/* 内容块 */}
-      <div className="space-y-8">
+      {/* 内容块 - 使用卡片式布局 */}
+      <div className="space-y-6">
         {data.contentBlocks.map((block: any) => (
-          <article key={block.id} className="prose prose-slate dark:prose-invert max-w-none">
-            {block.title && <h2 className="text-2xl font-semibold mb-4">{block.title}</h2>}
-            {block.content && (
-              <div
-                className="text-foreground leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: block.content }}
-              />
-            )}
-            {block.buttonText && block.buttonUrl && (
-              <Link
-                href={block.buttonUrl}
-                className="inline-block mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                {block.buttonText}
-              </Link>
-            )}
+          <article
+            key={block.id}
+            className="bg-card rounded-lg border border-border shadow-sm overflow-hidden"
+          >
+            <div className="p-6 md:p-8 lg:p-10">
+              {block.title && (
+                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-foreground">
+                  {block.title}
+                </h2>
+              )}
+              {block.content && (
+                <div
+                  className="prose prose-slate dark:prose-invert max-w-none
+                    prose-headings:font-bold prose-headings:text-foreground
+                    prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
+                    prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
+                    prose-p:text-base prose-p:leading-relaxed prose-p:text-foreground prose-p:mb-4
+                    prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                    prose-strong:text-foreground prose-strong:font-semibold
+                    prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6
+                    prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6
+                    prose-li:text-foreground prose-li:mb-2
+                    prose-em:text-muted-foreground prose-em:italic
+                    prose-code:text-primary prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                    prose-pre:bg-muted prose-pre:border prose-pre:border-border
+                    prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-4 prose-blockquote:italic"
+                  dangerouslySetInnerHTML={{ __html: block.content }}
+                />
+              )}
+              {block.buttonText && block.buttonUrl && (
+                <Link
+                  href={block.buttonUrl}
+                  className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-all shadow-md hover:shadow-lg"
+                >
+                  {block.buttonText}
+                  <span>→</span>
+                </Link>
+              )}
+            </div>
           </article>
         ))}
+      </div>
+
+      {/* 返回顶部按钮 */}
+      <div className="pt-8 border-t border-border">
+        <Link
+          href={`/${locale}`}
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span>←</span>
+          <span>{t.home}</span>
+        </Link>
       </div>
     </div>
   )
