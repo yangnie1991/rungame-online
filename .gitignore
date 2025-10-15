@@ -52,3 +52,10 @@ next-env.d.ts
 
 # turbo cache
 .turbo
+
+# temporary scripts and build logs
+/*.js
+!next.config.js
+!*.config.js
+build.log
+*.backup.md

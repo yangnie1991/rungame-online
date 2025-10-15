@@ -1,5 +1,6 @@
-import { getMostPlayedGames, getTrendingGames, getGamesByTagSlug } from "../actions"
+import { getFeaturedGames, getMostPlayedGames, getNewestGames, getTrendingGames } from "../actions"
 import { GameSection } from "@/components/site/GameSection"
+import { Link } from "@/i18n/routing"
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
@@ -25,85 +26,79 @@ export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params
 
   // 并行获取所有section的游戏数据（提升性能）
-  const [mostPlayedGames, trendingGames, ioGames, puzzleGames, actionGames] = await Promise.all([
+  const [featuredGames, mostPlayedGames, newestGames, trendingGames] = await Promise.all([
+    getFeaturedGames(locale, 24),
     getMostPlayedGames(locale, 24),
+    getNewestGames(locale, 24),
     getTrendingGames(locale, 24),
-    getGamesByTagSlug("io", locale, 24),
-    getGamesByTagSlug("puzzle", locale, 24),
-    getGamesByTagSlug("action", locale, 24),
   ])
 
-  // 翻译文本
-  const content = {
-    mostPlayed: locale === "zh" ? "最受欢迎" : "Most Played",
-    trending: locale === "zh" ? "热门趋势" : "Trending",
-    ioGames: locale === "zh" ? "IO游戏" : "IO Games",
-    puzzleGames: locale === "zh" ? "益智游戏" : "Puzzle Games",
-    actionGames: locale === "zh" ? "动作游戏" : "Action Games",
-  }
+  // 获取翻译文本
+  const t = await getTranslations({ locale, namespace: "home" })
 
   // 将游戏转换为GameSection需要的格式
-  const formatGames = (games: typeof mostPlayedGames) =>
+  const formatGames = (games: typeof featuredGames) =>
     games.map((game) => ({
       slug: game.slug,
       thumbnail: game.thumbnail,
       title: game.title,
       description: game.description,
-      category: game.category
+      category: game.categoryName
         ? {
-            name: game.category,
-            slug: "", // slug will be determined by category name
+            name: game.categoryName,
+            slug: game.categorySlug,
           }
         : undefined,
-      tags: (game.tags || []).map((tag: string) => ({ name: tag })),
+      tags: game.tags?.map((tag) => ({ name: tag.name })),
     }))
 
   return (
     <>
+      {/* Featured Games Section */}
+      <GameSection
+        title={t("featured")}
+        icon="⭐"
+        games={formatGames(featuredGames)}
+        viewAllLink="/featured"
+        locale={locale}
+      />
+
       {/* Most Played Games Section */}
       <GameSection
-        title={content.mostPlayed}
+        title={t("mostPlayed")}
         icon="🔥"
         games={formatGames(mostPlayedGames)}
         viewAllLink="/most-played"
         locale={locale}
       />
 
+      {/* Newest Games Section */}
+      <GameSection
+        title={t("newest")}
+        icon="🆕"
+        games={formatGames(newestGames)}
+        viewAllLink="/newest"
+        locale={locale}
+      />
+
       {/* Trending Games Section */}
       <GameSection
-        title={content.trending}
+        title={t("trending")}
         icon="📈"
         games={formatGames(trendingGames)}
         viewAllLink="/trending"
         locale={locale}
       />
 
-      {/* IO Games Section */}
-      <GameSection
-        title={content.ioGames}
-        icon="🌐"
-        games={formatGames(ioGames)}
-        viewAllLink="/games/tags/io"
-        locale={locale}
-      />
-
-      {/* Puzzle Games Section */}
-      <GameSection
-        title={content.puzzleGames}
-        icon="🧩"
-        games={formatGames(puzzleGames)}
-        viewAllLink="/games/tags/puzzle"
-        locale={locale}
-      />
-
-      {/* Action Games Section */}
-      <GameSection
-        title={content.actionGames}
-        icon="⚡"
-        games={formatGames(actionGames)}
-        viewAllLink="/games/tags/action"
-        locale={locale}
-      />
+      {/* Browse All Games Link */}
+      <div className="mt-12 mb-8 text-center">
+        <Link
+          href="/games"
+          className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+        >
+          {t("browseAllGames")} →
+        </Link>
+      </div>
     </>
   )
 }

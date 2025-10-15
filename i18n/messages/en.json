@@ -27,7 +27,11 @@
     "hero": "Play Free Online Games",
     "heroDesc": "Thousands of games, instant play, no downloads needed",
     "featured": "Featured Games",
+    "mostPlayed": "Most Played",
+    "newest": "Newest Games",
+    "trending": "Trending",
     "viewAll": "View All Games",
+    "browseAllGames": "Browse All Games",
     "categories": "Browse by Category"
   },
   "games": {

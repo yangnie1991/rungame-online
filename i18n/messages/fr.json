@@ -27,7 +27,11 @@
     "hero": "Jeux en Ligne Gratuits",
     "heroDesc": "Des milliers de jeux, jeu instantané, pas de téléchargements nécessaires",
     "featured": "Jeux en Vedette",
+    "mostPlayed": "Les Plus Joués",
+    "newest": "Nouveaux Jeux",
+    "trending": "Tendances",
     "viewAll": "Voir Tous les Jeux",
+    "browseAllGames": "Parcourir Tous les Jeux",
     "categories": "Parcourir par Catégorie"
   },
   "games": {

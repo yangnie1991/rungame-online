@@ -27,7 +27,11 @@
     "hero": "Juegos en Línea Gratis",
     "heroDesc": "Miles de juegos, juego instantáneo, no se necesitan descargas",
     "featured": "Juegos Destacados",
+    "mostPlayed": "Más Jugados",
+    "newest": "Juegos Nuevos",
+    "trending": "Tendencias",
     "viewAll": "Ver Todos los Juegos",
+    "browseAllGames": "Navegar Todos los Juegos",
     "categories": "Navegar por Categoría"
   },
   "games": {

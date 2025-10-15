@@ -1,7 +1,6 @@
 "use client"
 
-import { Link } from "@/i18n/routing"
-import { usePathname } from "next/navigation"
+import { Link, usePathname } from "@/i18n/routing"
 
 interface NavItem {
   href: string
@@ -41,9 +40,12 @@ interface SidebarProps {
 export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarProps) {
   const pathname = usePathname()
 
+  // 调试信息（可以在开发时查看）
+  // console.log('Current pathname:', pathname)
+
   // 判断导航项是否为当前页面
   const isCurrentPage = (href: string): boolean => {
-    // 标准化路径
+    // 标准化路径（移除末尾斜杠）
     const normalizeUrl = (url: string) => url.replace(/\/$/, "") || "/"
     const normalizedHref = normalizeUrl(href)
     const normalizedPath = normalizeUrl(pathname)
@@ -53,26 +55,18 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarPr
       return true
     }
 
-    // 对于首页
-    const isHomePage = (url: string) => {
-      if (url === "" || url === "/") return true
-      return /^\/[a-z]{2}$/.test(url)
+    // 对于首页，只精确匹配
+    if (normalizedHref === "/") {
+      return normalizedPath === "/"
     }
 
-    if (isHomePage(normalizedHref) && isHomePage(normalizedPath)) {
-      return true
-    }
-
-    // 其他页面，检查路径是否以该href开始
-    if (!isHomePage(normalizedHref)) {
-      return normalizedPath.startsWith(normalizedHref + "/")
-    }
-
-    return false
+    // 其他页面，检查路径是否以该 href 开始
+    // 例如：href="/games/category/action" 匹配 pathname="/games/category/action/page-2"
+    return normalizedPath.startsWith(normalizedHref + "/") || normalizedPath === normalizedHref
   }
 
   return (
-    <aside className="hidden md:block w-64 bg-background border-r border-gray-200 dark:border-gray-800 overflow-y-auto flex-shrink-0">
+    <aside className="hidden md:block w-64 bg-card overflow-y-auto flex-shrink-0 shadow-sm">
       <div className="p-4">
         {/* Main Navigation */}
         <div className="mb-6">
@@ -100,7 +94,7 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarPr
         {/* PageTypes Section */}
         {pageTypes.length > 0 && (
           <div className="mb-6">
-            <div className="border-t border-gray-200 dark:border-gray-800 mb-4"></div>
+            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-50"></div>
             <div className="space-y-1">
               {pageTypes.map((pageType) => {
                 const pageTypeHref = `/${pageType.slug}`
@@ -128,7 +122,7 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarPr
         {/* Categories Section */}
         {categories.length > 0 && (
           <div className="mb-6">
-            <div className="border-t border-gray-200 dark:border-gray-800 mb-4"></div>
+            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-50"></div>
             <div className="space-y-1">
               {categories.map((category) => {
                 const categoryHref = `/games/category/${category.slug}`
@@ -164,7 +158,7 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarPr
         {/* Tags Section - 标签汇总页入口 */}
         {tags.length > 0 && (
           <div className="mb-6">
-            <div className="border-t border-gray-200 dark:border-gray-800 mb-4"></div>
+            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-50"></div>
             <div className="space-y-1">
               <Link
                 href="/games/tags"
@@ -191,14 +185,16 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarPr
         )}
 
         {/* About Info */}
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="mt-6 pt-4">
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-50"></div>
           <p className="text-xs text-muted-foreground leading-relaxed">
             🎮 RunGame offers thousands of free online games, no downloads required, play instantly in your browser!
           </p>
         </div>
 
         {/* Support Links */}
-        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
+        <div className="mt-4 pt-3">
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-30"></div>
           {/* Policy Links */}
           <div className="flex justify-between text-xs text-muted-foreground mb-3">
             <Link href="/privacy" className="hover:text-primary transition-colors">

@@ -1,6 +1,6 @@
 import { getAllCategories } from "@/app/(site)/actions"
 import type { Metadata } from "next"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
 
 interface AllCategoriesPageProps {
   params: Promise<{ locale: string }>
@@ -35,7 +35,7 @@ export default async function AllCategoriesPage({ params }: AllCategoriesPagePro
     <div className="space-y-6">
       {/* 面包屑导航 */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href={`/${locale}`} className="hover:text-foreground transition-colors">
+        <Link href="/" className="hover:text-foreground transition-colors">
           {t.home}
         </Link>
         <span>/</span>
@@ -53,8 +53,8 @@ export default async function AllCategoriesPage({ params }: AllCategoriesPagePro
         {categories.map((category) => (
           <Link
             key={category.slug}
-            href={`/${locale}/games/category/${category.slug}`}
-            className="group p-6 bg-card border border-border rounded-lg hover:shadow-lg hover:border-primary transition-all"
+            href={`/games/category/${category.slug}`}
+            className="group p-6 bg-card rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
           >
             <div className="flex flex-col items-center text-center space-y-3">
               {category.icon && <span className="text-4xl">{category.icon}</span>}

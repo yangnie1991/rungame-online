@@ -6,6 +6,8 @@ import { SiteHeader } from "@/components/site/Header"
 import { Sidebar } from "@/components/site/Sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme/theme-provider"
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics"
+import { GoogleAdsense } from "@/components/analytics/GoogleAdsense"
 import { getEnabledLanguages, getAllCategories, getAllTags, getAllPageTypes } from "../actions"
 import { routing } from "@/i18n/routing"
 import "@/app/globals.css"
@@ -50,6 +52,11 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className}>
+        {/* Google Analytics - 使用 afterInteractive 策略，不阻塞首屏渲染 */}
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ""} />
+
+        {/* Google AdSense - 使用 afterInteractive 策略，不阻塞首屏渲染 */}
+        <GoogleAdsense adClientId={process.env.NEXT_PUBLIC_ADSENSE_ID || ""} />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -109,5 +116,9 @@ export async function generateMetadata({ params }: LocaleLayoutProps) {
   return {
     title: t("siteTitle"),
     description: t("siteDescription"),
+    // 添加 Google AdSense 和其他 meta 标签
+    other: {
+      'google-adsense-account': process.env.NEXT_PUBLIC_ADSENSE_ID || '',
+    },
   }
 }

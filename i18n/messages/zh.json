@@ -27,7 +27,11 @@
     "hero": "免费在线小游戏",
     "heroDesc": "海量游戏，即点即玩，无需下载",
     "featured": "精选游戏",
+    "mostPlayed": "最多人玩",
+    "newest": "最新游戏",
+    "trending": "热门趋势",
     "viewAll": "查看所有游戏",
+    "browseAllGames": "浏览全部游戏",
     "categories": "分类浏览"
   },
   "games": {

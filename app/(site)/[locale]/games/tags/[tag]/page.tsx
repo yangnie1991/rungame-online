@@ -2,7 +2,7 @@ import { getGamesByTagWithPagination } from "@/app/(site)/actions"
 import { GameSection } from "@/components/site/GameSection"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
 
 interface TagPageProps {
   params: Promise<{ locale: string; tag: string }>
@@ -60,7 +60,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
     <div className="space-y-6">
       {/* 面包屑导航 */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href={`/${locale}`} className="hover:text-foreground transition-colors">
+        <Link href="/" className="hover:text-foreground transition-colors">
           {t.home}
         </Link>
         <span>/</span>
@@ -85,7 +85,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
         <div className="flex items-center justify-center space-x-4 py-8">
           {page > 1 && (
             <Link
-              href={`/${locale}/games/tags/${tag}?page=${page - 1}`}
+              href={`/games/tags/${tag}?page=${page - 1}`}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               {t.previous}
@@ -98,7 +98,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
 
           {data.pagination.hasMore && (
             <Link
-              href={`/${locale}/games/tags/${tag}?page=${page + 1}`}
+              href={`/games/tags/${tag}?page=${page + 1}`}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               {t.next}

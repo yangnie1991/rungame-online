@@ -25,8 +25,8 @@ export function GameCard({
   showNewBadge = false,
 }: GameCardProps) {
   return (
-    <article className="w-full bg-card rounded-lg shadow-sm border overflow-hidden hover:shadow-lg transition-all duration-200 group">
-      <Link href={`/game/${slug}`} className="block">
+    <article className="w-full bg-card rounded-lg shadow-md hover:shadow-xl overflow-hidden transition-all duration-300 group">
+      <Link href={`/games/play/${slug}`} className="block">
         <div className="relative">
           <Image
             src={thumbnail}

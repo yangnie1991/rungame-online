@@ -31,16 +31,16 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
   }
 
   return (
-    <header className="bg-background border-b border-gray-200 dark:border-gray-800 py-4 z-50 shadow-sm flex-shrink-0">
+    <header className="bg-card py-4 z-50 shadow-sm flex-shrink-0">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo 和品牌关键词 */}
           <div className="flex items-center space-x-6">
-            <h1 className="text-2xl font-bold">
+            <div className="text-2xl font-bold">
               <Link href="/" className="text-primary hover:opacity-90 transition-opacity">
                 🎮 RunGame
               </Link>
-            </h1>
+            </div>
             <div className="hidden md:flex items-center space-x-4 text-sm text-muted-foreground">
               <span className="font-medium">Free Online Games</span>
               <span className="text-muted-foreground/50">|</span>
@@ -82,21 +82,26 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
                 </span>
                 <span className="ml-1">▾</span>
               </button>
-              <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-popover border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-card border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 <div className="py-1">
-                  {languages.map((lang) => (
-                    <Link
-                      key={lang.code}
-                      href={pathname}
-                      locale={lang.code as "en" | "zh" | "es" | "fr"}
-                      className={`block px-4 py-2 text-sm hover:bg-accent transition-colors ${
-                        lang.code === currentLocale ? "bg-accent" : ""
-                      }`}
-                    >
-                      {lang.flag && <span className="mr-2">{lang.flag}</span>}
-                      {lang.nativeName}
-                    </Link>
-                  ))}
+                  {languages.map((lang) => {
+                    const isActive = lang.code === currentLocale
+                    return (
+                      <Link
+                        key={lang.code}
+                        href={pathname}
+                        locale={lang.code as "en" | "zh" | "es" | "fr"}
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          isActive
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        {lang.flag && <span className="mr-2">{lang.flag}</span>}
+                        {lang.nativeName}
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
             </div>

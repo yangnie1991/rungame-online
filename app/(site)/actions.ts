@@ -518,6 +518,56 @@ export async function getTrendingGames(locale: string, limit = 24) {
 }
 
 /**
+ * 获取最新游戏（按创建时间）
+ */
+export async function getNewestGames(locale: string, limit = 24) {
+  const games = await prisma.game.findMany({
+    where: { isPublished: true },
+    take: limit,
+    include: {
+      translations: {
+        where: buildLocaleCondition(locale),
+        select: {
+          title: true,
+          description: true,
+          locale: true,
+        },
+      },
+      category: {
+        include: {
+          translations: {
+            where: buildLocaleCondition(locale),
+            select: { name: true, locale: true },
+          },
+        },
+      },
+      tags: {
+        include: {
+          tag: {
+            include: {
+              translations: {
+                where: buildLocaleCondition(locale),
+                select: { name: true, locale: true },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  })
+
+  return games.map((game) => ({
+    slug: game.slug,
+    thumbnail: game.thumbnail,
+    title: getTranslatedField(game.translations, locale, "title", "Untitled"),
+    description: getTranslatedField(game.translations, locale, "description", ""),
+    category: getTranslatedField(game.category.translations, locale, "name", ""),
+    tags: game.tags.map((t) => getTranslatedField(t.tag.translations, locale, "name", t.tag.slug)),
+  }))
+}
+
+/**
  * 根据标签获取游戏（用于首页section）
  */
 export async function getGamesByTagSlug(tagSlug: string, locale: string, limit = 24) {
@@ -727,7 +777,12 @@ export async function getPageTypeGames(pageTypeSlug: string, locale: string, pag
 
   if (!pageType) return null
 
-  // 根据页面类型配置查询条件和排序
+  // 从 gameListConfig 中读取筛选和排序配置
+  const config = pageType.gameListConfig as any || {}
+  const configFilters = config.filters || {}
+  const configOrderBy = config.orderBy || { playCount: "desc" }
+
+  // 构建查询条件
   const gamesQuery: {
     where: Record<string, unknown>
     skip: number
@@ -735,7 +790,10 @@ export async function getPageTypeGames(pageTypeSlug: string, locale: string, pag
     include: Record<string, unknown>
     orderBy?: unknown
   } = {
-    where: { isPublished: true },
+    where: {
+      isPublished: true,
+      ...configFilters,
+    },
     skip,
     take: limit,
     include: {
@@ -764,27 +822,7 @@ export async function getPageTypeGames(pageTypeSlug: string, locale: string, pag
         },
       },
     },
-  }
-
-  // 根据页面类型的type字段应用不同的排序和筛选
-  switch (pageType.type) {
-    case "most-played":
-      gamesQuery.orderBy = { playCount: "desc" }
-      break
-    case "trending":
-      gamesQuery.where.playCount = { gte: 10 }
-      gamesQuery.orderBy = [{ updatedAt: "desc" }, { playCount: "desc" }]
-      break
-    case "new":
-      gamesQuery.orderBy = { createdAt: "desc" }
-      break
-    case "featured":
-      gamesQuery.where.isFeatured = true
-      gamesQuery.orderBy = { playCount: "desc" }
-      break
-    default:
-      // 默认按播放次数排序
-      gamesQuery.orderBy = { playCount: "desc" }
+    orderBy: configOrderBy,
   }
 
   const [games, totalCount] = await Promise.all([
