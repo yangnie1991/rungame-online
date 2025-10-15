@@ -775,7 +775,8 @@ export async function getPageTypeGames(pageTypeSlug: string, locale: string, pag
     },
   })
 
-  if (!pageType) return null
+  // 只处理 GAME_LIST 类型的页面，其他类型返回 null
+  if (!pageType || pageType.type !== 'GAME_LIST') return null
 
   // 从 gameListConfig 中读取筛选和排序配置
   const config = pageType.gameListConfig as any || {}
