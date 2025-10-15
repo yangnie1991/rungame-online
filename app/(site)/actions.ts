@@ -518,6 +518,56 @@ export async function getTrendingGames(locale: string, limit = 24) {
 }
 
 /**
+ * 获取最新游戏（按创建时间）
+ */
+export async function getNewestGames(locale: string, limit = 24) {
+  const games = await prisma.game.findMany({
+    where: { isPublished: true },
+    take: limit,
+    include: {
+      translations: {
+        where: buildLocaleCondition(locale),
+        select: {
+          title: true,
+          description: true,
+          locale: true,
+        },
+      },
+      category: {
+        include: {
+          translations: {
+            where: buildLocaleCondition(locale),
+            select: { name: true, locale: true },
+          },
+        },
+      },
+      tags: {
+        include: {
+          tag: {
+            include: {
+              translations: {
+                where: buildLocaleCondition(locale),
+                select: { name: true, locale: true },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  })
+
+  return games.map((game) => ({
+    slug: game.slug,
+    thumbnail: game.thumbnail,
+    title: getTranslatedField(game.translations, locale, "title", "Untitled"),
+    description: getTranslatedField(game.translations, locale, "description", ""),
+    category: getTranslatedField(game.category.translations, locale, "name", ""),
+    tags: game.tags.map((t) => getTranslatedField(t.tag.translations, locale, "name", t.tag.slug)),
+  }))
+}
+
+/**
  * 根据标签获取游戏（用于首页section）
  */
 export async function getGamesByTagSlug(tagSlug: string, locale: string, limit = 24) {
