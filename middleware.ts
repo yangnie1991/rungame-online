@@ -15,8 +15,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 2. API路由和登录页面跳过国际化处理
-  if (pathname.startsWith("/api") || pathname.startsWith("/login")) {
+  // 2. API路由、登录页面和静态文本文件跳过国际化处理
+  if (
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/login") ||
+    pathname === "/ads.txt" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml"
+  ) {
     return NextResponse.next()
   }
 
