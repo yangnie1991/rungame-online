@@ -25,13 +25,52 @@ NEXT_PUBLIC_ADSENSE_ID="ca-pub-1239281249435423"
 
 ### 3. 验证配置
 
-AdSense 组件已集成到网站布局中（`app/(site)/[locale]/layout.tsx`），会自动加载 AdSense 脚本。
+AdSense 已通过两种方式集成到网站中：
+
+#### 方式 1: Meta 标签（账户验证）
+
+在 `app/(site)/[locale]/layout.tsx` 的 metadata 中自动添加：
+
+```tsx
+// generateMetadata 函数中
+metadata: {
+  other: {
+    'google-adsense-account': process.env.NEXT_PUBLIC_ADSENSE_ID || ''
+  }
+}
+```
+
+生成的 HTML：
+```html
+<meta name="google-adsense-account" content="ca-pub-1239281249435423">
+```
+
+#### 方式 2: 脚本加载（广告展示）
+
+在 `app/(site)/[locale]/layout.tsx` 的 body 中自动加载：
 
 ```tsx
 <GoogleAdsense adClientId={process.env.NEXT_PUBLIC_ADSENSE_ID || ""} />
 ```
 
+生成的 HTML：
+```html
+<script
+  async
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1239281249435423"
+  crossorigin="anonymous">
+</script>
+```
+
 ### 4. 技术实现
+
+#### Meta 标签的作用
+
+`<meta name="google-adsense-account">` 标签用于：
+- ✅ **账户验证**：Google 用来验证网站所有权
+- ✅ **自动广告**：启用 AdSense 自动广告功能
+- ✅ **快速审核**：加快 AdSense 账户审核流程
+- ✅ **防止欺诈**：确认广告展示在授权网站上
 
 #### GoogleAdsense 组件
 
@@ -43,10 +82,7 @@ AdSense 组件已集成到网站布局中（`app/(site)/[locale]/layout.tsx`）�
 - 自动优化脚本加载
 - 如果未配置 ID，组件不会渲染
 
-#### 加载脚本
-
-AdSense 脚本会在页面可交互后自动加载：
-
+加载的脚本：
 ```html
 <script
   async
@@ -54,6 +90,15 @@ AdSense 脚本会在页面可交互后自动加载：
   crossorigin="anonymous">
 </script>
 ```
+
+#### 两种方式的区别
+
+| 方式 | Meta 标签 | Script 脚本 |
+|------|----------|------------|
+| 位置 | `<head>` | `<body>` |
+| 用途 | 账户验证、自动广告 | 加载广告、手动广告单元 |
+| 必需性 | **推荐**（验证和自动广告） | **必需**（展示广告） |
+| 格式 | `<meta name="google-adsense-account" content="ca-pub-xxx">` | `<script src="...adsbygoogle.js">` |
 
 ## 使用广告单元
 

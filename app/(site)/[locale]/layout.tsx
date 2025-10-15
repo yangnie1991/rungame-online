@@ -116,9 +116,9 @@ export async function generateMetadata({ params }: LocaleLayoutProps) {
   return {
     title: t("siteTitle"),
     description: t("siteDescription"),
-    // 添加 Google Analytics 脚本到 head
+    // 添加 Google AdSense 和其他 meta 标签
     other: {
-      'google-site-verification': 'your-verification-code', // 如果需要
+      'google-adsense-account': process.env.NEXT_PUBLIC_ADSENSE_ID || '',
     },
   }
 }
