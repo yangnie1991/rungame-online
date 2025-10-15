@@ -1,4 +1,4 @@
-import { getPageTypeGames } from "@/app/(site)/actions"
+import { getPageTypeGames, getStaticContentPage } from "@/app/(site)/actions"
 import { GameSection } from "@/components/site/GameSection"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
@@ -12,104 +12,137 @@ interface PageTypePageProps {
 export async function generateMetadata({ params }: PageTypePageProps): Promise<Metadata> {
   const { locale, pageType } = await params
 
-  // 尝试获取页面数据，如果不存在会返回null
-  const data = await getPageTypeGames(pageType, locale, 1, 24)
+  // 尝试获取游戏列表页面数据
+  const gameListData = await getPageTypeGames(pageType, locale, 1, 24)
+  if (gameListData) {
+    // 构建 SEO 友好的标题和描述
+    const title = gameListData.pageType.metaTitle || `${gameListData.pageType.title} | RunGame - Free Online Games`
+    const description = gameListData.pageType.metaDescription ||
+      gameListData.pageType.description ||
+      `Play ${gameListData.pageType.title.toLowerCase()} on RunGame. Enjoy ${gameListData.pagination.totalGames}+ free online games, no downloads required!`
 
-  if (!data) {
+    // 构建关键词
+    const keywords = [
+      gameListData.pageType.title,
+      'free online games',
+      'browser games',
+      'no download games',
+      'RunGame',
+      locale === 'zh' ? '免费在线游戏' : 'free games',
+      locale === 'zh' ? '网页游戏' : 'web games',
+    ].join(', ')
+
+    // 获取网站 URL（根据环境变量或默认值）
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
+    const pageUrl = `${siteUrl}/${locale}/${pageType}`
+    const ogImage = gameListData.pageType.icon
+      ? `${siteUrl}/api/og?title=${encodeURIComponent(gameListData.pageType.title)}&icon=${encodeURIComponent(gameListData.pageType.icon)}`
+      : `${siteUrl}/og-image.png`
+
     return {
-      title: "Page Not Found",
+      title,
+      description,
+      keywords,
+      openGraph: {
+        title,
+        description,
+        url: pageUrl,
+        siteName: 'RunGame',
+        locale: locale === 'zh' ? 'zh_CN' : locale === 'es' ? 'es_ES' : locale === 'fr' ? 'fr_FR' : 'en_US',
+        type: 'website',
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: gameListData.pageType.title,
+          }
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [ogImage],
+        creator: '@rungame',
+        site: '@rungame',
+      },
+      alternates: {
+        canonical: pageUrl,
+        languages: {
+          'en': `${siteUrl}/en/${pageType}`,
+          'zh': `${siteUrl}/zh/${pageType}`,
+          'es': `${siteUrl}/es/${pageType}`,
+          'fr': `${siteUrl}/fr/${pageType}`,
+          'x-default': `${siteUrl}/${pageType}`,
+        },
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      },
+      other: {
+        'theme-color': '#2563eb',
+        'mobile-web-app-capable': 'yes',
+        'apple-mobile-web-app-capable': 'yes',
+        'apple-mobile-web-app-status-bar-style': 'black-translucent',
+      },
     }
   }
 
-  // 构建 SEO 友好的标题和描述
-  const title = data.pageType.metaTitle || `${data.pageType.title} | RunGame - Free Online Games`
-  const description = data.pageType.metaDescription ||
-    data.pageType.description ||
-    `Play ${data.pageType.title.toLowerCase()} on RunGame. Enjoy ${data.pagination.totalGames}+ free online games, no downloads required!`
+  // 尝试获取静态内容页面数据
+  const staticData = await getStaticContentPage(pageType, locale)
+  if (staticData) {
+    const title = staticData.pageType.metaTitle || `${staticData.pageType.title} | RunGame`
+    const description = staticData.pageType.metaDescription || staticData.pageType.description
 
-  // 构建关键词
-  const keywords = [
-    data.pageType.title,
-    'free online games',
-    'browser games',
-    'no download games',
-    'RunGame',
-    locale === 'zh' ? '免费在线游戏' : 'free games',
-    locale === 'zh' ? '网页游戏' : 'web games',
-  ].join(', ')
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
+    const pageUrl = `${siteUrl}/${locale}/${pageType}`
 
-  // 获取网站 URL（根据环境变量或默认值）
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
-  const pageUrl = `${siteUrl}/${locale}/${pageType}`
-  const ogImage = data.pageType.icon
-    ? `${siteUrl}/api/og?title=${encodeURIComponent(data.pageType.title)}&icon=${encodeURIComponent(data.pageType.icon)}`
-    : `${siteUrl}/og-image.png`
-
-  return {
-    title,
-    description,
-    keywords,
-
-    // Open Graph (用于 Facebook, LinkedIn 等)
-    openGraph: {
+    return {
       title,
       description,
-      url: pageUrl,
-      siteName: 'RunGame',
-      locale: locale === 'zh' ? 'zh_CN' : locale === 'es' ? 'es_ES' : locale === 'fr' ? 'fr_FR' : 'en_US',
-      type: 'website',
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: data.pageType.title,
-        }
-      ],
-    },
-
-    // Twitter Card (用于 Twitter/X)
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [ogImage],
-      creator: '@rungame',
-      site: '@rungame',
-    },
-
-    // 其他 SEO 相关配置
-    alternates: {
-      canonical: pageUrl,
-      languages: {
-        'en': `${siteUrl}/en/${pageType}`,
-        'zh': `${siteUrl}/zh/${pageType}`,
-        'es': `${siteUrl}/es/${pageType}`,
-        'fr': `${siteUrl}/fr/${pageType}`,
-        'x-default': `${siteUrl}/${pageType}`,
+      openGraph: {
+        title,
+        description,
+        url: pageUrl,
+        siteName: 'RunGame',
+        locale: locale === 'zh' ? 'zh_CN' : locale === 'es' ? 'es_ES' : locale === 'fr' ? 'fr_FR' : 'en_US',
+        type: 'website',
       },
-    },
-
-    // 机器人爬取配置
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
+      twitter: {
+        card: 'summary',
+        title,
+        description,
+        creator: '@rungame',
+        site: '@rungame',
+      },
+      alternates: {
+        canonical: pageUrl,
+        languages: {
+          'en': `${siteUrl}/en/${pageType}`,
+          'zh': `${siteUrl}/zh/${pageType}`,
+          'es': `${siteUrl}/es/${pageType}`,
+          'fr': `${siteUrl}/fr/${pageType}`,
+          'x-default': `${siteUrl}/${pageType}`,
+        },
+      },
+      robots: {
         index: true,
         follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
       },
-    },
+    }
+  }
 
-    // 其他元标签
-    other: {
-      'theme-color': '#2563eb',
-      'mobile-web-app-capable': 'yes',
-      'apple-mobile-web-app-capable': 'yes',
-      'apple-mobile-web-app-status-bar-style': 'black-translucent',
-    },
+  return {
+    title: "Page Not Found",
   }
 }
 
@@ -118,14 +151,24 @@ export default async function PageTypePage({ params, searchParams }: PageTypePag
   const { page: pageParam } = await searchParams
   const page = pageParam ? parseInt(pageParam) : 1
 
-  // 尝试获取页面数据，如果pageType不存在或未启用，会返回null
-  const data = await getPageTypeGames(pageType, locale, page, 24)
-
-  if (!data) {
-    notFound()
+  // 尝试获取游戏列表页面数据
+  const gameListData = await getPageTypeGames(pageType, locale, page, 24)
+  if (gameListData) {
+    return renderGameListPage(gameListData, locale, page, pageType)
   }
 
-  // 翻译文本
+  // 尝试获取静态内容页面数据
+  const staticData = await getStaticContentPage(pageType, locale)
+  if (staticData) {
+    return renderStaticContentPage(staticData, locale)
+  }
+
+  // 如果两种类型都不匹配，返回 404
+  notFound()
+}
+
+// 渲染游戏列表页面
+function renderGameListPage(data: any, locale: string, page: number, pageType: string) {
   const t = {
     home: locale === "zh" ? "首页" : "Home",
     games: locale === "zh" ? "游戏" : "Games",
@@ -134,8 +177,7 @@ export default async function PageTypePage({ params, searchParams }: PageTypePag
     next: locale === "zh" ? "下一页" : "Next",
   }
 
-  // 将游戏转换为GameSection需要的格式
-  const formattedGames = data.games.map((game) => ({
+  const formattedGames = data.games.map((game: any) => ({
     slug: game.slug,
     thumbnail: game.thumbnail,
     title: game.title,
@@ -199,6 +241,62 @@ export default async function PageTypePage({ params, searchParams }: PageTypePag
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// 渲染静态内容页面
+function renderStaticContentPage(data: any, locale: string) {
+  const t = {
+    home: locale === "zh" ? "首页" : "Home",
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* 面包屑导航 */}
+      <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <Link href={`/${locale}`} className="hover:text-foreground transition-colors">
+          {t.home}
+        </Link>
+        <span>/</span>
+        <span className="text-foreground">
+          {data.pageType.icon} {data.pageType.title}
+        </span>
+      </nav>
+
+      {/* 页面标题 */}
+      <div className="space-y-2">
+        <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-2">
+          {data.pageType.icon && <span>{data.pageType.icon}</span>}
+          {data.pageType.title}
+        </h1>
+        {data.pageType.subtitle && (
+          <p className="text-xl text-muted-foreground">{data.pageType.subtitle}</p>
+        )}
+      </div>
+
+      {/* 内容块 */}
+      <div className="space-y-8">
+        {data.contentBlocks.map((block: any) => (
+          <article key={block.id} className="prose prose-slate dark:prose-invert max-w-none">
+            {block.title && <h2 className="text-2xl font-semibold mb-4">{block.title}</h2>}
+            {block.content && (
+              <div
+                className="text-foreground leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: block.content }}
+              />
+            )}
+            {block.buttonText && block.buttonUrl && (
+              <Link
+                href={block.buttonUrl}
+                className="inline-block mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                {block.buttonText}
+              </Link>
+            )}
+          </article>
+        ))}
+      </div>
     </div>
   )
 }
