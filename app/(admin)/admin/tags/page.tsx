@@ -1,6 +1,5 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -8,28 +7,19 @@ import { Badge } from "@/components/ui/badge"
 import { Pencil, Plus } from "lucide-react"
 import { DeleteTagButton } from "@/components/admin/tags/DeleteTagButton"
 import { ToggleTagStatus } from "@/components/admin/tags/ToggleTagStatus"
+import { getAllTagsForAdmin } from "@/lib/data/tags/cache"
 
 async function getTagsWithGameCount() {
-  const tags = await prisma.tag.findMany({
-    include: {
-      translations: {
-        where: { locale: 'zh' },
-        select: { name: true }
-      },
-      _count: {
-        select: { games: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  })
+  // ✅ 使用缓存层获取标签数据（管理端专用，包含所有状态）
+  const tags = await getAllTagsForAdmin('zh')
 
   return tags.map(tag => ({
     id: tag.id,
     slug: tag.slug,
-    isEnabled: tag.isEnabled,
-    name: tag.translations[0]?.name || tag.slug,
-    gameCount: tag._count.games,
-    createdAt: tag.createdAt
+    isEnabled: tag.isEnabled, // 显示实际的启用状态
+    name: tag.name,
+    gameCount: tag.gameCount,
+    createdAt: new Date(), // 缓存数据不包含 createdAt
   }))
 }
 

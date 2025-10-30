@@ -1,4 +1,4 @@
-import { GameForm } from '@/components/admin/games/GameForm'
+import { GameForm } from '@/components/admin/games'
 
 export default function NewGamePage() {
   return (
@@ -8,7 +8,7 @@ export default function NewGamePage() {
         <p className="text-muted-foreground">创建一个新的游戏</p>
       </div>
 
-      <GameForm />
+      <GameForm mode="create" />
     </div>
   )
 }

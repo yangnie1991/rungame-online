@@ -22,24 +22,29 @@ export async function deletePageType(pageTypeId: string) {
 // 创建/更新页面类型的验证 Schema
 const pageTypeSchema = z.object({
   slug: z.string().min(1, "标识符不能为空").regex(/^[a-z0-9-]+$/, "标识符只能包含小写字母、数字和连字符"),
-  type: z.enum(["GAME_LIST", "STATIC_CONTENT", "MIXED"]),
+  type: z.enum(["GAME_LIST", "DISPLAY_PAGE", "OTHER_PAGE"]),
   icon: z.string().optional(),
   isEnabled: z.boolean().default(true),
   sortOrder: z.number().int().min(0, "排序值不能为负数").default(0),
+  // 主表字段（英文作为回退）
+  title: z.string().min(1, "英文标题不能为空"),
+  description: z.string().optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  keywords: z.string().optional(),
+  pageInfo: z.record(z.string(), z.unknown()).optional(),
+  // 翻译数据
   translations: z.array(
     z.object({
       locale: z.enum(["en", "zh", "es", "fr"]),
       title: z.string().min(1, "标题不能为空"),
-      subtitle: z.string().optional(),
       description: z.string().optional(),
       metaTitle: z.string().optional(),
       metaDescription: z.string().optional(),
-      metaKeywords: z.string().optional(),
-      ogTitle: z.string().optional(),
-      ogDescription: z.string().optional(),
-      ogImage: z.string().url().optional().or(z.literal("")),
+      keywords: z.string().optional(),
+      pageInfo: z.record(z.string(), z.unknown()).optional(),
     })
-  ).min(1, "至少需要一个翻译")
+  ).default([])
 })
 
 export type PageTypeFormData = z.infer<typeof pageTypeSchema>
@@ -59,12 +64,6 @@ export async function createPageType(data: PageTypeFormData) {
       return { success: false, error: "该标识符已存在" }
     }
 
-    // 处理空字符串的 ogImage
-    const translations = validated.translations.map(t => ({
-      ...t,
-      ogImage: t.ogImage || null
-    }))
-
     // 创建页面类型及翻译
     const pageType = await prisma.pageType.create({
       data: {
@@ -73,8 +72,16 @@ export async function createPageType(data: PageTypeFormData) {
         icon: validated.icon || null,
         isEnabled: validated.isEnabled,
         sortOrder: validated.sortOrder,
+        // 主表字段（英文作为回退）
+        title: validated.title,
+        description: validated.description || null,
+        metaTitle: validated.metaTitle || null,
+        metaDescription: validated.metaDescription || null,
+        keywords: validated.keywords || null,
+        pageInfo: validated.pageInfo || null,
+        // 翻译数据
         translations: {
-          create: translations
+          create: validated.translations
         }
       },
       include: {
@@ -118,12 +125,6 @@ export async function updatePageType(pageTypeId: string, data: PageTypeFormData)
       }
     }
 
-    // 处理空字符串的 ogImage
-    const translations = validated.translations.map(t => ({
-      ...t,
-      ogImage: t.ogImage || null
-    }))
-
     // 更新页面类型（先删除旧翻译，再创建新翻译）
     const pageType = await prisma.pageType.update({
       where: { id: pageTypeId },
@@ -133,9 +134,17 @@ export async function updatePageType(pageTypeId: string, data: PageTypeFormData)
         icon: validated.icon || null,
         isEnabled: validated.isEnabled,
         sortOrder: validated.sortOrder,
+        // 主表字段（英文作为回退）
+        title: validated.title,
+        description: validated.description || null,
+        metaTitle: validated.metaTitle || null,
+        metaDescription: validated.metaDescription || null,
+        keywords: validated.keywords || null,
+        pageInfo: validated.pageInfo || null,
+        // 翻译数据
         translations: {
           deleteMany: {},
-          create: translations
+          create: validated.translations
         }
       },
       include: {

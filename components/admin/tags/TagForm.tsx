@@ -8,6 +8,7 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
@@ -15,15 +16,28 @@ import { createTag, updateTag, type TagFormData } from "@/app/(admin)/admin/tags
 import type { Tag, TagTranslation } from "@prisma/client"
 import { useEnabledLanguages } from "@/hooks/useEnabledLanguages"
 import { Loader2 } from "lucide-react"
+import { ImageUploader } from "@/components/admin/ImageUploader"
 
 const tagSchema = z.object({
   slug: z.string().min(1, "标识符不能为空").regex(/^[a-z0-9-]+$/, "标识符只能包含小写字母、数字和连字符"),
+  icon: z.string().optional(),
+  // 主表字段（英文作为回退）
+  name: z.string().min(1, "英文名称不能为空"),
+  description: z.string().optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  keywords: z.string().optional(),
+  // 翻译数据
   translations: z.array(
     z.object({
       locale: z.string(),
       name: z.string().min(1, "名称不能为空"),
+      description: z.string().optional(),
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+      keywords: z.string().optional(),
     })
-  ).min(1, "至少需要一个翻译")
+  ).default([])
 })
 
 interface TagFormProps {
@@ -36,19 +50,27 @@ export function TagForm({ tag, mode }: TagFormProps) {
   const router = useRouter()
   const { languages, isLoading: isLoadingLanguages } = useEnabledLanguages()
 
+  const form = useForm<TagFormData>({
+    resolver: zodResolver(tagSchema),
+    defaultValues: {
+      slug: "",
+      icon: "",
+      name: "",
+      description: "",
+      metaTitle: "",
+      metaDescription: "",
+      keywords: "",
+      translations: []
+    }
+  })
+
   const {
     register,
     handleSubmit,
     control,
     reset,
     formState: { errors }
-  } = useForm<TagFormData>({
-    resolver: zodResolver(tagSchema),
-    defaultValues: {
-      slug: "",
-      translations: []
-    }
-  })
+  } = form
 
   const { fields } = useFieldArray({
     control,
@@ -60,18 +82,50 @@ export function TagForm({ tag, mode }: TagFormProps) {
     if (!isLoadingLanguages && languages.length > 0) {
       const initialData = tag ? {
         slug: tag.slug,
+        icon: tag.icon || "",
+        name: tag.name || "",
+        description: tag.description || "",
+        metaTitle: tag.metaTitle || "",
+        metaDescription: tag.metaDescription || "",
+        keywords: tag.keywords || "",
         translations: languages.map(locale => {
+          // 英文直接使用主表字段
+          if (locale.code === 'en') {
+            return {
+              locale: locale.code,
+              name: tag.name || "",
+              description: tag.description || "",
+              metaTitle: tag.metaTitle || "",
+              metaDescription: tag.metaDescription || "",
+              keywords: tag.keywords || "",
+            }
+          }
+          // 其他语言使用翻译表
           const translation = tag.translations.find(t => t.locale === locale.code)
           return {
             locale: locale.code,
             name: translation?.name || "",
+            description: translation?.description || "",
+            metaTitle: translation?.metaTitle || "",
+            metaDescription: translation?.metaDescription || "",
+            keywords: translation?.keywords || "",
           }
         })
       } : {
         slug: "",
+        icon: "",
+        name: "",
+        description: "",
+        metaTitle: "",
+        metaDescription: "",
+        keywords: "",
         translations: languages.map(locale => ({
           locale: locale.code,
           name: "",
+          description: "",
+          metaTitle: "",
+          metaDescription: "",
+          keywords: "",
         }))
       }
 
@@ -82,6 +136,19 @@ export function TagForm({ tag, mode }: TagFormProps) {
   async function onSubmit(data: TagFormData) {
     setIsSubmitting(true)
     try {
+      // 从英文翻译中提取主表字段，并从翻译数组中移除英文
+      const enTranslation = data.translations.find(t => t.locale === 'en')
+      if (enTranslation) {
+        data.name = enTranslation.name
+        data.description = enTranslation.description || ""
+        data.metaTitle = enTranslation.metaTitle || ""
+        data.metaDescription = enTranslation.metaDescription || ""
+        data.keywords = enTranslation.keywords || ""
+      }
+
+      // 移除英文翻译，只保留其他语言的翻译
+      data.translations = data.translations.filter(t => t.locale !== 'en')
+
       const result = mode === "create"
         ? await createTag(data)
         : await updateTag(tag!.id, data)
@@ -153,6 +220,18 @@ export function TagForm({ tag, mode }: TagFormProps) {
               只能使用小写字母、数字和连字符，用于 URL
             </p>
           </div>
+
+          <div className="space-y-2">
+            <ImageUploader
+              value={form.watch('icon')}
+              onChange={(url) => form.setValue('icon', url)}
+              uploadType="category"
+              label="标签图标"
+              description="上传自定义图标或使用 emoji（如 🎮）、图标 URL"
+              maxSize={2 * 1024 * 1024}
+              accept={['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -196,9 +275,44 @@ export function TagForm({ tag, mode }: TagFormProps) {
                         {errors.translations[index]?.name?.message}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500">
-                      标签仅需要名称，不需要描述信息
-                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`translations.${index}.description`}>描述</Label>
+                    <Textarea
+                      id={`translations.${index}.description`}
+                      {...register(`translations.${index}.description`)}
+                      placeholder={`标签描述（${currentLanguage.label}）`}
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`translations.${index}.metaTitle`}>SEO 标题</Label>
+                    <Input
+                      id={`translations.${index}.metaTitle`}
+                      {...register(`translations.${index}.metaTitle`)}
+                      placeholder="用于搜索引擎显示的标题"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`translations.${index}.metaDescription`}>SEO 描述</Label>
+                    <Textarea
+                      id={`translations.${index}.metaDescription`}
+                      {...register(`translations.${index}.metaDescription`)}
+                      placeholder="用于搜索引擎显示的描述"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`translations.${index}.keywords`}>关键词</Label>
+                    <Input
+                      id={`translations.${index}.keywords`}
+                      {...register(`translations.${index}.keywords`)}
+                      placeholder={`关键词，用逗号分隔（${currentLanguage.label}）`}
+                    />
                   </div>
                 </TabsContent>
               )

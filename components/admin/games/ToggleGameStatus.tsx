@@ -9,7 +9,7 @@ import { toast } from "sonner"
 interface ToggleGamePublishStatusProps {
   gameId: string
   gameTitle: string
-  currentStatus: boolean
+  currentStatus: string  // 新架构: status 是字符串类型
 }
 
 export function ToggleGamePublishStatus({
@@ -17,17 +17,20 @@ export function ToggleGamePublishStatus({
   gameTitle,
   currentStatus
 }: ToggleGamePublishStatusProps) {
-  const [isPublished, setIsPublished] = useState(currentStatus)
+  const [status, setStatus] = useState(currentStatus)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+
+  const isPublished = status === 'PUBLISHED'
 
   const handleToggle = async () => {
     setIsLoading(true)
     try {
-      const result = await toggleGamePublishStatus(gameId, isPublished)
+      const result = await toggleGamePublishStatus(gameId, status)
 
       if (result.success) {
-        setIsPublished(!isPublished)
+        // 切换状态: PUBLISHED <-> DRAFT
+        setStatus(status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED')
         toast.success("操作成功", {
           description: `《${gameTitle}》${result.message}`
         })

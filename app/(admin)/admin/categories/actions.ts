@@ -1,8 +1,9 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { CACHE_TAGS } from "@/lib/cache-helpers"
 
 // 删除分类
 export async function deleteCategory(categoryId: string) {
@@ -11,6 +12,8 @@ export async function deleteCategory(categoryId: string) {
       where: { id: categoryId }
     })
 
+    // ✅ 失效缓存
+    revalidateTag(CACHE_TAGS.CATEGORIES)
     revalidatePath("/admin/categories")
     return { success: true }
   } catch (error) {
@@ -24,6 +27,13 @@ const categorySchema = z.object({
   slug: z.string().min(1, "标识符不能为空").regex(/^[a-z0-9-]+$/, "标识符只能包含小写字母、数字和连字符"),
   icon: z.string().optional(),
   sortOrder: z.number().int().min(0, "排序值不能为负数").default(0),
+  // 主表字段（英文作为回退）
+  name: z.string().min(1, "英文名称不能为空"),
+  description: z.string().optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  keywords: z.string().optional(),
+  // 翻译数据（可以包含英文，用于覆盖主表）
   translations: z.array(
     z.object({
       locale: z.enum(["en", "zh", "es", "fr"]),
@@ -31,8 +41,9 @@ const categorySchema = z.object({
       description: z.string().optional(),
       metaTitle: z.string().optional(),
       metaDescription: z.string().optional(),
+      keywords: z.string().optional(),
     })
-  ).min(1, "至少需要一个翻译")
+  ).default([])
 })
 
 export type CategoryFormData = z.infer<typeof categorySchema>
@@ -58,6 +69,13 @@ export async function createCategory(data: CategoryFormData) {
         slug: validated.slug,
         icon: validated.icon || null,
         sortOrder: validated.sortOrder,
+        // 主表字段（英文作为回退）
+        name: validated.name,
+        description: validated.description || null,
+        metaTitle: validated.metaTitle || null,
+        metaDescription: validated.metaDescription || null,
+        keywords: validated.keywords || null,
+        // 翻译数据
         translations: {
           create: validated.translations
         }
@@ -67,6 +85,8 @@ export async function createCategory(data: CategoryFormData) {
       }
     })
 
+    // ✅ 失效缓存
+    revalidateTag(CACHE_TAGS.CATEGORIES)
     revalidatePath("/admin/categories")
     return { success: true, data: category }
   } catch (error) {
@@ -110,6 +130,13 @@ export async function updateCategory(categoryId: string, data: CategoryFormData)
         slug: validated.slug,
         icon: validated.icon || null,
         sortOrder: validated.sortOrder,
+        // 主表字段（英文作为回退）
+        name: validated.name,
+        description: validated.description || null,
+        metaTitle: validated.metaTitle || null,
+        metaDescription: validated.metaDescription || null,
+        keywords: validated.keywords || null,
+        // 翻译数据
         translations: {
           deleteMany: {},
           create: validated.translations
@@ -120,6 +147,8 @@ export async function updateCategory(categoryId: string, data: CategoryFormData)
       }
     })
 
+    // ✅ 失效缓存
+    revalidateTag(CACHE_TAGS.CATEGORIES)
     revalidatePath("/admin/categories")
     revalidatePath(`/admin/categories/${categoryId}`)
     return { success: true, data: category }
@@ -169,6 +198,8 @@ export async function toggleCategoryStatus(categoryId: string, currentStatus: bo
       data: { isEnabled: !currentStatus }
     })
 
+    // ✅ 失效缓存
+    revalidateTag(CACHE_TAGS.CATEGORIES)
     revalidatePath("/admin/categories")
     return {
       success: true,

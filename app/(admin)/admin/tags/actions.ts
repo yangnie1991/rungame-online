@@ -1,12 +1,15 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { CACHE_TAGS } from "@/lib/cache-helpers"
 
 export async function deleteTag(tagId: string) {
   try {
     await prisma.tag.delete({ where: { id: tagId } })
+    // ✅ 失效缓存
+    revalidateTag(CACHE_TAGS.TAGS)
     revalidatePath("/admin/tags")
     return { success: true }
   } catch (error) {
@@ -17,12 +20,24 @@ export async function deleteTag(tagId: string) {
 
 const tagSchema = z.object({
   slug: z.string().min(1, "标识符不能为空").regex(/^[a-z0-9-]+$/, "标识符只能包含小写字母、数字和连字符"),
+  icon: z.string().optional(),
+  // 主表字段（英文作为回退）
+  name: z.string().min(1, "英文名称不能为空"),
+  description: z.string().optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  keywords: z.string().optional(),
+  // 翻译数据
   translations: z.array(
     z.object({
       locale: z.enum(["en", "zh", "es", "fr"]),
       name: z.string().min(1, "名称不能为空"),
+      description: z.string().optional(),
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+      keywords: z.string().optional(),
     })
-  ).min(1, "至少需要一个翻译")
+  ).default([])
 })
 
 export type TagFormData = z.infer<typeof tagSchema>
@@ -36,11 +51,21 @@ export async function createTag(data: TagFormData) {
     const tag = await prisma.tag.create({
       data: {
         slug: validated.slug,
+        icon: validated.icon || null,
+        // 主表字段（英文作为回退）
+        name: validated.name,
+        description: validated.description || null,
+        metaTitle: validated.metaTitle || null,
+        metaDescription: validated.metaDescription || null,
+        keywords: validated.keywords || null,
+        // 翻译数据
         translations: { create: validated.translations }
       },
       include: { translations: true }
     })
 
+    // ✅ 失效缓存
+    revalidateTag(CACHE_TAGS.TAGS)
     revalidatePath("/admin/tags")
     return { success: true, data: tag }
   } catch (error) {
@@ -65,11 +90,21 @@ export async function updateTag(tagId: string, data: TagFormData) {
       where: { id: tagId },
       data: {
         slug: validated.slug,
+        icon: validated.icon || null,
+        // 主表字段（英文作为回退）
+        name: validated.name,
+        description: validated.description || null,
+        metaTitle: validated.metaTitle || null,
+        metaDescription: validated.metaDescription || null,
+        keywords: validated.keywords || null,
+        // 翻译数据
         translations: { deleteMany: {}, create: validated.translations }
       },
       include: { translations: true }
     })
 
+    // ✅ 失效缓存
+    revalidateTag(CACHE_TAGS.TAGS)
     revalidatePath("/admin/tags")
     revalidatePath(`/admin/tags/${tagId}`)
     return { success: true, data: tag }
@@ -105,6 +140,8 @@ export async function toggleTagStatus(tagId: string, currentStatus: boolean) {
       data: { isEnabled: !currentStatus }
     })
 
+    // ✅ 失效缓存
+    revalidateTag(CACHE_TAGS.TAGS)
     revalidatePath("/admin/tags")
     return {
       success: true,

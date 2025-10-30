@@ -59,7 +59,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
             </button>
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={() => signOut({ callbackUrl: "/admin/login" })}
             className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
           >
             <LogOut className="mr-2 h-4 w-4" />

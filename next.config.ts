@@ -1,6 +1,9 @@
 import type { NextConfig } from "next"
 import createNextIntlPlugin from "next-intl/plugin"
 
+// 验证必需的环境变量
+import './lib/env'
+
 const withNextIntl = createNextIntlPlugin("./i18n/config.ts")
 
 const nextConfig: NextConfig = {
@@ -11,6 +14,13 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // 开发环境启用数据缓存
+  // experimental: {
+  //   staleTimes: {
+  //     dynamic: 30, // 动态页面缓存30秒
+  //     static: 180, // 静态页面缓存180秒
+  //   },
+  // },
   images: {
     remotePatterns: [
       // 游戏平台图片

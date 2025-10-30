@@ -26,11 +26,11 @@ export function GameCard({
 }: GameCardProps) {
   return (
     <article className="w-full bg-card rounded-lg shadow-md hover:shadow-xl overflow-hidden transition-all duration-300 group">
-      <Link href={`/games/play/${slug}`} className="block">
+      <Link href={`/play/${slug}`} className="block">
         <div className="relative">
           <Image
             src={thumbnail}
-            alt={`${title} - Free online ${categoryName || ''} game`}
+            alt={`Play ${title}${categoryName ? ` - ${categoryName} game` : ''} online for free on RunGame | No download required`}
             width={300}
             height={144}
             className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-200"

@@ -1,0 +1,116 @@
+// Prisma Schema for GamePix Cache Database (Neon)
+// 独立的缓存数据库，用于存储 GamePix 游戏列表数据
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CACHE_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma-cache"
+}
+
+// GamePix 游戏缓存表
+model GamePixGameCache {
+  id             String   @id // GamePix 游戏 ID
+  namespace      String   @unique // 游戏的唯一标识符
+  title          String // 游戏标题
+  description    String   @db.Text // 游戏描述
+  category       String // 游戏分类
+  quality_score  Float // 质量评分 0-1
+  banner_image   String // 游戏封面 URL
+  image          String // 游戏图标 URL
+  url            String // 游戏游玩 URL
+  width          Int // 游戏框架宽度
+  height         Int // 游戏框架高度
+  orientation    String // 游戏方向 landscape/portrait
+  date_published DateTime // 发布日期
+  date_modified  DateTime // 修改日期
+
+  // 自定义管理字段
+  isImported     Boolean   @default(false) // 是否已导入到生产数据库
+  importCount    Int       @default(0) // 导入次数统计
+  lastImportedAt DateTime? // 最后导入时间
+  customTags     String[]  @default([]) // 自定义标签
+  notes          String?   @db.Text // 备注信息
+  priority       Int       @default(0) // 优先级 0-10
+  isHidden       Boolean   @default(false) // 是否隐藏（不显示在列表）
+
+  // 网页提取数据缓存
+  extractedTags        String[]  @default([]) // 从游戏网页提取的标签
+  extractedMarkdown    String?   @db.Text // 从游戏网页提取的 Markdown 内容
+  extractedVideos      String[]  @default([]) // 从游戏网页提取的视频 URL 列表
+  extractedScreenshots String[]  @default([]) // 从游戏网页提取的截图 URL 列表
+  extractedAt          DateTime? // 提取时间
+
+  // 同步相关
+  lastSyncAt DateTime @default(now()) // 最后同步时间
+  syncSource String   @default("gamepix") // 数据来源
+
+  // 时间戳
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 索引优化查询性能
+  @@index([category])
+  @@index([quality_score])
+  @@index([isImported])
+  @@index([lastSyncAt])
+  @@index([priority])
+  @@index([date_published])
+  @@map("gamepix_games_cache")
+}
+
+// 同步日志表
+model SyncLog {
+  id           String   @id @default(cuid())
+  totalGames   Int // 本次同步的游戏总数
+  newGames     Int // 新增游戏数
+  updatedGames Int // 更新游戏数
+  deletedGames Int      @default(0) // 删除游戏数
+  status       String // success, failed, partial
+  errorMessage String?  @db.Text // 错误信息
+  syncDuration Int? // 同步耗时（毫秒）
+  apiParams    Json? // 同步时使用的 API 参数
+  syncedAt     DateTime @default(now())
+
+  @@index([syncedAt])
+  @@index([status])
+  @@map("sync_logs")
+}
+
+// AI 对话历史表
+model AiChatHistory {
+  id String @id @default(cuid())
+
+  // 关联信息
+  gameId  String  @map("game_id") // 游戏 ID（主数据库的游戏 ID）
+  locale  String // 语言代码（en, zh, es 等）
+  adminId String? @map("admin_id") // 管理员 ID（可选，用于追踪谁创建的对话）
+
+  // 对话内容
+  messages Json // 对话消息数组 [{ role, content }, ...]
+
+  // 元数据
+  templateId String? @map("template_id") // 使用的提示词模板 ID（可选）
+  context    Json? // 对话上下文（keywords, selectedText 等）
+
+  // 统计信息
+  messageCount Int @default(0) @map("message_count") // 消息数量
+  totalTokens  Int @default(0) @map("total_tokens") // 累计 token 消耗（估算）
+
+  // 时间管理
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  lastUsedAt DateTime @default(now()) @map("last_used_at") // 最后使用时间
+  expiresAt  DateTime @map("expires_at") // 过期时间（7天后自动清理）
+
+  // 索引优化
+  @@unique([gameId, locale]) // 每个游戏的每个语言只有一个对话历史
+  @@index([adminId])
+  @@index([lastUsedAt])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@map("ai_chat_history")
+}

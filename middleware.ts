@@ -2,31 +2,28 @@ import createMiddleware from "next-intl/middleware"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { routing } from "./i18n/routing"
+import { shouldExcludeFromI18n } from "./lib/static-files"
 
 // 创建next-intl中间件 - 使用routing配置
 const intlMiddleware = createMiddleware(routing)
 
+/**
+ * 中间件主函数
+ *
+ * 处理顺序：
+ * 1. 检查是否需要排除在国际化之外（管理后台、API、静态文件等）
+ * 2. 如果需要国际化，则使用 next-intl 中间件处理
+ */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // 1. 管理后台路由 - 认证检查在服务器端 layout 中进行
-  // 中间件只负责路由，不处理认证（避免 Edge Function 体积过大）
-  if (pathname.startsWith("/admin")) {
+  // 检查是否应该跳过国际化处理
+  // 包括：管理后台、API 路由、登录页面、静态文件等
+  if (shouldExcludeFromI18n(pathname)) {
     return NextResponse.next()
   }
 
-  // 2. API路由、登录页面和静态文本文件跳过国际化处理
-  if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/login") ||
-    pathname === "/ads.txt" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml"
-  ) {
-    return NextResponse.next()
-  }
-
-  // 3. 用户端使用next-intl中间件处理国际化
+  // 用户端路由使用 next-intl 中间件处理国际化
   return intlMiddleware(request)
 }
 

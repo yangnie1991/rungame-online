@@ -1,0 +1,18 @@
+{
+  // i18n Ally 配置 - VSCode 国际化翻译助手
+  "i18n-ally.localesPaths": ["i18n/messages"],
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.enabledFrameworks": ["next-intl"],
+  "i18n-ally.sourceLanguage": "en",
+  "i18n-ally.displayLanguage": "zh",
+  "i18n-ally.enabledParsers": ["json"],
+
+  // 在编辑器中显示翻译提示
+  "i18n-ally.annotations": true,
+
+  // 高亮显示硬编码字符串
+  "i18n-ally.extract.autoDetect": true,
+
+  // 翻译缺失时的处理
+  "i18n-ally.diagnostic.missingKey": "warning"
+}

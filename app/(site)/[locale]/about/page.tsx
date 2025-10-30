@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
 import type { Metadata } from "next"
+import { generateSEOMetadata } from "@/lib/seo-helpers"
 
 interface AboutPageProps {
   params: Promise<{ locale: string }>
@@ -10,19 +11,13 @@ export async function generateMetadata({ params }: AboutPageProps): Promise<Meta
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: "about" })
 
-  return {
+  return generateSEOMetadata({
     title: t("metaTitle"),
     description: t("metaDescription"),
-    openGraph: {
-      title: t("metaTitle"),
-      description: t("metaDescription"),
-      type: "website",
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
-  }
+    locale,
+    path: `/about`,
+    type: 'website',
+  })
 }
 
 export default async function AboutPage({ params }: AboutPageProps) {
@@ -51,20 +46,86 @@ export default async function AboutPage({ params }: AboutPageProps) {
       </div>
 
       {/* 内容 */}
-      <article className="bg-card rounded-lg border border-border shadow-sm">
-        <div
-          className="p-6 md:p-8 lg:p-10 prose prose-slate dark:prose-invert max-w-none
-            prose-headings:font-bold prose-headings:text-foreground
-            prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
-            prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-            prose-p:text-base prose-p:leading-relaxed prose-p:text-foreground prose-p:mb-4
-            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-            prose-strong:text-foreground prose-strong:font-semibold
-            prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6
-            prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6
-            prose-li:text-foreground prose-li:mb-2"
-          dangerouslySetInnerHTML={{ __html: t.raw("content") }}
-        />
+      <article className="space-y-8">
+        {/* Who We Are */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("whoWeAre.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("whoWeAre.content")}
+          </p>
+        </section>
+
+        {/* Our Mission */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("mission.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("mission.content")}
+          </p>
+        </section>
+
+        {/* What We Offer */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("offer.title")}
+          </h2>
+          <ul className="space-y-3">
+            {["instantPlay", "free", "diverse", "mobile", "updates", "safe"].map((key) => (
+              <li key={key} className="flex items-start gap-3">
+                <span className="text-primary mt-1">✓</span>
+                <div>
+                  <strong className="font-semibold">
+                    {t(`offer.items.${key}.label`)}:
+                  </strong>{" "}
+                  <span>{t(`offer.items.${key}.text`)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Our Values */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("values.title")}
+          </h2>
+          <div className="space-y-4">
+            {["accessibility", "quality", "community", "innovation", "safety"].map((key) => (
+              <div key={key}>
+                <p>
+                  <strong className="font-semibold">{t(`values.items.${key}.label`)}:</strong>{" "}
+                  {t(`values.items.${key}.text`)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Why Choose RunGame */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("whyChoose.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("whyChoose.content")}
+          </p>
+        </section>
+
+        {/* Join Our Community */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("community.title")}
+          </h2>
+          <p className="text-base leading-relaxed mb-4">
+            {t("community.content")}
+          </p>
+          <p className="text-base leading-relaxed font-medium">
+            {t("community.thanks")}
+          </p>
+        </section>
       </article>
 
       {/* 返回首页 */}

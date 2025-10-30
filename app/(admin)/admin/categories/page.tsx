@@ -1,6 +1,5 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -8,32 +7,29 @@ import { Badge } from "@/components/ui/badge"
 import { Pencil, Plus } from "lucide-react"
 import { DeleteCategoryButton } from "@/components/admin/categories/DeleteCategoryButton"
 import { ToggleCategoryStatus } from "@/components/admin/categories/ToggleCategoryStatus"
+import { getAllCategoriesForAdmin } from "@/lib/data/categories/cache"
 
 async function getCategoriesWithGameCount() {
-  const categories = await prisma.category.findMany({
-    include: {
-      translations: {
-        where: { locale: 'zh' },
-        select: { name: true, description: true }
-      },
-      _count: {
-        select: { games: true }
-      }
-    },
-    orderBy: { sortOrder: 'asc' }
-  })
+  // ✅ 使用缓存层获取分类数据（管理端专用，包含所有状态）
+  const categories = await getAllCategoriesForAdmin('zh')
 
-  return categories.map(cat => ({
+  // 按 sortOrder 排序
+  const sortedCategories = categories.sort((a, b) => a.sortOrder - b.sortOrder)
+
+  // 组合数据
+  const categoriesWithCount = sortedCategories.map((cat) => ({
     id: cat.id,
     slug: cat.slug,
     icon: cat.icon,
     sortOrder: cat.sortOrder,
-    isEnabled: cat.isEnabled,
-    name: cat.translations[0]?.name || cat.slug,
-    description: cat.translations[0]?.description || '',
-    gameCount: cat._count.games,
-    createdAt: cat.createdAt
+    isEnabled: cat.isEnabled, // 显示实际的启用状态
+    name: cat.name,
+    description: cat.description,
+    gameCount: cat.gameCount,
+    createdAt: new Date(), // 缓存数据不包含 createdAt
   }))
+
+  return categoriesWithCount
 }
 
 async function CategoriesTable() {

@@ -1,63 +1,99 @@
 @import "tailwindcss";
 
+@plugin "@tailwindcss/typography" {
+  className: game-info;
+}
+
 /* 🎮 2025年赛博游戏主题配色系统 - 基于shadcn/ui官方规范 */
 
 :root {
   /* ===== shadcn/ui 官方变量 - 现代游戏风格 ===== */
 
   /* 基础背景和文字 */
-  --background: 248 250 252; /* #F8FAFC - Slate-50 极淡蓝灰主背景 */
-  --foreground: 15 23 42; /* #0F172A - Slate-900 深蓝黑主文字 */
+  --background: 248 250 252;
+  /* #F8FAFC - Slate-50 极淡蓝灰主背景 */
+  --foreground: 15 23 42;
+  /* #0F172A - Slate-900 深蓝黑主文字 */
 
   /* 卡片层 */
-  --card: 255 255 255; /* #FFFFFF - 纯白提升层 */
-  --card-foreground: 15 23 42; /* #0F172A - Slate-900 */
+  --card: 255 255 255;
+  /* #FFFFFF - 纯白提升层 */
+  --card-foreground: 15 23 42;
+  /* #0F172A - Slate-900 */
 
   /* 弹出层 */
-  --popover: 255 255 255; /* #FFFFFF */
-  --popover-foreground: 15 23 42; /* #0F172A - Slate-900 */
+  --popover: 255 255 255;
+  /* #FFFFFF */
+  --popover-foreground: 15 23 42;
+  /* #0F172A - Slate-900 */
 
   /* 主色调 - 清爽蓝色 */
-  --primary: 59 130 246; /* #3B82F6 - Blue-500 品牌主色 */
-  --primary-foreground: 255 255 255; /* white */
+  --primary: 59 130 246;
+  /* #3B82F6 - Blue-500 品牌主色 */
+  --primary-foreground: 255 255 255;
+  /* white */
 
   /* 次要色 - 浅灰背景 */
-  --secondary: 241 245 249; /* #F1F5F9 - Slate-100 次级背景 */
-  --secondary-foreground: 15 23 42; /* #0F172A - Slate-900 */
+  --secondary: 241 245 249;
+  /* #F1F5F9 - Slate-100 次级背景 */
+  --secondary-foreground: 15 23 42;
+  /* #0F172A - Slate-900 */
 
   /* 静音色 - 低对比度元素 */
-  --muted: 241 245 249; /* #F1F5F9 - Slate-100 */
-  --muted-foreground: 100 116 139; /* #64748B - Slate-500 浅蓝灰 */
+  --muted: 241 245 249;
+  /* #F1F5F9 - Slate-100 */
+  --muted-foreground: 100 116 139;
+  /* #64748B - Slate-500 浅蓝灰 */
 
   /* 强调色 - 翡翠绿（游戏成功色） */
-  --accent: 16 185 129; /* #10B981 - Emerald-500 */
-  --accent-foreground: 255 255 255; /* white */
+  --accent: 16 185 129;
+  /* #10B981 - Emerald-500 */
+  --accent-foreground: 255 255 255;
+  /* white */
 
   /* 破坏性操作 - 错误红 */
-  --destructive: 239 68 68; /* #EF4444 - Red-500 */
-  --destructive-foreground: 255 255 255; /* white */
+  --destructive: 239 68 68;
+  /* #EF4444 - Red-500 */
+  --destructive-foreground: 255 255 255;
+  /* white */
 
   /* 边框和输入框 */
-  --border: 226 232 240; /* #E2E8F0 - Slate-200 淡边框 */
-  --input: 226 232 240; /* #E2E8F0 - Slate-200 与border一致 */
-  --ring: 59 130 246; /* #3B82F6 - Blue-500 与primary一致 */
+  --border: 226 232 240;
+  /* #E2E8F0 - Slate-200 淡边框 */
+  --input: 226 232 240;
+  /* #E2E8F0 - Slate-200 与border一致 */
+  --ring: 59 130 246;
+  /* #3B82F6 - Blue-500 与primary一致 */
 
   /* 图表色 - 用于数据可视化 */
-  --chart-1: 59 130 246; /* #3B82F6 - Blue-500 */
-  --chart-2: 16 185 129; /* #10B981 - Emerald-500 */
-  --chart-3: 245 158 11; /* #F59E0B - Amber-500 */
-  --chart-4: 6 182 212; /* #06B6D4 - Cyan-500 */
-  --chart-5: 139 92 246; /* #8B5CF6 - Violet-500 */
+  --chart-1: 59 130 246;
+  /* #3B82F6 - Blue-500 */
+  --chart-2: 16 185 129;
+  /* #10B981 - Emerald-500 */
+  --chart-3: 245 158 11;
+  /* #F59E0B - Amber-500 */
+  --chart-4: 6 182 212;
+  /* #06B6D4 - Cyan-500 */
+  --chart-5: 139 92 246;
+  /* #8B5CF6 - Violet-500 */
 
   /* 侧边栏（如适用） */
-  --sidebar-background: 255 255 255; /* #FFFFFF */
-  --sidebar-foreground: 15 23 42; /* #0F172A - Slate-900 */
-  --sidebar-primary: 59 130 246; /* #3B82F6 - Blue-500 */
-  --sidebar-primary-foreground: 255 255 255; /* white */
-  --sidebar-accent: 241 245 249; /* #F1F5F9 - Slate-100 */
-  --sidebar-accent-foreground: 15 23 42; /* #0F172A - Slate-900 */
-  --sidebar-border: 226 232 240; /* #E2E8F0 - Slate-200 */
-  --sidebar-ring: 59 130 246; /* #3B82F6 - Blue-500 */
+  --sidebar-background: 255 255 255;
+  /* #FFFFFF */
+  --sidebar-foreground: 15 23 42;
+  /* #0F172A - Slate-900 */
+  --sidebar-primary: 59 130 246;
+  /* #3B82F6 - Blue-500 */
+  --sidebar-primary-foreground: 255 255 255;
+  /* white */
+  --sidebar-accent: 241 245 249;
+  /* #F1F5F9 - Slate-100 */
+  --sidebar-accent-foreground: 15 23 42;
+  /* #0F172A - Slate-900 */
+  --sidebar-border: 226 232 240;
+  /* #E2E8F0 - Slate-200 */
+  --sidebar-ring: 59 130 246;
+  /* #3B82F6 - Blue-500 */
 
   /* 圆角 */
   --radius: 0.5rem;
@@ -68,58 +104,90 @@
   /* ===== shadcn/ui 官方变量 - 赛博霓虹风格 ===== */
 
   /* 基础背景和文字 */
-  --background: 15 15 35; /* #0F0F23 - 深紫黑背景 */
-  --foreground: 248 250 252; /* #F8FAFC - Slate-50 柔和白色文字 */
+  --background: 15 15 35;
+  /* #0F0F23 - 深紫黑背景 */
+  --foreground: 248 250 252;
+  /* #F8FAFC - Slate-50 柔和白色文字 */
 
   /* 卡片层 */
-  --card: 26 26 46; /* #1A1A2E - 次级深蓝背景 */
-  --card-foreground: 248 250 252; /* #F8FAFC - Slate-50 */
+  --card: 26 26 46;
+  /* #1A1A2E - 次级深蓝背景 */
+  --card-foreground: 248 250 252;
+  /* #F8FAFC - Slate-50 */
 
   /* 弹出层 */
-  --popover: 26 26 46; /* #1A1A2E */
-  --popover-foreground: 248 250 252; /* #F8FAFC - Slate-50 */
+  --popover: 26 26 46;
+  /* #1A1A2E */
+  --popover-foreground: 248 250 252;
+  /* #F8FAFC - Slate-50 */
 
   /* 主色调 - 电光蓝 */
-  --primary: 0 212 255; /* #00D4FF - 赛博电光蓝 */
-  --primary-foreground: 15 15 35; /* #0F0F23 - 深色背景 */
+  --primary: 0 212 255;
+  /* #00D4FF - 赛博电光蓝 */
+  --primary-foreground: 15 15 35;
+  /* #0F0F23 - 深色背景 */
 
   /* 次要色 - 深蓝背景 */
-  --secondary: 22 33 62; /* #16213E - 第三级背景 */
-  --secondary-foreground: 248 250 252; /* #F8FAFC - Slate-50 */
+  --secondary: 22 33 62;
+  /* #16213E - 第三级背景 */
+  --secondary-foreground: 248 250 252;
+  /* #F8FAFC - Slate-50 */
 
   /* 静音色 - 低对比度元素 */
-  --muted: 51 65 85; /* #334155 - Slate-700 */
-  --muted-foreground: 148 163 184; /* #94A3B8 - Slate-400 */
+  --muted: 51 65 85;
+  /* #334155 - Slate-700 */
+  --muted-foreground: 148 163 184;
+  /* #94A3B8 - Slate-400 */
 
   /* 强调色 - 霓虹绿 */
-  --accent: 0 255 136; /* #00FF88 - 赛博霓虹绿 */
-  --accent-foreground: 15 15 35; /* #0F0F23 */
+  --accent: 0 255 136;
+  /* #00FF88 - 赛博霓虹绿 */
+  --accent-foreground: 15 15 35;
+  /* #0F0F23 */
 
   /* 破坏性操作 - 霓虹红 */
-  --destructive: 255 71 87; /* #FF4757 - 赛博霓虹红 */
-  --destructive-foreground: 248 250 252; /* #F8FAFC - Slate-50 */
+  --destructive: 255 71 87;
+  /* #FF4757 - 赛博霓虹红 */
+  --destructive-foreground: 248 250 252;
+  /* #F8FAFC - Slate-50 */
 
   /* 边框和输入框 */
-  --border: 51 65 85; /* #334155 - Slate-700 柔和边框 */
-  --input: 51 65 85; /* #334155 - Slate-700 与border一致 */
-  --ring: 0 212 255; /* #00D4FF - 电光蓝与primary一致 */
+  --border: 51 65 85;
+  /* #334155 - Slate-700 柔和边框 */
+  --input: 51 65 85;
+  /* #334155 - Slate-700 与border一致 */
+  --ring: 0 212 255;
+  /* #00D4FF - 电光蓝与primary一致 */
 
   /* 图表色 - 霓虹游戏色彩 */
-  --chart-1: 0 212 255; /* #00D4FF - 电光蓝 */
-  --chart-2: 0 255 136; /* #00FF88 - 霓虹绿 */
-  --chart-3: 255 215 0; /* #FFD700 - 金色 */
-  --chart-4: 124 58 237; /* #7C3AED - 紫罗兰 */
-  --chart-5: 255 71 87; /* #FF4757 - 霓虹红 */
+  --chart-1: 0 212 255;
+  /* #00D4FF - 电光蓝 */
+  --chart-2: 0 255 136;
+  /* #00FF88 - 霓虹绿 */
+  --chart-3: 255 215 0;
+  /* #FFD700 - 金色 */
+  --chart-4: 124 58 237;
+  /* #7C3AED - 紫罗兰 */
+  --chart-5: 255 71 87;
+  /* #FF4757 - 霓虹红 */
 
   /* 侧边栏（暗色） */
-  --sidebar-background: 26 26 46; /* #1A1A2E */
-  --sidebar-foreground: 248 250 252; /* #F8FAFC - Slate-50 */
-  --sidebar-primary: 0 212 255; /* #00D4FF - 电光蓝 */
-  --sidebar-primary-foreground: 15 15 35; /* #0F0F23 */
-  --sidebar-accent: 22 33 62; /* #16213E */
-  --sidebar-accent-foreground: 248 250 252; /* #F8FAFC - Slate-50 */
-  --sidebar-border: 51 65 85; /* #334155 - Slate-700 */
-  --sidebar-ring: 0 212 255; /* #00D4FF - 电光蓝 */
+  --sidebar-background: 26 26 46;
+  /* #1A1A2E */
+  --sidebar-foreground: 248 250 252;
+  /* #F8FAFC - Slate-50 */
+  --sidebar-primary: 0 212 255;
+  /* #00D4FF - 电光蓝 */
+  --sidebar-primary-foreground: 15 15 35;
+  /* #0F0F23 */
+  --sidebar-accent: 22 33 62;
+  /* #16213E */
+  --sidebar-accent-foreground: 248 250 252;
+  /* #F8FAFC - Slate-50 */
+  --sidebar-border: 51 65 85;
+  /* #334155 - Slate-700 */
+  --sidebar-ring: 0 212 255;
+  /* #00D4FF - 电光蓝 */
 }
 
 @theme inline {
@@ -181,7 +249,7 @@ body {
 
 /* ===== 自定义滚动条（Webkit浏览器） ===== */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 1px;
   height: 8px;
 }
 
@@ -209,77 +277,141 @@ body {
   color: rgb(var(--foreground));
 }
 
-/* ===== 游戏主题扩展工具类 ===== */
-/* 基于官方变量的语义化工具类 */
+/* ===== Typography (game-info) 样式定制 ===== */
+/* 基于 @tailwindcss/typography 插件，覆盖以匹配主题 */
 
-/* 品牌色快捷方式（映射到primary） */
-.bg-brand {
-  background-color: rgb(var(--primary));
+/* 普通段落和列表文字使用 muted-foreground（灰色），与游戏描述保持一致 */
+.game-info {
+  --tw-prose-body: rgb(var(--muted-foreground));
+  --tw-prose-headings: rgb(var(--foreground));
+  --tw-prose-lead: rgb(var(--muted-foreground));
+  --tw-prose-links: rgb(var(--primary));
+  --tw-prose-bold: rgb(var(--foreground));
+  --tw-prose-counters: rgb(var(--primary));
+  --tw-prose-bullets: rgb(var(--primary));
+  --tw-prose-hr: rgb(var(--border));
+  --tw-prose-quotes: rgb(var(--muted-foreground));
+  --tw-prose-quote-borders: rgb(var(--primary));
+  --tw-prose-captions: rgb(var(--muted-foreground));
+  --tw-prose-code: rgb(var(--foreground));
+  --tw-prose-pre-code: rgb(var(--foreground));
+  --tw-prose-pre-bg: rgb(var(--muted));
+  --tw-prose-th-borders: rgb(var(--border));
+  --tw-prose-td-borders: rgb(var(--border));
 }
 
-.text-brand {
-  color: rgb(var(--primary));
+/* 移除 game-info 各种元素的边框（typography 插件的默认样式） */
+.game-info * {
+  border: none !important;
 }
 
-.border-brand {
-  border-color: rgb(var(--primary));
+/* 只保留以下元素的边框 */
+.game-info blockquote {
+  border-left: 4px solid rgb(var(--primary)) !important;
 }
 
-/* 游戏成功色（映射到accent/chart-2） */
-.bg-gaming {
-  background-color: rgb(var(--accent));
+.game-info table,
+.game-info thead,
+.game-info tbody,
+.game-info tr {
+  border-color: rgb(var(--border)) !important;
 }
 
-.text-gaming {
-  color: rgb(var(--accent));
+.game-info thead {
+  border-bottom: 2px solid rgb(var(--border)) !important;
 }
 
-.border-gaming {
-  border-color: rgb(var(--accent));
+.game-info tbody tr {
+  border-bottom: 1px solid rgb(var(--border)) !important;
 }
 
-/* 热门/警告色（映射到chart-3） */
-.bg-hot {
-  background-color: rgb(var(--chart-3));
+/* 调整 game-info 内部元素的垂直间距 - 覆盖 typography 插件的 :where() 选择器 */
+.game-info h1 {
+  margin-top: 0.5rem ;
+  /* 8px */
+  margin-bottom: 0.5rem ;
+  /* 8px */
 }
 
-.text-hot {
-  color: rgb(var(--chart-3));
+.game-info h2{
+  margin-top: 0.75rem;
+  /* 12px */
+  margin-bottom: 0.75rem;
+  /* 12px */
 }
 
-.border-hot {
-  border-color: rgb(var(--chart-3));
+.game-info h3,
+.game-info h4 {
+  margin-top: 0.375rem;
+  /* 6px */
+  margin-bottom: 0.375rem;
+  /* 6px */
 }
 
-/* 状态色快捷方式 */
-.text-success {
-  color: rgb(var(--accent));
+.game-info p {
+  margin-top: 0.25rem ;
+  /* 8px */
+  margin-bottom: 0.25rem ;
+  /* 8px */
 }
 
-.text-warning {
-  color: rgb(var(--chart-3));
+.game-info ul,
+.game-info ol{
+  margin-top: 0.375rem ;
+  /* 8px */
+  margin-bottom: 0.375rem ;
+  /* 8px */
 }
 
-.text-error {
-  color: rgb(var(--destructive));
+.game-info li{
+  margin-top: 0.25rem ;
+  /* 4px */
+  margin-bottom: 0.25rem ;
+  /* 4px */
 }
 
-.text-info {
-  color: rgb(var(--primary));
+.game-info blockquote {
+  margin-top: 0.75rem ;
+  /* 12px */
+  margin-bottom: 0.75rem;
+  /* 12px */
 }
 
-.bg-success {
-  background-color: rgb(var(--accent));
+.game-info pre:not([class~="not-game-info"]) {
+  margin-top: 0.75rem !important;
+  /* 12px */
+  margin-bottom: 0.75rem !important;
+  /* 12px */
 }
 
-.bg-warning {
-  background-color: rgb(var(--chart-3));
+/* 第一个和最后一个元素的特殊处理 */
+.game-info> :first-child {
+  margin-top: 0;
 }
 
-.bg-error {
-  background-color: rgb(var(--destructive));
+.game-info> :last-child {
+  margin-bottom: 0;
 }
 
-.bg-info {
-  background-color: rgb(var(--primary));
+/* 暗色模式变量 */
+.dark .game-info {
+  --tw-prose-body: rgb(var(--muted-foreground));
+  --tw-prose-headings: rgb(var(--foreground));
+  --tw-prose-lead: rgb(var(--muted-foreground));
+  --tw-prose-links: rgb(var(--primary));
+  --tw-prose-bold: rgb(var(--foreground));
+  --tw-prose-counters: rgb(var(--primary));
+  --tw-prose-bullets: rgb(var(--primary));
+  --tw-prose-hr: rgb(var(--border));
+  --tw-prose-quotes: rgb(var(--muted-foreground));
+  --tw-prose-quote-borders: rgb(var(--primary));
+  --tw-prose-captions: rgb(var(--muted-foreground));
+  --tw-prose-code: rgb(var(--foreground));
+  --tw-prose-pre-code: rgb(var(--foreground));
+  --tw-prose-pre-bg: rgb(var(--muted));
+  --tw-prose-th-borders: rgb(var(--border));
+  --tw-prose-td-borders: rgb(var(--border));
+  --tw-prose-invert-body: rgb(var(--muted-foreground));
+  --tw-prose-invert-headings: rgb(var(--foreground));
+  --tw-prose-invert-bold: rgb(var(--foreground));
 }

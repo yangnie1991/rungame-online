@@ -4,6 +4,8 @@ import { Link, usePathname, useRouter } from "@/i18n/routing"
 import { Search, Menu } from "lucide-react"
 import { useState } from "react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
+import { useTranslations } from "next-intl"
+import Image from "next/image"
 
 interface Language {
   code: string
@@ -21,6 +23,7 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const t = useTranslations("header")
 
   // 处理搜索提交
   const handleSearch = (e: React.FormEvent) => {
@@ -35,18 +38,24 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo 和品牌关键词 */}
-          <div className="flex items-center space-x-6">
-            <div className="text-2xl font-bold">
-              <Link href="/" className="text-primary hover:opacity-90 transition-opacity">
-                🎮 RunGame
-              </Link>
-            </div>
+          <div className="flex items-center space-x-3 sm:space-x-6">
+            <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity shrink-0">
+              <Image
+                src="/logo/logo-rungame.svg"
+                alt="RunGame Logo"
+                width={48}
+                height={48}
+                className="w-7 h-7 sm:w-8 sm:h-8"
+                priority
+              />
+              <span className="text-xl sm:text-2xl font-bold text-primary">RunGame</span>
+            </Link>
             <div className="hidden md:flex items-center space-x-4 text-sm text-muted-foreground">
-              <span className="font-medium">Free Online Games</span>
+              <span className="font-medium">{t("freeOnlineGames")}</span>
               <span className="text-muted-foreground/50">|</span>
-              <span className="font-medium">No Download</span>
+              <span className="font-medium">{t("noDownload")}</span>
               <span className="text-muted-foreground/50">|</span>
-              <span className="font-medium">Play Instantly</span>
+              <span className="font-medium">{t("playInstantly")}</span>
             </div>
           </div>
 
@@ -58,7 +67,7 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
                 name="q"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search your favorite games..."
+                placeholder={t("searchPlaceholder")}
                 className="w-full px-4 py-3 rounded-lg bg-background border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary pr-12 text-base transition-all"
               />
               <button

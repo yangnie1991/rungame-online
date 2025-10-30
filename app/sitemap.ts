@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 2. 获取所有已发布的游戏
   const games = await prisma.game.findMany({
-    where: { isPublished: true },
+    where: { status: 'PUBLISHED' },
     select: {
       slug: true,
       updatedAt: true,
@@ -51,8 +51,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     locales.forEach((locale) => {
       const url =
         locale === defaultLocale
-          ? `${baseUrl}/games/${game.slug}`
-          : `${baseUrl}/${locale}/games/${game.slug}`
+          ? `${baseUrl}/play/${game.slug}`
+          : `${baseUrl}/${locale}/play/${game.slug}`
 
       sitemap.push({
         url,
@@ -64,8 +64,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             locales.map((l) => [
               l,
               l === defaultLocale
-                ? `${baseUrl}/games/${game.slug}`
-                : `${baseUrl}/${l}/games/${game.slug}`,
+                ? `${baseUrl}/play/${game.slug}`
+                : `${baseUrl}/${l}/play/${game.slug}`,
             ])
           ),
         },
@@ -80,8 +80,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       slug: true,
       _count: {
         select: {
-          games: {
-            where: { isPublished: true },
+          gameSubCategories: {
+            where: {
+              game: { status: 'PUBLISHED' }
+            },
           },
         },
       },
@@ -91,12 +93,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 为每个分类生成多语言 URL
   categories.forEach((category) => {
-    if (category._count.games > 0) {
+    if (category._count.gameSubCategories > 0) {
       locales.forEach((locale) => {
         const url =
           locale === defaultLocale
-            ? `${baseUrl}/games/category/${category.slug}`
-            : `${baseUrl}/${locale}/games/category/${category.slug}`
+            ? `${baseUrl}/category/${category.slug}`
+            : `${baseUrl}/${locale}/category/${category.slug}`
 
         sitemap.push({
           url,
@@ -108,8 +110,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
               locales.map((l) => [
                 l,
                 l === defaultLocale
-                  ? `${baseUrl}/games/category/${category.slug}`
-                  : `${baseUrl}/${l}/games/category/${category.slug}`,
+                  ? `${baseUrl}/category/${category.slug}`
+                  : `${baseUrl}/${l}/category/${category.slug}`,
               ])
             ),
           },
@@ -124,7 +126,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: {
       slug: true,
       games: {
-        where: { game: { isPublished: true } },
+        where: { game: { status: 'PUBLISHED' } },
         take: 1,
       },
     },
@@ -136,8 +138,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       locales.forEach((locale) => {
         const url =
           locale === defaultLocale
-            ? `${baseUrl}/games/tags/${tag.slug}`
-            : `${baseUrl}/${locale}/games/tags/${tag.slug}`
+            ? `${baseUrl}/tag/${tag.slug}`
+            : `${baseUrl}/${locale}/tag/${tag.slug}`
 
         sitemap.push({
           url,
@@ -149,8 +151,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
               locales.map((l) => [
                 l,
                 l === defaultLocale
-                  ? `${baseUrl}/games/tags/${tag.slug}`
-                  : `${baseUrl}/${l}/games/tags/${tag.slug}`,
+                  ? `${baseUrl}/tag/${tag.slug}`
+                  : `${baseUrl}/${l}/tag/${tag.slug}`,
               ])
             ),
           },

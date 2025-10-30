@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
 import type { Metadata } from "next"
+import { generateSEOMetadata } from "@/lib/seo-helpers"
 
 interface PrivacyPageProps {
   params: Promise<{ locale: string }>
@@ -10,19 +11,13 @@ export async function generateMetadata({ params }: PrivacyPageProps): Promise<Me
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: "privacy" })
 
-  return {
+  return generateSEOMetadata({
     title: t("metaTitle"),
     description: t("metaDescription"),
-    openGraph: {
-      title: t("metaTitle"),
-      description: t("metaDescription"),
-      type: "website",
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
-  }
+    locale,
+    path: `/privacy`,
+    type: 'website',
+  })
 }
 
 export default async function PrivacyPage({ params }: PrivacyPageProps) {
@@ -48,24 +43,116 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
           {t("title")}
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground">{t("subtitle")}</p>
+        <p className="text-sm text-muted-foreground italic">{t("lastUpdated")}</p>
       </div>
 
-      {/* 内容 */}
-      <article className="bg-card rounded-lg border border-border shadow-sm">
-        <div
-          className="p-6 md:p-8 lg:p-10 prose prose-slate dark:prose-invert max-w-none
-            prose-headings:font-bold prose-headings:text-foreground
-            prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
-            prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-            prose-p:text-base prose-p:leading-relaxed prose-p:text-foreground prose-p:mb-4
-            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-            prose-strong:text-foreground prose-strong:font-semibold
-            prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6
-            prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6
-            prose-li:text-foreground prose-li:mb-2
-            prose-em:text-muted-foreground prose-em:italic"
-          dangerouslySetInnerHTML={{ __html: t.raw("content") }}
-        />
+      {/* 内容区域 */}
+      <article className="space-y-8">
+        {/* Introduction */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("introduction.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("introduction.content")}
+          </p>
+        </section>
+
+        {/* Information We Collect */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("informationWeCollect.title")}
+          </h2>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-xl font-semibold mb-2">
+                {t("informationWeCollect.automaticInfo.title")}
+              </h3>
+              <p className="text-base leading-relaxed">
+                {t("informationWeCollect.automaticInfo.content")}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold mb-2">
+                {t("informationWeCollect.cookies.title")}
+              </h3>
+              <p className="text-base leading-relaxed">
+                {t("informationWeCollect.cookies.content")}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Google AdSense */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("advertising.title")}
+          </h2>
+          <p className="text-base leading-relaxed mb-4">
+            {t("advertising.intro")}
+          </p>
+          <div>
+            <p className="font-semibold mb-2">{t("advertising.googleUse.title")}</p>
+            <ul className="space-y-2">
+              {t.raw("advertising.googleUse.items").map((item: string, index: number) => (
+                <li key={index} className="flex items-start gap-3">
+                  <span className="text-primary mt-1">•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* Google Analytics */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("analytics.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("analytics.content")}
+          </p>
+        </section>
+
+        {/* How We Use */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("howWeUse.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("howWeUse.content")}
+          </p>
+        </section>
+
+        {/* Children's Privacy */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("childrenPrivacy.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("childrenPrivacy.content")}
+          </p>
+        </section>
+
+        {/* Your Rights */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("yourRights.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("yourRights.content")}
+          </p>
+        </section>
+
+        {/* Contact */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("contact.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("contact.content")}
+          </p>
+        </section>
       </article>
 
       {/* 返回首页 */}

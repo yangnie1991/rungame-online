@@ -16,11 +16,19 @@ import { createCategory, updateCategory, type CategoryFormData } from "@/app/(ad
 import type { Category, CategoryTranslation } from "@prisma/client"
 import { useEnabledLanguages } from "@/hooks/useEnabledLanguages"
 import { Loader2 } from "lucide-react"
+import { ImageUploader } from "@/components/admin/ImageUploader"
 
 const categorySchema = z.object({
   slug: z.string().min(1, "标识符不能为空").regex(/^[a-z0-9-]+$/, "标识符只能包含小写字母、数字和连字符"),
   icon: z.string().optional(),
   sortOrder: z.coerce.number().int().min(0, "排序值不能为负数").default(0),
+  // 主表字段（从英文翻译自动填充）
+  name: z.string().min(1, "英文名称不能为空"),
+  description: z.string().optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  keywords: z.string().optional(),
+  // 翻译数据
   translations: z.array(
     z.object({
       locale: z.string(),
@@ -28,8 +36,9 @@ const categorySchema = z.object({
       description: z.string().optional(),
       metaTitle: z.string().optional(),
       metaDescription: z.string().optional(),
+      keywords: z.string().optional(),
     })
-  ).min(1, "至少需要一个翻译")
+  ).default([])
 })
 
 interface CategoryFormProps {
@@ -42,21 +51,28 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
   const router = useRouter()
   const { languages, isLoading: isLoadingLanguages } = useEnabledLanguages()
 
+  const form = useForm<CategoryFormData>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      slug: "",
+      icon: "",
+      sortOrder: 0,
+      name: "",
+      description: "",
+      metaTitle: "",
+      metaDescription: "",
+      keywords: "",
+      translations: []
+    }
+  })
+
   const {
     register,
     handleSubmit,
     control,
     reset,
     formState: { errors }
-  } = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema),
-    defaultValues: {
-      slug: "",
-      icon: "",
-      sortOrder: 0,
-      translations: []
-    }
-  })
+  } = form
 
   const { fields } = useFieldArray({
     control,
@@ -70,7 +86,24 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
         slug: category.slug,
         icon: category.icon || "",
         sortOrder: category.sortOrder,
+        name: category.name || "",
+        description: category.description || "",
+        metaTitle: category.metaTitle || "",
+        metaDescription: category.metaDescription || "",
+        keywords: category.keywords || "",
         translations: languages.map(locale => {
+          // 英文直接使用主表字段
+          if (locale.code === 'en') {
+            return {
+              locale: locale.code,
+              name: category.name || "",
+              description: category.description || "",
+              metaTitle: category.metaTitle || "",
+              metaDescription: category.metaDescription || "",
+              keywords: category.keywords || "",
+            }
+          }
+          // 其他语言使用翻译表
           const translation = category.translations.find(t => t.locale === locale.code)
           return {
             locale: locale.code,
@@ -78,18 +111,25 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
             description: translation?.description || "",
             metaTitle: translation?.metaTitle || "",
             metaDescription: translation?.metaDescription || "",
+            keywords: translation?.keywords || "",
           }
         })
       } : {
         slug: "",
         icon: "",
         sortOrder: 0,
+        name: "",
+        description: "",
+        metaTitle: "",
+        metaDescription: "",
+        keywords: "",
         translations: languages.map(locale => ({
           locale: locale.code,
           name: "",
           description: "",
           metaTitle: "",
           metaDescription: "",
+          keywords: "",
         }))
       }
 
@@ -100,6 +140,19 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
   async function onSubmit(data: CategoryFormData) {
     setIsSubmitting(true)
     try {
+      // 从英文翻译中提取主表字段，并从翻译数组中移除英文
+      const enTranslation = data.translations.find(t => t.locale === 'en')
+      if (enTranslation) {
+        data.name = enTranslation.name
+        data.description = enTranslation.description || ""
+        data.metaTitle = enTranslation.metaTitle || ""
+        data.metaDescription = enTranslation.metaDescription || ""
+        data.keywords = enTranslation.keywords || ""
+      }
+
+      // 移除英文翻译，只保留其他语言的翻译
+      data.translations = data.translations.filter(t => t.locale !== 'en')
+
       const result = mode === "create"
         ? await createCategory(data)
         : await updateCategory(category!.id, data)
@@ -154,36 +207,34 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
           <CardDescription className="text-gray-600">设置分类的基本属性</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 bg-white">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="slug">
-                标识符 (Slug) <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="slug"
-                {...register("slug")}
-                placeholder="action-games"
-                className={errors.slug ? "border-red-500" : ""}
-              />
-              {errors.slug && (
-                <p className="text-sm text-red-500">{errors.slug.message}</p>
-              )}
-              <p className="text-xs text-gray-500">
-                只能使用小写字母、数字和连字符，用于 URL
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="slug">
+              标识符 (Slug) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="slug"
+              {...register("slug")}
+              placeholder="action-games"
+              className={errors.slug ? "border-red-500" : ""}
+            />
+            {errors.slug && (
+              <p className="text-sm text-red-500">{errors.slug.message}</p>
+            )}
+            <p className="text-xs text-gray-500">
+              只能使用小写字母、数字和连字符，用于 URL
+            </p>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="icon">图标（可选）</Label>
-              <Input
-                id="icon"
-                {...register("icon")}
-                placeholder="🎮"
-              />
-              <p className="text-xs text-gray-500">
-                可以使用 emoji 或图标名称
-              </p>
-            </div>
+          <div className="space-y-2">
+            <ImageUploader
+              value={form.watch('icon')}
+              onChange={(url) => form.setValue('icon', url)}
+              uploadType="category"
+              label="分类图标"
+              description="上传自定义图标或使用 emoji（如 🎮）、图标 URL"
+              maxSize={2 * 1024 * 1024}
+              accept={['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']}
+            />
           </div>
 
           <div className="space-y-2">
@@ -272,6 +323,15 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
                       {...register(`translations.${index}.metaDescription`)}
                       placeholder="用于搜索引擎显示的描述"
                       rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`translations.${index}.keywords`}>关键词</Label>
+                    <Input
+                      id={`translations.${index}.keywords`}
+                      {...register(`translations.${index}.keywords`)}
+                      placeholder={`关键词，用逗号分隔（${currentLanguage.label}）`}
                     />
                   </div>
                 </TabsContent>

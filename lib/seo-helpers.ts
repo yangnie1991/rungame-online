@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { getLocalizedSiteConfig } from '@/lib/site-config'
+import { generateGameOGImageUrl } from './og-image-helpers'
 
 /**
  * SEO 元数据生成工具
@@ -27,7 +29,7 @@ export function getSiteUrl(): string {
 /**
  * 生成标准化的 SEO 元数据
  */
-export function generateSEOMetadata(options: GenerateSEOMetadataOptions): Metadata {
+export async function generateSEOMetadata(options: GenerateSEOMetadataOptions): Promise<Metadata> {
   const {
     title,
     description,
@@ -40,37 +42,21 @@ export function generateSEOMetadata(options: GenerateSEOMetadataOptions): Metada
     modifiedTime,
   } = options
 
-  const siteUrl = getSiteUrl()
+  // 获取网站配置
+  const siteConfig = await getLocalizedSiteConfig(locale)
+
+  const siteUrl = siteConfig.siteUrl
   const fullUrl = `${siteUrl}${path}`
 
-  // 默认 OG 图片
-  const defaultOgImage = `${siteUrl}/og-image.png`
-  const imageUrl = ogImage || defaultOgImage
+  // 使用配置中的 OG 图片或默认值
+  const imageUrl = ogImage || siteConfig.ogImageUrl || `${siteUrl}/assets/images/og-image.png`
 
-  // 标准关键词
-  const standardKeywords = [
-    'free online games',
-    'browser games',
-    'no download games',
-    'RunGame',
-  ]
-
-  // 根据语言添加本地化关键词
-  const localizedKeywords = locale === 'zh'
-    ? ['免费在线游戏', '网页游戏', '无需下载游戏']
-    : locale === 'es'
-    ? ['juegos gratis', 'juegos en línea', 'juegos de navegador']
-    : locale === 'fr'
-    ? ['jeux gratuits', 'jeux en ligne', 'jeux de navigateur']
-    : []
-
-  const allKeywords = [...keywords, ...standardKeywords, ...localizedKeywords].join(', ')
+  // 合并关键词：页面关键词 + 配置的默认关键词
+  const allKeywords = [...keywords, ...siteConfig.defaultKeywords].join(', ')
 
   // Open Graph locale 映射
   const ogLocaleMap: Record<string, string> = {
     'zh': 'zh_CN',
-    'es': 'es_ES',
-    'fr': 'fr_FR',
     'en': 'en_US',
   }
 
@@ -84,7 +70,7 @@ export function generateSEOMetadata(options: GenerateSEOMetadataOptions): Metada
       title,
       description,
       url: fullUrl,
-      siteName: 'RunGame',
+      siteName: siteConfig.siteName,
       locale: ogLocaleMap[locale] || 'en_US',
       type: type,
       images: [
@@ -105,8 +91,8 @@ export function generateSEOMetadata(options: GenerateSEOMetadataOptions): Metada
       title,
       description,
       images: [imageUrl],
-      creator: '@rungame',
-      site: '@rungame',
+      creator: siteConfig.twitterHandle || '@rungame',
+      site: siteConfig.twitterHandle || '@rungame',
     },
 
     // Canonical 和多语言链接
@@ -129,8 +115,8 @@ export function generateSEOMetadata(options: GenerateSEOMetadataOptions): Metada
     },
 
     // 其他元标签
+    // 注意：theme-color 已在根 layout 的 viewport 中定义，此处不重复
     other: {
-      'theme-color': '#2563eb',
       'mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-status-bar-style': 'black-translucent',
@@ -145,7 +131,7 @@ export function generateSEOMetadata(options: GenerateSEOMetadataOptions): Metada
  */
 function generateAlternateLanguages(path: string): Record<string, string> {
   const siteUrl = getSiteUrl()
-  const supportedLocales = ['en', 'zh', 'es', 'fr']
+  const supportedLocales = ['en', 'zh']
 
   // 移除路径中的语言前缀
   let cleanPath = path
@@ -163,8 +149,14 @@ function generateAlternateLanguages(path: string): Record<string, string> {
 
   const languages: Record<string, string> = {}
 
+  // 英文（默认语言）不带前缀
+  languages['en'] = `${siteUrl}${cleanPath}`
+
+  // 其他语言带前缀
   for (const locale of supportedLocales) {
-    languages[locale] = `${siteUrl}/${locale}${cleanPath}`
+    if (locale !== 'en') {
+      languages[locale] = `${siteUrl}/${locale}${cleanPath}`
+    }
   }
 
   // x-default 指向默认语言（英文）
@@ -175,22 +167,35 @@ function generateAlternateLanguages(path: string): Record<string, string> {
 
 /**
  * 生成游戏页面的 SEO 元数据
+ * 注意：此函数是异步的，因为它需要从数据库获取配置
  */
-export function generateGameSEOMetadata(options: {
+export async function generateGameSEOMetadata(options: {
   title: string
   description: string
   locale: string
   slug: string
   categoryName?: string
+  categoryIcon?: string
   tags?: string[]
   thumbnail?: string
   publishedTime?: string
   modifiedTime?: string
-}): Metadata {
-  const { title, description, locale, slug, categoryName, tags, thumbnail, publishedTime, modifiedTime } = options
+}): Promise<Metadata> {
+  const { title, description, locale, slug, categoryName, categoryIcon, tags, thumbnail, publishedTime, modifiedTime } = options
 
-  const seoTitle = `${title} - Play Free Online | RunGame`
-  const seoDescription = description || `Play ${title} for free on RunGame. ${categoryName ? `${categoryName} game.` : ''} No downloads, instant fun!`
+  // 国际化的标题和描述模板
+  const titleTemplates: Record<string, string> = {
+    en: `${title} - Play Free Online`,
+    zh: `${title} - 免费在线玩`,
+  }
+
+  const descriptionTemplates: Record<string, string> = {
+    en: description || `Play ${title} for free on RunGame. ${categoryName ? `${categoryName} game.` : ''} No downloads, instant fun!`,
+    zh: description || `在 RunGame 上免费玩 ${title}。${categoryName ? `${categoryName}游戏。` : ''}无需下载，即刻畅玩！`,
+  }
+
+  const seoTitle = titleTemplates[locale] || titleTemplates.en
+  const seoDescription = descriptionTemplates[locale] || descriptionTemplates.en
 
   const keywords = [
     title,
@@ -198,13 +203,25 @@ export function generateGameSEOMetadata(options: {
     ...(tags || []),
   ]
 
-  return generateSEOMetadata({
+  // 英文（默认语言）不带前缀
+  const pathPrefix = locale === 'en' ? '' : `/${locale}`
+
+  // 🎨 使用动态生成的 OG 图片（包含游戏信息）
+  const ogImage = generateGameOGImageUrl({
+    title,
+    category: categoryName,
+    categoryIcon, // 分类图标
+    thumbnail, // 游戏缩略图会显示在 OG 图片中
+    tags: tags?.join(','), // 标签（逗号分隔）
+  })
+
+  return await generateSEOMetadata({
     title: seoTitle,
     description: seoDescription,
     locale,
-    path: `/${locale}/games/${slug}`,
+    path: `${pathPrefix}/${slug}`, // slug 已经包含 "play/" 前缀
     keywords,
-    ogImage: thumbnail,
+    ogImage, // ✅ 使用动态生成的 OG 图片
     type: 'article',
     publishedTime,
     modifiedTime,
@@ -223,21 +240,48 @@ export function generateCategorySEOMetadata(options: {
 }): Metadata {
   const { categoryName, description, locale, slug, gameCount } = options
 
-  const seoTitle = `${categoryName} Games - Free Online ${categoryName} Games | RunGame`
-  const seoDescription = description || `Play ${gameCount}+ free ${categoryName.toLowerCase()} games on RunGame. Browser games, no downloads required!`
+  // 国际化的标题和描述模板（修复 RunGame 重复问题）
+  const titleTemplates: Record<string, string> = {
+    en: `${categoryName} Games - Free Online ${categoryName} Games`,
+    zh: `${categoryName}游戏 - 免费在线${categoryName}游戏`,
+  }
 
-  const keywords = [
-    categoryName,
-    `${categoryName} games`,
-    `free ${categoryName} games`,
-    `online ${categoryName} games`,
-  ]
+  const descriptionTemplates: Record<string, string> = {
+    en: description.length > 50
+      ? description
+      : `Play ${gameCount}+ free ${categoryName.toLowerCase()} games on RunGame. Enjoy browser-based gaming with no downloads required. Instant fun with action-packed ${categoryName.toLowerCase()} games!`,
+    zh: description.length > 50
+      ? description
+      : `在 RunGame 上玩 ${gameCount}+ 款免费${categoryName}游戏。享受无需下载的网页游戏。即刻体验充满乐趣的${categoryName}游戏！`,
+  }
+
+  const keywordsTemplates: Record<string, string[]> = {
+    en: [
+      categoryName,
+      `${categoryName} games`,
+      `free ${categoryName} games`,
+      `online ${categoryName} games`,
+    ],
+    zh: [
+      categoryName,
+      `${categoryName}游戏`,
+      `免费${categoryName}游戏`,
+      `在线${categoryName}游戏`,
+    ],
+  }
+
+  const seoTitle = titleTemplates[locale] || titleTemplates.en
+  const seoDescription = descriptionTemplates[locale] || descriptionTemplates.en
+  const keywords = keywordsTemplates[locale] || keywordsTemplates.en
+
+  // 英文（默认语言）不带前缀
+  const pathPrefix = locale === 'en' ? '' : `/${locale}`
 
   return generateSEOMetadata({
     title: seoTitle,
     description: seoDescription,
     locale,
-    path: `/${locale}/games/category/${slug}`,
+    path: `${pathPrefix}/category/${slug}`,
     keywords,
   })
 }
@@ -253,46 +297,91 @@ export function generateTagSEOMetadata(options: {
 }): Metadata {
   const { tagName, locale, slug, gameCount } = options
 
-  const seoTitle = `${tagName} Games - Play Free Online | RunGame`
-  const seoDescription = `Discover ${gameCount}+ free ${tagName.toLowerCase()} games on RunGame. Instant play, no downloads!`
+  // 国际化的标题和描述模板
+  const titleTemplates: Record<string, string> = {
+    en: `${tagName} Games - Play Free Online`,
+    zh: `${tagName}游戏 - 免费在线玩`,
+  }
 
-  const keywords = [
-    tagName,
-    `${tagName} games`,
-    `free ${tagName} games`,
-  ]
+  const descriptionTemplates: Record<string, string> = {
+    en: `Discover ${gameCount}+ free ${tagName.toLowerCase()} games on RunGame. Enjoy instant play with no downloads required. Browse our collection of ${tagName.toLowerCase()} games and start playing now!`,
+    zh: `在 RunGame 上发现 ${gameCount}+ 款免费${tagName}游戏。无需下载即可畅玩。浏览我们的${tagName}游戏合集，立即开始游戏！`,
+  }
+
+  const keywordsTemplates: Record<string, string[]> = {
+    en: [
+      tagName,
+      `${tagName} games`,
+      `free ${tagName} games`,
+    ],
+    zh: [
+      tagName,
+      `${tagName}游戏`,
+      `免费${tagName}游戏`,
+    ],
+  }
+
+  const seoTitle = titleTemplates[locale] || titleTemplates.en
+  const seoDescription = descriptionTemplates[locale] || descriptionTemplates.en
+  const keywords = keywordsTemplates[locale] || keywordsTemplates.en
+
+  // 英文（默认语言）不带前缀
+  const pathPrefix = locale === 'en' ? '' : `/${locale}`
 
   return generateSEOMetadata({
     title: seoTitle,
     description: seoDescription,
     locale,
-    path: `/${locale}/games/tags/${slug}`,
+    path: `${pathPrefix}/tag/${slug}`,
     keywords,
   })
 }
 
 /**
+ * 将游戏数量转换为稳定的范围表示
+ * 这样可以避免元数据频繁变化，对 SEO 更友好
+ */
+function getStableGameCountRange(count: number): string {
+  if (count === 0) return '1000+'
+  if (count < 50) return '50+'
+  if (count < 100) return '100+'
+  if (count < 500) return '500+'
+  if (count < 1000) return '1000+'
+  if (count < 5000) return '5000+'
+  return '10000+'
+}
+
+/**
  * 生成首页的 SEO 元数据
+ *
+ * @param locale - 语言代码
+ * @param totalGames - 游戏总数（可选，用于生成稳定的数量范围）
+ *
+ * SEO 最佳实践：
+ * - 使用数量范围而非精确数字，避免元数据频繁变化
+ * - 保持描述稳定，有利于搜索引擎理解和索引
  */
 export function generateHomeSEOMetadata(locale: string, totalGames: number = 0): Metadata {
+  // 转换为稳定的范围表示
+  const gameRange = getStableGameCountRange(totalGames)
+
   const titles: Record<string, string> = {
     en: 'RunGame - Free Online Games | Play Browser Games No Download',
     zh: 'RunGame - 免费在线游戏 | 无需下载的网页游戏',
-    es: 'RunGame - Juegos Gratis en Línea | Juegos de Navegador Sin Descarga',
-    fr: 'RunGame - Jeux Gratuits en Ligne | Jeux de Navigateur Sans Téléchargement',
   }
 
   const descriptions: Record<string, string> = {
-    en: `Play ${totalGames || '1000+'}  free online games on RunGame! Action, puzzle, racing, sports and more. Browser games, no downloads, instant fun!`,
-    zh: `在 RunGame 上玩 ${totalGames || '1000+'} 款免费在线游戏！动作、益智、赛车、体育等更多游戏。网页游戏，无需下载，即刻畅玩！`,
-    es: `¡Juega ${totalGames || '1000+'} juegos gratis en línea en RunGame! Acción, puzzles, carreras, deportes y más. Juegos de navegador, sin descargas, diversión instantánea!`,
-    fr: `Jouez à ${totalGames || '1000+'} jeux gratuits en ligne sur RunGame! Action, puzzle, course, sport et plus. Jeux de navigateur, pas de téléchargements, plaisir instantané!`,
+    en: `Play ${gameRange} free online games on RunGame! Action, puzzle, racing, sports and more. Browser games, no downloads, instant fun!`,
+    zh: `在 RunGame 上玩 ${gameRange} 款免费在线游戏！动作、益智、赛车、体育等更多游戏。网页游戏，无需下载，即刻畅玩！`,
   }
+
+  // 英文（默认语言）不带前缀
+  const pathPrefix = locale === 'en' ? '' : `/${locale}`
 
   return generateSEOMetadata({
     title: titles[locale] || titles.en,
     description: descriptions[locale] || descriptions.en,
     locale,
-    path: `/${locale}`,
+    path: pathPrefix,
   })
 }

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OG 图片预览工具 - RunGame</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .card h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.5em;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .preview {
+      margin-top: 30px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .preview h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+
+    .preview img {
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: opacity 0.3s ease;
+    }
+
+    .preview-url {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f7fafc;
+      border-radius: 6px;
+      word-break: break-all;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .copy-btn {
+      margin-top: 10px;
+      background: #48bb78;
+    }
+
+    .copy-btn:hover {
+      background: #38a169;
+    }
+
+    .hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #718096;
+    }
+
+    .quick-test {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+    }
+
+    .quick-test h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .quick-links a {
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+
+    .quick-links a:hover {
+      background: #764ba2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 OG 图片预览工具</h1>
+
+    <!-- 快速测试链接 -->
+    <div class="quick-test">
+      <h2>🚀 快速测试（点击查看示例）</h2>
+      <div class="quick-links">
+        <a href="/api/og/game?title=Subway%20Surfers&category=Action&playCount=50000&rating=4.8" target="_blank">游戏示例</a>
+        <a href="/api/og/category?name=Action%20Games&description=Fast-paced%20thrilling%20games&gameCount=150&icon=⚔️" target="_blank">分类示例</a>
+        <a href="/api/og/tag?name=Multiplayer&description=Play%20with%20friends%20online&gameCount=89&icon=👥" target="_blank">标签示例</a>
+        <a href="/api/og/pagetype?title=Hot%20Games&description=Most%20popular%20games&gameCount=100&type=GAME_LIST&icon=🔥" target="_blank">PageType示例</a>
+      </div>
+    </div>
+
+    <!-- 表单区域 -->
+    <div class="grid">
+      <!-- 游戏 OG 图片 -->
+      <div class="card">
+        <h2>🎮 游戏 OG 图片</h2>
+        <form id="gameForm">
+          <div class="form-group">
+            <label>游戏标题 *</label>
+            <input type="text" name="title" value="Subway Surfers" required>
+          </div>
+          <div class="form-group">
+            <label>分类</label>
+            <input type="text" name="category" value="Action">
+          </div>
+          <div class="form-group">
+            <label>播放次数</label>
+            <input type="number" name="playCount" value="50000">
+          </div>
+          <div class="form-group">
+            <label>评分 (0-5)</label>
+            <input type="number" step="0.1" name="rating" value="4.8">
+          </div>
+          <div class="form-group">
+            <label>缩略图 URL</label>
+            <input type="text" name="thumbnail" placeholder="https://...">
+            <div class="hint">留空则不显示缩略图</div>
+          </div>
+          <button type="submit">生成预览</button>
+        </form>
+      </div>
+
+      <!-- 分类 OG 图片 -->
+      <div class="card">
+        <h2>📁 分类 OG 图片</h2>
+        <form id="categoryForm">
+          <div class="form-group">
+            <label>分类名称 *</label>
+            <input type="text" name="name" value="Action Games" required>
+          </div>
+          <div class="form-group">
+            <label>描述</label>
+            <input type="text" name="description" value="Fast-paced thrilling games">
+          </div>
+          <div class="form-group">
+            <label>游戏数量</label>
+            <input type="number" name="gameCount" value="150">
+          </div>
+          <div class="form-group">
+            <label>图标 (emoji)</label>
+            <input type="text" name="icon" value="⚔️">
+          </div>
+          <button type="submit">生成预览</button>
+        </form>
+      </div>
+
+      <!-- 标签 OG 图片 -->
+      <div class="card">
+        <h2>🏷️ 标签 OG 图片</h2>
+        <form id="tagForm">
+          <div class="form-group">
+            <label>标签名称 *</label>
+            <input type="text" name="name" value="Multiplayer" required>
+          </div>
+          <div class="form-group">
+            <label>描述</label>
+            <input type="text" name="description" value="Play with friends online">
+          </div>
+          <div class="form-group">
+            <label>游戏数量</label>
+            <input type="number" name="gameCount" value="89">
+          </div>
+          <div class="form-group">
+            <label>图标 (emoji)</label>
+            <input type="text" name="icon" value="👥">
+          </div>
+          <button type="submit">生成预览</button>
+        </form>
+      </div>
+
+      <!-- PageType OG 图片 -->
+      <div class="card">
+        <h2>📄 PageType OG 图片</h2>
+        <form id="pagetypeForm">
+          <div class="form-group">
+            <label>页面标题 *</label>
+            <input type="text" name="title" value="Most Played Games" required>
+          </div>
+          <div class="form-group">
+            <label>描述</label>
+            <input type="text" name="description" value="Top 100 most played games">
+          </div>
+          <div class="form-group">
+            <label>游戏数量</label>
+            <input type="number" name="gameCount" value="100">
+          </div>
+          <div class="form-group">
+            <label>图标 (emoji)</label>
+            <input type="text" name="icon" value="🔥">
+          </div>
+          <div class="form-group">
+            <label>页面类型</label>
+            <select name="type">
+              <option value="GAME_LIST">GAME_LIST (紫色)</option>
+              <option value="DISPLAY_PAGE">DISPLAY_PAGE (青蓝色)</option>
+              <option value="OTHER_PAGE">OTHER_PAGE (灰色)</option>
+            </select>
+          </div>
+          <button type="submit">生成预览</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 预览区域 -->
+    <div class="preview" id="preview" style="display: none;">
+      <h2>📸 预览结果</h2>
+      <img id="previewImage" src="" alt="OG Image Preview">
+      <div class="preview-url" id="previewUrl"></div>
+      <button class="copy-btn" onclick="copyUrl()">📋 复制 URL</button>
+    </div>
+  </div>
+
+  <script>
+    function generateOGImage(formData, endpoint) {
+      const params = new URLSearchParams()
+
+      for (const [key, value] of formData.entries()) {
+        if (value) {
+          params.append(key, value)
+        }
+      }
+
+      // 添加时间戳防止缓存
+      params.append('_t', Date.now())
+
+      const url = `/api/og/${endpoint}?${params.toString()}`
+
+      // 显示预览
+      const preview = document.getElementById('preview')
+      const previewImage = document.getElementById('previewImage')
+      const previewUrl = document.getElementById('previewUrl')
+
+      // 添加加载状态
+      previewImage.style.opacity = '0.5'
+      previewImage.alt = '正在生成图片...'
+
+      // 加载图片
+      previewImage.onload = () => {
+        previewImage.style.opacity = '1'
+        previewImage.alt = 'OG Image Preview'
+      }
+
+      previewImage.onerror = () => {
+        previewImage.style.opacity = '1'
+        previewImage.alt = '图片加载失败'
+        alert('图片生成失败，请检查参数或查看控制台错误信息')
+      }
+
+      previewImage.src = url
+      // 显示不带时间戳的 URL
+      const cleanUrl = url.replace(/&_t=\d+/, '')
+      previewUrl.textContent = window.location.origin + cleanUrl
+      preview.style.display = 'block'
+
+      // 滚动到预览
+      setTimeout(() => {
+        preview.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    }
+
+    function copyUrl() {
+      const url = document.getElementById('previewUrl').textContent
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = event.target
+        const originalText = btn.textContent
+        btn.textContent = '✅ 已复制！'
+        setTimeout(() => {
+          btn.textContent = originalText
+        }, 2000)
+      })
+    }
+
+    // 游戏表单
+    document.getElementById('gameForm').addEventListener('submit', (e) => {
+      e.preventDefault()
+      const formData = new FormData(e.target)
+      generateOGImage(formData, 'game')
+    })
+
+    // 分类表单
+    document.getElementById('categoryForm').addEventListener('submit', (e) => {
+      e.preventDefault()
+      const formData = new FormData(e.target)
+      generateOGImage(formData, 'category')
+    })
+
+    // 标签表单
+    document.getElementById('tagForm').addEventListener('submit', (e) => {
+      e.preventDefault()
+      const formData = new FormData(e.target)
+      generateOGImage(formData, 'tag')
+    })
+
+    // PageType 表单
+    document.getElementById('pagetypeForm').addEventListener('submit', (e) => {
+      e.preventDefault()
+      const formData = new FormData(e.target)
+      generateOGImage(formData, 'pagetype')
+    })
+  </script>
+</body>
+</html>

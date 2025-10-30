@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
 import type { Metadata } from "next"
+import { generateSEOMetadata } from "@/lib/seo-helpers"
 
 interface ContactPageProps {
   params: Promise<{ locale: string }>
@@ -10,19 +11,13 @@ export async function generateMetadata({ params }: ContactPageProps): Promise<Me
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: "contact" })
 
-  return {
+  return generateSEOMetadata({
     title: t("metaTitle"),
     description: t("metaDescription"),
-    openGraph: {
-      title: t("metaTitle"),
-      description: t("metaDescription"),
-      type: "website",
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
-  }
+    locale,
+    path: `/contact`,
+    type: 'website',
+  })
 }
 
 export default async function ContactPage({ params }: ContactPageProps) {
@@ -50,21 +45,121 @@ export default async function ContactPage({ params }: ContactPageProps) {
         <p className="text-lg md:text-xl text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {/* 内容 */}
-      <article className="bg-card rounded-lg border border-border shadow-sm">
-        <div
-          className="p-6 md:p-8 lg:p-10 prose prose-slate dark:prose-invert max-w-none
-            prose-headings:font-bold prose-headings:text-foreground
-            prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
-            prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-            prose-p:text-base prose-p:leading-relaxed prose-p:text-foreground prose-p:mb-4
-            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-            prose-strong:text-foreground prose-strong:font-semibold
-            prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6
-            prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6
-            prose-li:text-foreground prose-li:mb-2"
-          dangerouslySetInnerHTML={{ __html: t.raw("content") }}
-        />
+      {/* 内容区域 */}
+      <article className="space-y-8">
+        {/* Introduction */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("intro.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("intro.content")}
+          </p>
+        </section>
+
+        {/* How to Reach Us */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("howToReach.title")}
+          </h2>
+
+          <div className="space-y-6">
+            {/* Email Section */}
+            <div>
+              <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
+                <span>📧</span>
+                {t("howToReach.email.title")}
+              </h3>
+              <div className="space-y-2 pl-6">
+                <div>
+                  <span className="font-semibold">{t("howToReach.email.general.label")}:</span>{" "}
+                  <a href={`mailto:${t("howToReach.email.general.email")}`} className="text-primary hover:underline">
+                    {t("howToReach.email.general.email")}
+                  </a>
+                </div>
+                <div>
+                  <span className="font-semibold">{t("howToReach.email.business.label")}:</span>{" "}
+                  <a href={`mailto:${t("howToReach.email.business.email")}`} className="text-primary hover:underline">
+                    {t("howToReach.email.business.email")}
+                  </a>
+                </div>
+                <div>
+                  <span className="font-semibold">{t("howToReach.email.support.label")}:</span>{" "}
+                  <a href={`mailto:${t("howToReach.email.support.email")}`} className="text-primary hover:underline">
+                    {t("howToReach.email.support.email")}
+                  </a>
+                </div>
+                <div>
+                  <span className="font-semibold">{t("howToReach.email.privacy.label")}:</span>{" "}
+                  <a href={`mailto:${t("howToReach.email.privacy.email")}`} className="text-primary hover:underline">
+                    {t("howToReach.email.privacy.email")}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Game Submissions */}
+            <div>
+              <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
+                <span>🎮</span>
+                {t("howToReach.gameSubmissions.title")}
+              </h3>
+              <p className="text-base leading-relaxed pl-6">
+                {t("howToReach.gameSubmissions.content")}
+              </p>
+            </div>
+
+            {/* Partnership Opportunities */}
+            <div>
+              <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
+                <span>💼</span>
+                {t("howToReach.partnerships.title")}
+              </h3>
+              <p className="text-base leading-relaxed pl-6">
+                {t("howToReach.partnerships.content")}
+              </p>
+            </div>
+
+            {/* Social Media */}
+            <div>
+              <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
+                <span>🌐</span>
+                {t("howToReach.social.title")}
+              </h3>
+              <p className="text-base mb-2 pl-6">{t("howToReach.social.content")}</p>
+              <ul className="space-y-1 pl-6">
+                <li className="flex items-center gap-2">
+                  <span className="text-primary">•</span>
+                  <span>{t("howToReach.social.twitter")}</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-primary">•</span>
+                  <span>{t("howToReach.social.facebook")}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Response Time */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("responseTime.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("responseTime.content")}
+          </p>
+        </section>
+
+        {/* Feedback & Suggestions */}
+        <section className="bg-card text-card-foreground rounded-lg border border-border shadow-sm p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 border-b border-border pb-3">
+            {t("feedback.title")}
+          </h2>
+          <p className="text-base leading-relaxed">
+            {t("feedback.content")}
+          </p>
+        </section>
       </article>
 
       {/* 返回首页 */}

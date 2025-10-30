@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@prisma/client'
+import {
+  CONTENT_SECTION_KEYS,
+  type ContentSection,
+} from '@/lib/types/game-info'
 
 // Zod Schema for Game form validation
 const gameSchema = z.object({
@@ -12,28 +16,145 @@ const gameSchema = z.object({
   banner: z.string().url('横幅图必须是有效的URL').optional(),
   embedUrl: z.string().min(1, '嵌入URL不能为空').url('嵌入URL必须是有效的URL'),
   gameUrl: z.string().min(1, '游戏URL不能为空').url('游戏URL必须是有效的URL'),
-  width: z.coerce.number().int().min(100, '宽度至少100px').default(800),
-  height: z.coerce.number().int().min(100, '高度至少100px').default(600),
+  // 新架构: dimensions 替代 width 和 height
+  dimensions: z.object({
+    width: z.coerce.number().int().min(100, '宽度至少100px').default(800),
+    height: z.coerce.number().int().min(100, '高度至少100px').default(600),
+    aspectRatio: z.string().default('4:3'),
+    orientation: z.enum(['landscape', 'portrait', 'square']).default('landscape'),
+  }).default({ width: 800, height: 600, aspectRatio: '4:3', orientation: 'landscape' }),
+  // 新架构: 英文基础字段
+  title: z.string().min(1, '英文标题不能为空'),
+  description: z.string().optional(),
+  keywords: z.string().optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  // 新增字段
+  screenshots: z.array(z.string().url()).default([]),
+  videos: z.array(z.string().url()).default([]),
+  developer: z.string().optional(),
+  developerUrl: z.string().url().optional(),
+  sourcePlatform: z.string().optional(),
+  sourcePlatformId: z.string().optional(),
   categoryId: z.string().min(1, '必须选择分类'),
   tagIds: z.array(z.string()).default([]),
   isFeatured: z.boolean().default(false),
-  isPublished: z.boolean().default(false),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  // 新架构: status 替代 isPublished (使用大写枚举值)
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED', 'MAINTENANCE']).default('DRAFT'),
+  // 新架构: gameInfo (ContentSections)
+  gameInfo: z.object({
+    [CONTENT_SECTION_KEYS.CONTROLS]: z.object({
+      content: z.union([
+        z.string(),
+        z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+      ]),
+      order: z.number().int().min(1),
+    }).optional(),
+    [CONTENT_SECTION_KEYS.HOW_TO_PLAY]: z.object({
+      content: z.union([
+        z.string(),
+        z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+      ]),
+      order: z.number().int().min(1),
+    }).optional(),
+    [CONTENT_SECTION_KEYS.GAME_DETAILS]: z.object({
+      content: z.union([
+        z.string(),
+        z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+      ]),
+      order: z.number().int().min(1),
+    }).optional(),
+    [CONTENT_SECTION_KEYS.FAQ]: z.object({
+      content: z.union([
+        z.string(),
+        z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+      ]),
+      order: z.number().int().min(1),
+    }).optional(),
+    [CONTENT_SECTION_KEYS.EXTRAS]: z.object({
+      content: z.union([
+        z.string(),
+        z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+      ]),
+      order: z.number().int().min(1),
+    }).optional(),
+  }).optional(),
+  // 翻译数据（非英文语言）
   translations: z.array(
     z.object({
-      locale: z.enum(['en', 'zh', 'es', 'fr']),
+      locale: z.string(), // 动态语言，不硬编码
       title: z.string().min(1, '标题不能为空'),
       description: z.string().optional(),
-      longDescription: z.string().optional(),
-      instructions: z.string().optional(),
       keywords: z.string().optional(),
       metaTitle: z.string().optional(),
       metaDescription: z.string().optional(),
+      // 新架构: translationInfo (ContentSections)
+      translationInfo: z.object({
+        [CONTENT_SECTION_KEYS.CONTROLS]: z.object({
+          content: z.union([
+            z.string(),
+            z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+          ]),
+          order: z.number().int().min(1),
+        }).optional(),
+        [CONTENT_SECTION_KEYS.HOW_TO_PLAY]: z.object({
+          content: z.union([
+            z.string(),
+            z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+          ]),
+          order: z.number().int().min(1),
+        }).optional(),
+        [CONTENT_SECTION_KEYS.GAME_DETAILS]: z.object({
+          content: z.union([
+            z.string(),
+            z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+          ]),
+          order: z.number().int().min(1),
+        }).optional(),
+        [CONTENT_SECTION_KEYS.FAQ]: z.object({
+          content: z.union([
+            z.string(),
+            z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+          ]),
+          order: z.number().int().min(1),
+        }).optional(),
+        [CONTENT_SECTION_KEYS.EXTRAS]: z.object({
+          content: z.union([
+            z.string(),
+            z.object({ type: z.literal('doc'), content: z.array(z.any()).optional() })
+          ]),
+          order: z.number().int().min(1),
+        }).optional(),
+      }).optional(),
     })
-  ).min(1, '至少需要一个语言的翻译'),
+  ).default([]),
 })
 
 export type GameFormData = z.infer<typeof gameSchema>
+
+/**
+ * 辅助函数：根据子分类ID获取父分类ID
+ *
+ * @param categoryId 子分类ID
+ * @returns 父分类ID
+ * @throws 如果传入的是主分类ID（parentId为null）则抛出错误
+ */
+async function getMainCategoryId(categoryId: string): Promise<string> {
+  const category = await prisma.category.findUnique({
+    where: { id: categoryId },
+    select: { parentId: true }
+  })
+
+  if (!category) {
+    throw new Error('分类不存在')
+  }
+
+  if (!category.parentId) {
+    throw new Error('只能选择子分类，不能选择主分类')
+  }
+
+  return category.parentId
+}
 
 // Create a new game
 export async function createGame(data: GameFormData) {
@@ -52,6 +173,9 @@ export async function createGame(data: GameFormData) {
       }
     }
 
+    // 获取主分类ID（从选中的子分类查询）
+    const mainCategoryId = await getMainCategoryId(validated.categoryId)
+
     // Create game with translations and tags
     const game = await prisma.game.create({
       data: {
@@ -60,15 +184,48 @@ export async function createGame(data: GameFormData) {
         banner: validated.banner || null,
         embedUrl: validated.embedUrl,
         gameUrl: validated.gameUrl,
-        width: validated.width,
-        height: validated.height,
-        categoryId: validated.categoryId,
+        // 新架构: dimensions JSON
+        dimensions: validated.dimensions as Prisma.InputJsonValue,
+        // 新架构: 英文基础字段
+        title: validated.title,
+        description: validated.description || null,
+        keywords: validated.keywords || null,
+        metaTitle: validated.metaTitle || null,
+        metaDescription: validated.metaDescription || null,
+        // 新增字段
+        screenshots: validated.screenshots,
+        videos: validated.videos,
+        developer: validated.developer || null,
+        developerUrl: validated.developerUrl || null,
+        sourcePlatform: validated.sourcePlatform || null,
+        sourcePlatformId: validated.sourcePlatformId || null,
         isFeatured: validated.isFeatured,
-        isPublished: validated.isPublished,
-        ...(validated.metadata && { metadata: validated.metadata as Prisma.InputJsonValue }),
+        // 新架构: status
+        status: validated.status,
+        // 新架构: gameInfo (ContentSections)
+        ...(validated.gameInfo && { gameInfo: validated.gameInfo as Prisma.InputJsonValue }),
+        // 翻译数据
         translations: {
-          create: validated.translations,
+          create: validated.translations.map(t => ({
+            locale: t.locale,
+            title: t.title,
+            description: t.description || null,
+            keywords: t.keywords || null,
+            metaTitle: t.metaTitle || null,
+            metaDescription: t.metaDescription || null,
+            // translationInfo (ContentSections)
+            ...(t.translationInfo && { translationInfo: t.translationInfo as Prisma.InputJsonValue }),
+          })),
         },
+        // 分类关联（使用 GameCategory 关联表）
+        gameCategories: {
+          create: {
+            categoryId: validated.categoryId,      // 子分类ID
+            mainCategoryId: mainCategoryId,        // 父分类ID
+            isPrimary: true,                       // 标记为主分类
+          }
+        },
+        // 标签关联
         tags: {
           create: validated.tagIds.map((tagId) => ({
             tagId,
@@ -78,6 +235,11 @@ export async function createGame(data: GameFormData) {
       include: {
         translations: true,
         tags: true,
+        gameCategories: {
+          include: {
+            category: true,
+          }
+        },
       },
     })
 
@@ -88,25 +250,31 @@ export async function createGame(data: GameFormData) {
       return { success: false, error: error.issues[0].message }
     }
     console.error('创建游戏失败:', error)
-    return { success: false, error: '创建游戏失败，请稍后重试' }
+    return { success: false, error: error instanceof Error ? error.message : '创建游戏失败，请稍后重试' }
   }
 }
 
-// Get a single game by ID for editing
+/**
+ * 获取游戏基础信息（用于编辑）
+ *
+ * ✅ 性能优化：不加载翻译数据，翻译数据将在用户切换到对应语言标签时按需加载
+ */
 export async function getGame(id: string) {
   try {
     const game = await prisma.game.findUnique({
       where: { id },
       include: {
-        translations: {
-          orderBy: { locale: 'asc' },
-        },
+        // ✅ 不加载翻译数据
         tags: {
           include: {
             tag: true,
           },
         },
-        category: true,
+        gameCategories: {
+          include: {
+            category: true,
+          },
+        },
       },
     })
 
@@ -124,6 +292,34 @@ export async function getGame(id: string) {
   } catch (error) {
     console.error('获取游戏失败:', error)
     return { success: false, error: '获取游戏失败' }
+  }
+}
+
+/**
+ * 按需加载某个语言的翻译数据
+ *
+ * @param gameId 游戏ID
+ * @param locale 语言代码（如 'zh', 'es', 'fr'）
+ * @returns 该语言的翻译数据，如果不存在则返回空对象
+ */
+export async function getGameTranslation(gameId: string, locale: string) {
+  try {
+    const translation = await prisma.gameTranslation.findUnique({
+      where: {
+        gameId_locale: {
+          gameId,
+          locale,
+        },
+      },
+    })
+
+    return {
+      success: true,
+      data: translation || null,
+    }
+  } catch (error) {
+    console.error(`获取游戏翻译失败 (locale: ${locale}):`, error)
+    return { success: false, error: '获取翻译数据失败' }
   }
 }
 
@@ -147,6 +343,9 @@ export async function updateGame(id: string, data: GameFormData) {
       }
     }
 
+    // 获取主分类ID（从选中的子分类查询）
+    const mainCategoryId = await getMainCategoryId(validated.categoryId)
+
     // Update game in a transaction
     const game = await prisma.$transaction(async (tx) => {
       // Delete existing translations
@@ -159,6 +358,11 @@ export async function updateGame(id: string, data: GameFormData) {
         where: { gameId: id },
       })
 
+      // Delete existing category relationships
+      await tx.gameCategory.deleteMany({
+        where: { gameId: id },
+      })
+
       // Update game with new data
       return await tx.game.update({
         where: { id },
@@ -168,15 +372,48 @@ export async function updateGame(id: string, data: GameFormData) {
           banner: validated.banner || null,
           embedUrl: validated.embedUrl,
           gameUrl: validated.gameUrl,
-          width: validated.width,
-          height: validated.height,
-          categoryId: validated.categoryId,
+          // 新架构: dimensions JSON
+          dimensions: validated.dimensions as Prisma.InputJsonValue,
+          // 新架构: 英文基础字段
+          title: validated.title,
+          description: validated.description || null,
+          keywords: validated.keywords || null,
+          metaTitle: validated.metaTitle || null,
+          metaDescription: validated.metaDescription || null,
+          // 新增字段
+          screenshots: validated.screenshots,
+          videos: validated.videos,
+          developer: validated.developer || null,
+          developerUrl: validated.developerUrl || null,
+          sourcePlatform: validated.sourcePlatform || null,
+          sourcePlatformId: validated.sourcePlatformId || null,
           isFeatured: validated.isFeatured,
-          isPublished: validated.isPublished,
-          ...(validated.metadata && { metadata: validated.metadata as Prisma.InputJsonValue }),
+          // 新架构: status
+          status: validated.status,
+          // 新架构: gameInfo (ContentSections)
+          ...(validated.gameInfo && { gameInfo: validated.gameInfo as Prisma.InputJsonValue }),
+          // 翻译数据
           translations: {
-            create: validated.translations,
+            create: validated.translations.map(t => ({
+              locale: t.locale,
+              title: t.title,
+              description: t.description || null,
+              keywords: t.keywords || null,
+              metaTitle: t.metaTitle || null,
+              metaDescription: t.metaDescription || null,
+              // translationInfo (ContentSections)
+              ...(t.translationInfo && { translationInfo: t.translationInfo as Prisma.InputJsonValue }),
+            })),
           },
+          // 分类关联（使用 GameCategory 关联表）
+          gameCategories: {
+            create: {
+              categoryId: validated.categoryId,      // 子分类ID
+              mainCategoryId: mainCategoryId,        // 父分类ID
+              isPrimary: true,                       // 标记为主分类
+            }
+          },
+          // 标签关联
           tags: {
             create: validated.tagIds.map((tagId) => ({
               tagId,
@@ -186,6 +423,11 @@ export async function updateGame(id: string, data: GameFormData) {
         include: {
           translations: true,
           tags: true,
+          gameCategories: {
+            include: {
+              category: true,
+            }
+          },
         },
       })
     })
@@ -198,7 +440,7 @@ export async function updateGame(id: string, data: GameFormData) {
       return { success: false, error: error.issues[0].message }
     }
     console.error('更新游戏失败:', error)
-    return { success: false, error: '更新游戏失败，请稍后重试' }
+    return { success: false, error: error instanceof Error ? error.message : '更新游戏失败，请稍后重试' }
   }
 }
 
@@ -217,25 +459,46 @@ export async function deleteGame(id: string) {
   }
 }
 
-// Get all categories for select dropdown
+/**
+ * 获取所有子分类（用于 CategoryCascader）
+ *
+ * 只返回子分类（parentId !== null），并包含父分类信息
+ * 🔥 优化：使用缓存层，避免重复查询数据库
+ */
 export async function getCategories() {
   try {
-    const categories = await prisma.category.findMany({
-      include: {
-        translations: {
-          where: { locale: 'zh' },
-          select: { name: true },
-        },
-      },
-      orderBy: { sortOrder: 'asc' },
-    })
+    const { getAllCategoriesForAdmin } = await import('@/lib/data/categories/cache')
+    const allCategories = await getAllCategoriesForAdmin('zh')
+
+    // 创建一个 Map 用于快速查找父分类
+    const categoryMap = new Map(allCategories.map(cat => [cat.id, cat]))
+
+    // 过滤出子分类（parentId !== null）
+    const subCategories = allCategories
+      .filter(cat => cat.parentId !== null)
+      .map(cat => {
+        const parent = cat.parentId ? categoryMap.get(cat.parentId) : null
+
+        return {
+          id: cat.id,
+          name: cat.name,
+          nameCn: cat.name, // 已经是中文翻译
+          parentId: cat.parentId!,
+          parent: parent ? {
+            id: parent.id,
+            name: parent.name,
+            nameCn: parent.name, // 已经是中文翻译
+          } : {
+            id: cat.parentId!,
+            name: '未知分类',
+            nameCn: '未知分类',
+          },
+        }
+      })
 
     return {
       success: true,
-      data: categories.map((cat) => ({
-        id: cat.id,
-        name: cat.translations[0]?.name || cat.slug,
-      })),
+      data: subCategories,
     }
   } catch (error) {
     console.error('获取分类失败:', error)
@@ -244,23 +507,17 @@ export async function getCategories() {
 }
 
 // Get all tags for multi-select
+// 🔥 优化：使用缓存层，避免重复查询数据库
 export async function getTags() {
   try {
-    const tags = await prisma.tag.findMany({
-      include: {
-        translations: {
-          where: { locale: 'zh' },
-          select: { name: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+    const { getAllTagsForAdmin } = await import('@/lib/data/tags/cache')
+    const allTags = await getAllTagsForAdmin('zh')
 
     return {
       success: true,
-      data: tags.map((tag) => ({
+      data: allTags.map((tag) => ({
         id: tag.id,
-        name: tag.translations[0]?.name || tag.slug,
+        name: tag.name, // 已经是中文翻译
       })),
     }
   } catch (error) {
@@ -270,7 +527,7 @@ export async function getTags() {
 }
 
 // Toggle game published status
-export async function toggleGamePublishStatus(gameId: string, currentStatus: boolean) {
+export async function toggleGamePublishStatus(gameId: string, currentStatus: string) {
   try {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
@@ -280,11 +537,13 @@ export async function toggleGamePublishStatus(gameId: string, currentStatus: boo
       return { success: false, error: '游戏不存在' }
     }
 
+    // 切换状态: PUBLISHED <-> DRAFT
+    const newStatus = currentStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'
+
     const updatedGame = await prisma.game.update({
       where: { id: gameId },
       data: {
-        isPublished: !currentStatus,
-        publishedAt: !currentStatus ? new Date() : null,
+        status: newStatus,
       },
     })
 
@@ -292,7 +551,7 @@ export async function toggleGamePublishStatus(gameId: string, currentStatus: boo
     return {
       success: true,
       data: updatedGame,
-      message: updatedGame.isPublished ? '已发布' : '已设为草稿',
+      message: updatedGame.status === 'PUBLISHED' ? '已发布' : '已设为草稿',
     }
   } catch (error) {
     console.error('切换发布状态失败:', error)

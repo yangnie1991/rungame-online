@@ -1,22 +1,16 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { getEnabledLanguagesCached } from "@/lib/data/languages/cache"
+import { CACHE_TAGS } from "@/lib/cache-helpers"
 
 // 获取所有已启用的语言（用于表单的多语言Tab）
+// 🔥 优化：使用缓存层，避免重复查询数据库
 export async function getEnabledLanguages() {
   try {
-    const languages = await prisma.language.findMany({
-      where: { isEnabled: true },
-      orderBy: { sortOrder: 'asc' },
-      select: {
-        id: true,
-        code: true,
-        name: true,
-        nativeName: true,
-      }
-    })
+    const languages = await getEnabledLanguagesCached()
 
     return {
       success: true,
@@ -41,7 +35,11 @@ export async function deleteLanguage(languageId: string) {
     await prisma.language.delete({
       where: { id: languageId }
     })
+
+    // 失效语言缓存
+    revalidateTag(CACHE_TAGS.LANGUAGES)
     revalidatePath("/admin/languages")
+
     return { success: true }
   } catch (error) {
     console.error("删除语言失败:", error)
@@ -85,11 +83,14 @@ export async function createLanguage(data: LanguageFormData) {
         isDefault: validated.isDefault,
         isEnabled: validated.isEnabled,
         sortOrder: validated.sortOrder,
-        direction: validated.direction,
+        direction: validated.direction.toUpperCase() as "LTR" | "RTL",
       }
     })
 
+    // 失效语言缓存
+    revalidateTag(CACHE_TAGS.LANGUAGES)
     revalidatePath("/admin/languages")
+
     return { success: true, data: language }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -132,12 +133,15 @@ export async function updateLanguage(languageId: string, data: LanguageFormData)
         isDefault: validated.isDefault,
         isEnabled: validated.isEnabled,
         sortOrder: validated.sortOrder,
-        direction: validated.direction,
+        direction: validated.direction.toUpperCase() as "LTR" | "RTL",
       }
     })
 
+    // 失效语言缓存
+    revalidateTag(CACHE_TAGS.LANGUAGES)
     revalidatePath("/admin/languages")
     revalidatePath(`/admin/languages/${languageId}`)
+
     return { success: true, data: language }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -185,7 +189,10 @@ export async function toggleLanguageStatus(languageId: string, currentStatus: bo
       data: { isEnabled: !currentStatus }
     })
 
+    // 失效语言缓存
+    revalidateTag(CACHE_TAGS.LANGUAGES)
     revalidatePath("/admin/languages")
+
     return {
       success: true,
       data: updatedLanguage,

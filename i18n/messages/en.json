@@ -16,12 +16,26 @@
     "categories": "Categories",
     "tags": "Tags",
     "allGames": "All Games",
+    "allCategories": "All Categories",
+    "subCategories": "Subcategories",
+    "browseCategoriesDescription": "Explore games by category and find your favorites",
+    "noGamesFound": "No games found",
+    "siteName": "RunGame",
     "viewAll": "View All",
     "playNow": "Play Now",
     "plays": "plays",
     "noGames": "No games available",
     "loading": "Loading...",
-    "gamesCount": "{count} games"
+    "gamesCount": "{count} games",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "more": "more",
+    "all": "All",
+    "sortBy": "Sort by",
+    "sortByPopular": "Most Popular",
+    "sortByNewest": "Newest",
+    "sortByName": "Name"
   },
   "home": {
     "hero": "Play Free Online Games",
@@ -70,27 +84,255 @@
     "subtitle": "Learn more about RunGame",
     "metaTitle": "About Us - RunGame Free Online Games",
     "metaDescription": "Learn about RunGame, your premier destination for free online games. Discover our mission, values, and commitment to providing quality gaming experiences.",
-    "content": "<h2>Who We Are</h2>\n<p>RunGame is your premier destination for free online games. We are passionate gamers who believe that everyone deserves access to quality entertainment without barriers. Founded with the mission to make gaming accessible to all, we've built a platform where you can instantly play thousands of games without downloads, registrations, or paywalls.</p>\n\n<h2>Our Mission</h2>\n<p>Our mission is simple: to bring joy and entertainment to people around the world through accessible, high-quality gaming experiences. We carefully curate our game collection to ensure every title meets our standards for fun, engagement, and quality.</p>\n\n<h2>What We Offer</h2>\n<ul>\n  <li><strong>Instant Play:</strong> No downloads, no installations - just click and play</li>\n  <li><strong>Free Forever:</strong> All our games are completely free to play</li>\n  <li><strong>Diverse Collection:</strong> From puzzles to action games, we have something for everyone</li>\n  <li><strong>Mobile Friendly:</strong> Play on any device, anywhere, anytime</li>\n  <li><strong>Regular Updates:</strong> New games added weekly to keep the experience fresh</li>\n  <li><strong>Family Safe:</strong> All content is carefully reviewed for appropriate audiences</li>\n</ul>\n\n<h2>Our Values</h2>\n<p><strong>Accessibility:</strong> Gaming should be available to everyone, regardless of their device or location.</p>\n<p><strong>Quality:</strong> We believe in quality over quantity, carefully selecting each game in our catalog.</p>\n<p><strong>Community:</strong> Our players are at the heart of everything we do.</p>\n<p><strong>Innovation:</strong> We continuously improve our platform to provide the best gaming experience.</p>\n<p><strong>Safety:</strong> We prioritize user safety and privacy in all our operations.</p>\n\n<h2>Why Choose RunGame?</h2>\n<p>Unlike other gaming platforms, RunGame focuses on simplicity and accessibility. We don't believe in complicated sign-up processes or intrusive ads. Our platform is designed to get you playing as quickly as possible. Whether you're looking for a quick break during work, entertaining kids at home, or spending a relaxing evening, RunGame has the perfect game for you.</p>\n\n<h2>Join Our Community</h2>\n<p>Join millions of players worldwide who trust RunGame for their daily gaming fix. Whether you're a casual player or a dedicated gamer, you'll find something to love in our ever-growing collection.</p>\n\n<p>Thank you for choosing RunGame. Let's play!</p>"
+    "whoWeAre": {
+      "title": "Who We Are",
+      "content": "RunGame is your premier destination for free online games. We are passionate gamers who believe that everyone deserves access to quality entertainment without barriers. Founded with the mission to make gaming accessible to all, we've built a platform where you can instantly play thousands of games without downloads, registrations, or paywalls."
+    },
+    "mission": {
+      "title": "Our Mission",
+      "content": "Our mission is simple: to bring joy and entertainment to people around the world through accessible, high-quality gaming experiences. We carefully curate our game collection to ensure every title meets our standards for fun, engagement, and quality."
+    },
+    "offer": {
+      "title": "What We Offer",
+      "items": {
+        "instantPlay": {
+          "label": "Instant Play",
+          "text": "No downloads, no installations - just click and play"
+        },
+        "free": {
+          "label": "Free Forever",
+          "text": "All our games are completely free to play"
+        },
+        "diverse": {
+          "label": "Diverse Collection",
+          "text": "From puzzles to action games, we have something for everyone"
+        },
+        "mobile": {
+          "label": "Mobile Friendly",
+          "text": "Play on any device, anywhere, anytime"
+        },
+        "updates": {
+          "label": "Regular Updates",
+          "text": "New games added weekly to keep the experience fresh"
+        },
+        "safe": {
+          "label": "Family Safe",
+          "text": "All content is carefully reviewed for appropriate audiences"
+        }
+      }
+    },
+    "values": {
+      "title": "Our Values",
+      "items": {
+        "accessibility": {
+          "label": "Accessibility",
+          "text": "Gaming should be available to everyone, regardless of their device or location."
+        },
+        "quality": {
+          "label": "Quality",
+          "text": "We believe in quality over quantity, carefully selecting each game in our catalog."
+        },
+        "community": {
+          "label": "Community",
+          "text": "Our players are at the heart of everything we do."
+        },
+        "innovation": {
+          "label": "Innovation",
+          "text": "We continuously improve our platform to provide the best gaming experience."
+        },
+        "safety": {
+          "label": "Safety",
+          "text": "We prioritize user safety and privacy in all our operations."
+        }
+      }
+    },
+    "whyChoose": {
+      "title": "Why Choose RunGame?",
+      "content": "Unlike other gaming platforms, RunGame focuses on simplicity and accessibility. We don't believe in complicated sign-up processes or intrusive ads. Our platform is designed to get you playing as quickly as possible. Whether you're looking for a quick break during work, entertaining kids at home, or spending a relaxing evening, RunGame has the perfect game for you."
+    },
+    "community": {
+      "title": "Join Our Community",
+      "content": "Join millions of players worldwide who trust RunGame for their daily gaming fix. Whether you're a casual player or a dedicated gamer, you'll find something to love in our ever-growing collection.",
+      "thanks": "Thank you for choosing RunGame. Let's play!"
+    }
   },
   "privacy": {
     "title": "Privacy Policy",
     "subtitle": "How we protect your privacy",
     "metaTitle": "Privacy Policy - RunGame",
     "metaDescription": "Read our privacy policy to understand how we collect, use, and protect your information when you use RunGame.",
-    "content": "<p><em>Last updated: October 15, 2025</em></p>\n\n<h2>Introduction</h2>\n<p>Welcome to RunGame (\"we,\" \"our,\" or \"us\"). We are committed to protecting your privacy and ensuring you have a positive experience on our website. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website rungame.online.</p>\n\n<h2>Information We Collect</h2>\n<h3>Automatically Collected Information</h3>\n<p>When you visit RunGame, we automatically collect certain information about your device and browsing actions, including IP address, browser type, operating system, pages viewed, and game play statistics.</p>\n\n<h3>Cookies and Tracking Technologies</h3>\n<p>We use cookies and similar tracking technologies to track activity on our website and enhance user experience.</p>\n\n<h2>Google AdSense and Third-Party Advertising</h2>\n<p>We use Google AdSense to display advertisements on RunGame. Google AdSense uses cookies and web beacons to serve ads based on your visits to our site and other sites on the Internet.</p>\n\n<p><strong>Google's Use of Information:</strong></p>\n<ul>\n  <li>Google uses cookies to serve ads based on your prior visits to our website or other websites</li>\n  <li>You may opt out of personalized advertising by visiting <a href=\"https://www.google.com/settings/ads\" target=\"_blank\" rel=\"noopener noreferrer\">Google Ads Settings</a></li>\n  <li>You can also opt out of third-party vendors' use of cookies by visiting <a href=\"http://www.aboutads.info/choices/\" target=\"_blank\" rel=\"noopener noreferrer\">aboutads.info</a></li>\n</ul>\n\n<h2>Google Analytics</h2>\n<p>We use Google Analytics to analyze website traffic and usage patterns. You can opt out of Google Analytics by installing the <a href=\"https://tools.google.com/dlpage/gaoptout\" target=\"_blank\" rel=\"noopener noreferrer\">Google Analytics Opt-out Browser Add-on</a>.</p>\n\n<h2>How We Use Your Information</h2>\n<p>We use the information we collect to provide, operate, and maintain our website, improve user experience, analyze site usage, and display relevant advertisements.</p>\n\n<h2>Children's Privacy</h2>\n<p>Our website is intended for general audiences and is not directed at children under 13 years of age. We do not knowingly collect personal information from children under 13.</p>\n\n<h2>Your Privacy Rights</h2>\n<p>Depending on your location, you may have certain rights regarding your personal information, including the right to access, correct, delete your information, and object to processing.</p>\n\n<h2>Contact Us</h2>\n<p>If you have any questions about this Privacy Policy, please contact us at privacy@rungame.online</p>"
+    "lastUpdated": "Last updated: October 15, 2025",
+    "introduction": {
+      "title": "Introduction",
+      "content": "Welcome to RunGame. We are committed to protecting your privacy and ensuring you have a positive experience on our website. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website rungame.online."
+    },
+    "informationWeCollect": {
+      "title": "Information We Collect",
+      "automaticInfo": {
+        "title": "Automatically Collected Information",
+        "content": "When you visit RunGame, we automatically collect certain information about your device and browsing actions, including IP address, browser type, operating system, pages viewed, and game play statistics."
+      },
+      "cookies": {
+        "title": "Cookies and Tracking Technologies",
+        "content": "We use cookies and similar tracking technologies to track activity on our website and enhance user experience."
+      }
+    },
+    "advertising": {
+      "title": "Google AdSense and Third-Party Advertising",
+      "intro": "We use Google AdSense to display advertisements on RunGame. Google AdSense uses cookies and web beacons to serve ads based on your visits to our site and other sites on the Internet.",
+      "googleUse": {
+        "title": "Google's Use of Information:",
+        "items": [
+          "Google uses cookies to serve ads based on your prior visits to our website or other websites",
+          "You may opt out of personalized advertising by visiting Google Ads Settings",
+          "You can also opt out of third-party vendors' use of cookies by visiting aboutads.info"
+        ]
+      }
+    },
+    "analytics": {
+      "title": "Google Analytics",
+      "content": "We use Google Analytics to analyze website traffic and usage patterns. You can opt out of Google Analytics by installing the Google Analytics Opt-out Browser Add-on."
+    },
+    "howWeUse": {
+      "title": "How We Use Your Information",
+      "content": "We use the information we collect to provide, operate, and maintain our website, improve user experience, analyze site usage, and display relevant advertisements."
+    },
+    "childrenPrivacy": {
+      "title": "Children's Privacy",
+      "content": "Our website is intended for general audiences and is not directed at children under 13 years of age. We do not knowingly collect personal information from children under 13."
+    },
+    "yourRights": {
+      "title": "Your Privacy Rights",
+      "content": "Depending on your location, you may have certain rights regarding your personal information, including the right to access, correct, delete your information, and object to processing."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "content": "If you have any questions about this Privacy Policy, please contact us at privacy@rungame.online"
+    }
   },
   "terms": {
     "title": "Terms of Service",
     "subtitle": "Rules and guidelines for using RunGame",
     "metaTitle": "Terms of Service - RunGame",
     "metaDescription": "Read the terms and conditions that govern your use of RunGame and our services.",
-    "content": "<p><em>Last updated: October 15, 2025</em></p>\n\n<h2>Agreement to Terms</h2>\n<p>Welcome to RunGame. By accessing or using our website at rungame.online, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you do not have permission to access the Service.</p>\n\n<h2>Use License</h2>\n<p>We grant you a limited, non-exclusive, non-transferable, revocable license to access and use RunGame for personal, non-commercial entertainment purposes.</p>\n\n<h2>Acceptable Use</h2>\n<p>You agree to use RunGame only for lawful purposes. You agree not to violate any applicable laws or regulations, infringe upon the rights of others, transmit any harmful or malicious code, or attempt to gain unauthorized access to our systems.</p>\n\n<h2>Third-Party Games</h2>\n<p>RunGame hosts games from third-party developers and publishers. These games are subject to their own terms and conditions. We are not responsible for the content, functionality, or availability of third-party games.</p>\n\n<h2>Intellectual Property</h2>\n<p>The Service and its original content, features, and functionality are owned by RunGame and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.</p>\n\n<h2>Disclaimer of Warranties</h2>\n<p>THE SERVICE IS PROVIDED \"AS IS\" AND \"AS AVAILABLE\" WITHOUT ANY WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED.</p>\n\n<h2>Limitation of Liability</h2>\n<p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, RUNGAME SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.</p>\n\n<h2>Advertising</h2>\n<p>RunGame displays advertisements to support the free availability of games. By using the Service, you agree that we may display advertisements within the Service.</p>\n\n<h2>Changes to Terms</h2>\n<p>We reserve the right to modify these Terms at any time. Your continued use of the Service after changes constitutes acceptance of the modified Terms.</p>\n\n<h2>Contact Us</h2>\n<p>If you have any questions about these Terms, please contact us at legal@rungame.online</p>"
+    "lastUpdated": "Last updated: October 15, 2025",
+    "agreement": {
+      "title": "Agreement to Terms",
+      "content": "Welcome to RunGame. By accessing or using our website at rungame.online, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you do not have permission to access the Service."
+    },
+    "license": {
+      "title": "Use License",
+      "content": "We grant you a limited, non-exclusive, non-transferable, revocable license to access and use RunGame for personal, non-commercial entertainment purposes."
+    },
+    "acceptableUse": {
+      "title": "Acceptable Use",
+      "content": "You agree to use RunGame only for lawful purposes. You agree not to violate any applicable laws or regulations, infringe upon the rights of others, transmit any harmful or malicious code, or attempt to gain unauthorized access to our systems."
+    },
+    "thirdPartyGames": {
+      "title": "Third-Party Games",
+      "content": "RunGame hosts games from third-party developers and publishers. These games are subject to their own terms and conditions. We are not responsible for the content, functionality, or availability of third-party games."
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "content": "The Service and its original content, features, and functionality are owned by RunGame and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws."
+    },
+    "disclaimer": {
+      "title": "Disclaimer of Warranties",
+      "content": "THE SERVICE IS PROVIDED AS IS AND AS AVAILABLE WITHOUT ANY WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED."
+    },
+    "limitation": {
+      "title": "Limitation of Liability",
+      "content": "TO THE MAXIMUM EXTENT PERMITTED BY LAW, RUNGAME SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES."
+    },
+    "advertising": {
+      "title": "Advertising",
+      "content": "RunGame displays advertisements to support the free availability of games. By using the Service, you agree that we may display advertisements within the Service."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "content": "We reserve the right to modify these Terms at any time. Your continued use of the Service after changes constitutes acceptance of the modified Terms."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "content": "If you have any questions about these Terms, please contact us at legal@rungame.online"
+    }
   },
   "contact": {
     "title": "Contact Us",
     "subtitle": "Get in touch with us",
     "metaTitle": "Contact Us - RunGame",
     "metaDescription": "Get in touch with the RunGame team. We're here to help with questions, feedback, or support.",
-    "content": "<h2>We'd Love to Hear From You</h2>\n<p>At RunGame, we value your feedback, questions, and suggestions. Whether you're experiencing technical issues, have ideas for new games, or simply want to say hello, we're here to help.</p>\n\n<h2>How to Reach Us</h2>\n\n<h3>📧 Email</h3>\n<p><strong>General inquiries:</strong> <a href=\"mailto:hello@rungame.online\">hello@rungame.online</a></p>\n<p><strong>Business inquiries:</strong> <a href=\"mailto:business@rungame.online\">business@rungame.online</a></p>\n<p><strong>Technical support:</strong> <a href=\"mailto:support@rungame.online\">support@rungame.online</a></p>\n<p><strong>Privacy concerns:</strong> <a href=\"mailto:privacy@rungame.online\">privacy@rungame.online</a></p>\n\n<h3>🎮 Game Submissions</h3>\n<p>Are you a game developer interested in having your games featured on RunGame? Email us at <a href=\"mailto:games@rungame.online\">games@rungame.online</a></p>\n\n<h3>💼 Partnership Opportunities</h3>\n<p>Interested in advertising, sponsorships, or business collaborations? Email us at <a href=\"mailto:partnerships@rungame.online\">partnerships@rungame.online</a></p>\n\n<h3>🌐 Social Media</h3>\n<p>Follow us and stay updated:</p>\n<ul>\n  <li><strong>Twitter:</strong> <a href=\"https://twitter.com/rungame\" target=\"_blank\" rel=\"noopener noreferrer\">@rungame</a></li>\n  <li><strong>Facebook:</strong> <a href=\"https://facebook.com/rungame\" target=\"_blank\" rel=\"noopener noreferrer\">facebook.com/rungame</a></li>\n</ul>\n\n<h2>Response Time</h2>\n<p>We strive to respond to all inquiries within 24-48 hours during business days.</p>\n\n<h2>Feedback & Suggestions</h2>\n<p>Your input helps us improve RunGame! Share your thoughts at <a href=\"mailto:feedback@rungame.online\">feedback@rungame.online</a>.</p>"
+    "intro": {
+      "title": "We'd Love to Hear From You",
+      "content": "At RunGame, we value your feedback, questions, and suggestions. Whether you're experiencing technical issues, have ideas for new games, or simply want to say hello, we're here to help."
+    },
+    "howToReach": {
+      "title": "How to Reach Us",
+      "email": {
+        "title": "Email",
+        "general": {
+          "label": "General inquiries",
+          "email": "hello@rungame.online"
+        },
+        "business": {
+          "label": "Business inquiries",
+          "email": "business@rungame.online"
+        },
+        "support": {
+          "label": "Technical support",
+          "email": "support@rungame.online"
+        },
+        "privacy": {
+          "label": "Privacy concerns",
+          "email": "privacy@rungame.online"
+        }
+      },
+      "gameSubmissions": {
+        "title": "Game Submissions",
+        "content": "Are you a game developer interested in having your games featured on RunGame? Email us at games@rungame.online"
+      },
+      "partnerships": {
+        "title": "Partnership Opportunities",
+        "content": "Interested in advertising, sponsorships, or business collaborations? Email us at partnerships@rungame.online"
+      },
+      "social": {
+        "title": "Social Media",
+        "content": "Follow us and stay updated:",
+        "twitter": "Twitter: @rungame",
+        "facebook": "Facebook: facebook.com/rungame"
+      }
+    },
+    "responseTime": {
+      "title": "Response Time",
+      "content": "We strive to respond to all inquiries within 24-48 hours during business days."
+    },
+    "feedback": {
+      "title": "Feedback & Suggestions",
+      "content": "Your input helps us improve RunGame! Share your thoughts at feedback@rungame.online."
+    }
+  },
+  "sidebar": {
+    "aboutInfo": "RunGame offers thousands of free online games, no downloads required, play instantly in your browser!",
+    "allTags": "All Tags",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact",
+    "searchPlaceholder": "Search games..."
+  },
+  "header": {
+    "freeOnlineGames": "Free Online Games",
+    "noDownload": "No Download",
+    "playInstantly": "Play Instantly",
+    "searchPlaceholder": "Search your favorite games..."
+  },
+  "gameInfo": {
+    "longDescription": "Detailed Description",
+    "instructions": "Game Instructions",
+    "howToPlay": "How to Play",
+    "gameFeatures": "Game Features",
+    "tips": "Tips & Tricks",
+    "about": "About This Game",
+    "screenshots": "Screenshots",
+    "videos": "Videos"
   }
 }

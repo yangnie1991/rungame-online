@@ -71,7 +71,7 @@ NEXTAUTH_URL="http://localhost:3000"
 openssl rand -base64 32
 ```
 
-> 📝 详细配置请参考 [环境变量文档](docs/ENVIRONMENT.md)
+> 📝 详细配置请参考 [架构文档](docs/ARCHITECTURE.md) 和 [CLAUDE.md](CLAUDE.md)
 
 4. **初始化数据库**
 
@@ -101,20 +101,22 @@ npm run dev
 
 ## 📖 文档
 
+### 📚 完整文档目录
+请查看 **[docs/README.md](docs/README.md)** 获取完整的文档导航和索引。
+
 ### 核心文档
 - [**CLAUDE.md**](CLAUDE.md) - 开发者指南（给 AI 助手的完整架构文档）
-- [**部署指南**](docs/DEPLOYMENT.md) - 完整的部署指南
-- [**环境变量**](docs/ENVIRONMENT.md) - 环境变量配置说明
+- [**架构文档**](docs/ARCHITECTURE.md) - 项目架构和技术栈详解
+- [**数据库文档**](docs/DATABASE.md) - 数据库架构和查询模式
+- [**国际化文档**](docs/I18N.md) - next-intl 多语言实现
+- [**页面结构文档**](docs/PAGE-STRUCTURE.md) - PageType 动态页面系统
+- [**SEO 文档**](docs/SEO.md) - 搜索引擎优化完整指南
 
-### 技术参考
-- [**国际化最佳实践**](docs/I18N-BEST-PRACTICES.md) - next-intl 使用指南
-- [**PageType 详解**](docs/PAGETYPE-EXPLANATION.md) - 动态页面系统
-- [**shadcn/ui 说明**](docs/SHADCN-UI-EXPLAINED.md) - UI 组件使用
-- [**实现指南**](docs/IMPLEMENTATION-GUIDE.md) - 详细实现文档
+### 工具脚本
+项目包含丰富的维护脚本，详见 **[scripts/README.md](scripts/README.md)**
 
-### 问题排查
-- [**数据库连接**](docs/DATABASE-CONNECTION-ISSUE.md) - 数据库连接问题解决
-- [**国际化回退**](docs/I18N-FALLBACK-FIX-REPORT.md) - 翻译回退问题
+### 清理记录
+- [**清理总结**](CLEANUP-SUMMARY.md) - 2025-01-20 项目清理详细记录
 
 ## 🛠️ 技术栈
 
@@ -208,7 +210,7 @@ RunGame 使用 Next.js 路由组实现完全独立的双界面：
 2. **STATIC_CONTENT** - 静态内容页（如"关于我们"、"隐私政策"）
 3. **MIXED** - 混合模式（静态内容 + 游戏列表）
 
-详见 [PageType 详解](docs/PAGETYPE-EXPLANATION.md)
+详见 [页面结构文档](docs/PAGE-STRUCTURE.md)
 
 ## 🔧 常用命令
 
@@ -236,7 +238,7 @@ npm run lint             # 运行 ESLint
 2. 配置环境变量
 3. 点击 Deploy
 
-详细步骤见 [部署指南](docs/DEPLOYMENT.md#部署到-vercel)
+详细步骤见 [架构文档](docs/ARCHITECTURE.md) 中的部署章节
 
 ### Docker
 
@@ -252,11 +254,11 @@ docker run -d -p 3000:3000 \
   rungame:latest
 ```
 
-详细配置见 [部署指南](docs/DEPLOYMENT.md#使用-docker推荐)
+详细配置见 [架构文档](docs/ARCHITECTURE.md)
 
 ### 传统服务器
 
-使用 PM2 + Nginx，详见 [部署指南](docs/DEPLOYMENT.md#使用-pm2传统方式)
+使用 PM2 + Nginx，详见 [架构文档](docs/ARCHITECTURE.md)
 
 ## 🔐 安全
 
@@ -283,7 +285,7 @@ docker run -d -p 3000:3000 \
 3. 在 Language 表中添加记录
 4. 为内容添加翻译
 
-详见 [国际化最佳实践](docs/I18N-BEST-PRACTICES.md)
+详见 [国际化文档](docs/I18N.md)
 
 ## 📊 性能
 
@@ -347,4 +349,4 @@ docker run -d -p 3000:3000 \
 
 **Made with ❤️ using Next.js**
 
-**最后更新**: 2025-01-14
+**最后更新**: 2025-01-20

@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
+import { getAllLanguages } from "@/lib/data/languages/cache"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -10,9 +10,8 @@ import { DeleteLanguageButton } from "@/components/admin/languages/DeleteLanguag
 import { ToggleLanguageStatus } from "@/components/admin/languages/ToggleLanguageStatus"
 
 async function getLanguages() {
-  const languages = await prisma.language.findMany({
-    orderBy: { sortOrder: 'asc' }
-  })
+  // 使用缓存层而不是直接查询数据库
+  const languages = await getAllLanguages()
 
   return languages.map(lang => ({
     id: lang.id,

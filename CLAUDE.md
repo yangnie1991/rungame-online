@@ -137,7 +137,7 @@ if (session.user.role !== "SUPER_ADMIN") return Response.json({ error: "Forbidde
 
 ### PageType 系统
 
-**三种 PageType 模式** (详见 [docs/PAGETYPE-EXPLANATION.md](docs/PAGETYPE-EXPLANATION.md)):
+**三种 PageType 模式** (详见 [docs/PAGE-STRUCTURE.md](docs/PAGE-STRUCTURE.md)):
 
 1. **GAME_LIST**: 根据配置筛选/排序的动态游戏列表
    - 示例: 最多游玩、热门、新游戏
@@ -306,7 +306,7 @@ DATABASE_URL="postgresql://game:password@host:6432/game?schema=public&pgbouncer=
 总连接数 = 应用实例数 × connection_limit
 ```
 
-更多详情见 [docs/DATABASE-CONNECTION-ISSUE.md](docs/DATABASE-CONNECTION-ISSUE.md)
+更多详情见 [docs/DATABASE.md](docs/DATABASE.md)
 
 ## 文件引用格式
 
@@ -323,28 +323,61 @@ DATABASE_URL="postgresql://game:password@host:6432/game?schema=public&pgbouncer=
 
 ## 相关文档
 
-### 核心文档
+### 📚 完整文档目录
+详见 [docs/README.md](docs/README.md) - 包含完整的文档导航和索引
+
+### 核心文档（7个）
 - [README.md](README.md) - 项目快速开始
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - 完整部署指南
-- [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) - 环境变量配置
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - 项目架构和技术栈详解
+- [docs/DATABASE.md](docs/DATABASE.md) - 数据库架构和查询模式
+- [docs/I18N.md](docs/I18N.md) - next-intl 多语言实现指南
+- [docs/PAGE-STRUCTURE.md](docs/PAGE-STRUCTURE.md) - PageType 动态页面系统
+- [docs/SEO.md](docs/SEO.md) - 搜索引擎优化完整指南
+- [docs/AI-FEATURES.md](docs/AI-FEATURES.md) - AI 功能完整实现指南
+- [docs/GAMEPIX-IMPORT.md](docs/GAMEPIX-IMPORT.md) - GamePix 游戏导入指南
 
-### 技术参考
-- [docs/I18N-BEST-PRACTICES.md](docs/I18N-BEST-PRACTICES.md) - next-intl 最佳实践
-- [docs/PAGETYPE-EXPLANATION.md](docs/PAGETYPE-EXPLANATION.md) - PageType 系统详解
-- [docs/SHADCN-UI-EXPLAINED.md](docs/SHADCN-UI-EXPLAINED.md) - shadcn/ui 使用说明
-- [docs/IMPLEMENTATION-GUIDE.md](docs/IMPLEMENTATION-GUIDE.md) - 实现指南
+### 扩展文档（6个）
+- [docs/SEO-CONTENT-GENERATION.md](docs/SEO-CONTENT-GENERATION.md) - SEO 内容生成
+- [docs/GOOGLE-SEO-META-LENGTH.md](docs/GOOGLE-SEO-META-LENGTH.md) - Google SEO 字符限制
+- [docs/GOOGLE-SEARCH-API-SETUP.md](docs/GOOGLE-SEARCH-API-SETUP.md) - Google API 配置
+- [docs/QUERY-OPTIMIZATION.md](docs/QUERY-OPTIMIZATION.md) - 查询优化
+- [docs/R2-CDN-SETUP.md](docs/R2-CDN-SETUP.md) - R2 CDN 配置
+- [docs/ENVIRONMENT-VALIDATION.md](docs/ENVIRONMENT-VALIDATION.md) - 环境验证
 
-### 问题排查
-- [docs/DATABASE-CONNECTION-ISSUE.md](docs/DATABASE-CONNECTION-ISSUE.md) - 数据库连接问题
-- [docs/I18N-FALLBACK-FIX-REPORT.md](docs/I18N-FALLBACK-FIX-REPORT.md) - 国际化回退修复报告
-- [docs/REORDER-TABLE-COLUMNS.md](docs/REORDER-TABLE-COLUMNS.md) - 数据库表字段重排序
-- [docs/LANGUAGES-TABLE-REBUILD-SUMMARY.md](docs/LANGUAGES-TABLE-REBUILD-SUMMARY.md) - Languages表重建总结
+### 工具脚本
+- [scripts/README.md](scripts/README.md) - 维护脚本使用指南
+- scripts/utils/ - 工具脚本（查询、检查、导入等）
+- scripts/validation/ - 验证脚本（数据完整性检查）
+- scripts/seo/ - SEO 相关脚本
+- scripts/assets/ - 资源生成脚本（图标、Logo等）
+
+### 项目清理记录
+- [CLEANUP-SUMMARY.md](CLEANUP-SUMMARY.md) - 2025-01-30 文档清理详细记录
 
 ---
 ## 强制性限制
 - 所有的内容回复使用中文进行回复
-- 对于涉及的组件、框架、css框架、UI组件、框架插件的使用和代码书写必须遵循官方的最佳实践指导，相关的官方技术文档使用Context7mcp工具进行获取
+- 对于UI组件的使用，必须遵循官方的最实践，UI组件的官方文档利用shadcn MCP服务进行获取
+- 对于涉及的框架、css框架、框架插件的使用和代码书写必须遵循官方的最佳实践指导，相关的官方技术文档使用Context7mcp工具进行获取
 - 对于页面功能的调试、测试必须优先使用browsermcp进行，如果该工具未连接，提示用户进行mcp工具连接后，再进行功能调试、测试工作
 
-**最后更新**: 2025-01-14
+**最后更新**: 2025-01-30
 **项目版本**: v1.0
+
+---
+
+## 📝 更新日志
+
+### 2025-01-30
+- 🧹 第二轮大规模清理：删除 105 个临时文档
+- 📚 合并相关文档：
+  - 创建 AI-FEATURES.md 整合所有 AI 功能文档
+  - 创建 GAMEPIX-IMPORT.md 整合游戏导入文档
+- ✨ 精简到 14 个核心+扩展文档（从 117 个）
+- 📖 更新 CLAUDE.md 和 docs/README.md 的文档索引
+
+### 2025-01-20
+- 🧹 大规模清理：删除 108 个过时文件
+- 📁 重组 scripts/ 目录为清晰的子目录结构
+- ✨ 文档精简：从 54 个减少到 6 个核心文档
+- 📚 更新所有文档引用链接

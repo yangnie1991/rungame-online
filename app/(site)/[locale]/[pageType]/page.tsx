@@ -1,8 +1,15 @@
-import { getPageTypeGames } from "@/app/(site)/actions"
+import { getPageTypeGames, getPageTypeInfo } from "@/lib/data"
 import { GameSection } from "@/components/site/GameSection"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import Link from "next/link"
+import { Link } from "@/i18n/routing"
+import { getTranslations } from "next-intl/server"
+import {
+  generateCollectionPageSchema,
+  generateBreadcrumbSchema,
+  renderJsonLd
+} from "@/lib/schema-generators"
+import { generatePageTypeOGImageUrl } from "@/lib/og-image-helpers"
 
 interface PageTypePageProps {
   params: Promise<{ locale: string; pageType: string }>
@@ -12,24 +19,24 @@ interface PageTypePageProps {
 export async function generateMetadata({ params }: PageTypePageProps): Promise<Metadata> {
   const { locale, pageType } = await params
 
-  // 尝试获取游戏列表页面数据
-  const data = await getPageTypeGames(pageType, locale, 1, 24)
+  // 只获取 PageType 信息，不查询游戏列表（避免重复查询）
+  const pageTypeInfo = await getPageTypeInfo(pageType, locale)
 
-  if (!data) {
+  if (!pageTypeInfo) {
     return {
       title: "Page Not Found",
     }
   }
 
   // 构建 SEO 友好的标题和描述
-  const title = data.pageType.metaTitle || `${data.pageType.title} | RunGame - Free Online Games`
-  const description = data.pageType.metaDescription ||
-    data.pageType.description ||
-    `Play ${data.pageType.title.toLowerCase()} on RunGame. Enjoy ${data.pagination.totalGames}+ free online games, no downloads required!`
+  const title = pageTypeInfo.metaTitle || `${pageTypeInfo.title} | RunGame - Free Online Games`
+  const description = pageTypeInfo.metaDescription ||
+    pageTypeInfo.description ||
+    `Play ${pageTypeInfo.title.toLowerCase()} on RunGame. Enjoy ${pageTypeInfo.totalGames}+ free online games, no downloads required!`
 
   // 构建关键词
   const keywords = [
-    data.pageType.title,
+    pageTypeInfo.title,
     'free online games',
     'browser games',
     'no download games',
@@ -41,9 +48,15 @@ export async function generateMetadata({ params }: PageTypePageProps): Promise<M
   // 获取网站 URL（根据环境变量或默认值）
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
   const pageUrl = `${siteUrl}/${locale}/${pageType}`
-  const ogImage = data.pageType.icon
-    ? `${siteUrl}/api/og?title=${encodeURIComponent(data.pageType.title)}&icon=${encodeURIComponent(data.pageType.icon)}`
-    : `${siteUrl}/og-image.png`
+
+  // 🎨 使用动态生成的 PageType OG 图片
+  const ogImage = generatePageTypeOGImageUrl({
+    title: pageTypeInfo.title,
+    description: pageTypeInfo.description || '',
+    gameCount: pageTypeInfo.totalGames,
+    icon: pageTypeInfo.icon || '🎯',
+    type: pageTypeInfo.type as 'GAME_LIST' | 'DISPLAY_PAGE' | 'OTHER_PAGE',
+  })
 
   return {
     title,
@@ -61,7 +74,7 @@ export async function generateMetadata({ params }: PageTypePageProps): Promise<M
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: data.pageType.title,
+          alt: pageTypeInfo.title,
         }
       ],
     },
@@ -95,12 +108,16 @@ export async function generateMetadata({ params }: PageTypePageProps): Promise<M
       },
     },
     other: {
-      'theme-color': '#2563eb',
       'mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-status-bar-style': 'black-translucent',
     },
   }
+}
+
+// 导出 viewport 配置
+export const viewport = {
+  themeColor: '#2563eb',
 }
 
 export default async function PageTypePage({ params, searchParams }: PageTypePageProps) {
@@ -114,6 +131,8 @@ export default async function PageTypePage({ params, searchParams }: PageTypePag
   if (!data) {
     notFound()
   }
+
+  const tCommon = await getTranslations({ locale, namespace: "common" })
 
   const t = {
     home: locale === "zh" ? "首页" : "Home",
@@ -132,11 +151,35 @@ export default async function PageTypePage({ params, searchParams }: PageTypePag
     tags: (game.tags || []).map((tag: string) => ({ name: tag })),
   }))
 
+  // 面包屑 Schema
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: tCommon("home"), url: `/${locale}` },
+    { name: data.pageType.title, url: '' },
+  ])
+
+  // 页面集合 Schema
+  const collectionSchema = generateCollectionPageSchema({
+    name: data.pageType.title,
+    description: data.pageType.description || `Play ${data.pageType.title} games online for free`,
+    url: `/${locale}/${pageType}`,
+    numberOfItems: data.pagination.totalGames,
+  })
+
   return (
     <div className="space-y-6">
+      {/* 添加结构化数据 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: renderJsonLd(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: renderJsonLd(collectionSchema) }}
+      />
+
       {/* 面包屑导航 */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href={`/${locale}`} className="hover:text-foreground transition-colors">
+        <Link href="/" className="hover:text-foreground transition-colors">
           {t.home}
         </Link>
         <span>/</span>
@@ -151,7 +194,6 @@ export default async function PageTypePage({ params, searchParams }: PageTypePag
           {data.pageType.icon && <span>{data.pageType.icon}</span>}
           {data.pageType.title}
         </h1>
-        {data.pageType.subtitle && <p className="text-xl text-muted-foreground">{data.pageType.subtitle}</p>}
         {data.pageType.description && <p className="text-muted-foreground">{data.pageType.description}</p>}
         <p className="text-sm text-muted-foreground">
           {data.pagination.totalGames.toLocaleString()} {t.games}
@@ -166,7 +208,7 @@ export default async function PageTypePage({ params, searchParams }: PageTypePag
         <div className="flex items-center justify-center space-x-4 py-8">
           {page > 1 && (
             <Link
-              href={`/${locale}/${pageType}?page=${page - 1}`}
+              href={`/${pageType}?page=${page - 1}`}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               {t.previous}
@@ -179,7 +221,7 @@ export default async function PageTypePage({ params, searchParams }: PageTypePag
 
           {data.pagination.hasMore && (
             <Link
-              href={`/${locale}/${pageType}?page=${page + 1}`}
+              href={`/${pageType}?page=${page + 1}`}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               {t.next}

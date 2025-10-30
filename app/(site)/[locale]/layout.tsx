@@ -1,18 +1,16 @@
 import { getTranslations, setRequestLocale } from "next-intl/server"
 import { NextIntlClientProvider } from "next-intl"
 import { getMessages } from "next-intl/server"
-import { Inter } from "next/font/google"
 import { SiteHeader } from "@/components/site/Header"
 import { Sidebar } from "@/components/site/Sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics"
 import { GoogleAdsense } from "@/components/analytics/GoogleAdsense"
-import { getEnabledLanguages, getAllCategories, getAllTags, getAllPageTypes } from "../actions"
+import { getEnabledLanguages, getMainCategories, getAllTags, getAllPageTypes } from "@/lib/data"
 import { routing } from "@/i18n/routing"
+import { generateOrganizationSchema, renderJsonLd } from "@/lib/schema-generators"
 import "@/app/globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
 
 interface LocaleLayoutProps {
   children: React.ReactNode
@@ -35,8 +33,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   // 获取启用的语言列表
   const languages = await getEnabledLanguages()
 
-  // 获取分类列表（用于侧边栏）
-  const categoriesData = await getAllCategories(locale)
+  // 获取主分类列表（用于侧边栏，只显示父分类）
+  const categoriesData = await getMainCategories(locale)
 
   // 获取标签列表（用于侧边栏）
   const tagsData = await getAllTags(locale)
@@ -49,9 +47,18 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     { href: "/", icon: "🏠", text: locale === "zh" ? "首页" : "Home" },
   ]
 
+  // 生成Organization Schema（全局）
+  const organizationSchema = generateOrganizationSchema()
+
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="font-sans">
+        {/* Organization Schema - 全局网站组织信息 */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: renderJsonLd(organizationSchema) }}
+        />
+
         {/* Google Analytics - 使用 afterInteractive 策略，不阻塞首屏渲染 */}
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ""} />
 
@@ -113,12 +120,80 @@ export async function generateMetadata({ params }: LocaleLayoutProps) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: "metadata" })
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
+  const title = t("siteTitle")
+  const description = t("siteDescription")
+
   return {
-    title: t("siteTitle"),
-    description: t("siteDescription"),
-    // 添加 Google AdSense 和其他 meta 标签
+    title: {
+      default: title,
+      template: '%s | RunGame',  // 使用 | 分隔符更简洁
+    },
+    description,
+
+    // Favicon 和图标
+    icons: {
+      icon: [
+        { url: '/logo/logo-rungame-16.png', sizes: '16x16', type: 'image/png' },
+        { url: '/logo/logo-rungame-32.png', sizes: '32x32', type: 'image/png' },
+        { url: '/logo/logo-rungame-64.png', sizes: '64x64', type: 'image/png' },
+        { url: '/logo/logo-rungame-128.png', sizes: '128x128', type: 'image/png' },
+        { url: '/logo/logo-rungame.svg', type: 'image/svg+xml' },
+      ],
+      shortcut: '/favicon.ico',
+      apple: '/apple-touch-icon.png',
+    },
+
+    // Web App Manifest
+    manifest: '/manifest.json',
+
+    // Open Graph (Facebook, LinkedIn)
+    openGraph: {
+      type: 'website',
+      locale: locale === 'zh' ? 'zh_CN' : `${locale}_US`,
+      url: siteUrl,
+      siteName: 'RunGame',
+      title,
+      description,
+      images: [
+        {
+          url: `${siteUrl}/assets/images/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+
+    // Twitter Card
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [`${siteUrl}/assets/images/twitter-image.png`],
+      creator: '@rungame',
+    },
+
+    // 其他 meta 标签
     other: {
       'google-adsense-account': process.env.NEXT_PUBLIC_ADSENSE_ID || '',
+      // 注意：theme-color 已在 viewport 中定义，这里不再重复
+    },
+
+    // 应用相关
+    applicationName: 'RunGame',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'RunGame',
     },
   }
+}
+
+// 导出 viewport 配置
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#2563eb',  // 使用primary颜色（蓝色），与品牌一致
 }

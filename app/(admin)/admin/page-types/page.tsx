@@ -13,10 +13,7 @@ async function getPageTypesWithDetails() {
     include: {
       translations: {
         where: { locale: 'zh' },
-        select: { title: true, subtitle: true }
-      },
-      _count: {
-        select: { contentBlocks: true }
+        select: { title: true, description: true }
       }
     },
     orderBy: { sortOrder: 'asc' }
@@ -29,9 +26,8 @@ async function getPageTypesWithDetails() {
     icon: pt.icon,
     sortOrder: pt.sortOrder,
     isEnabled: pt.isEnabled,
-    title: pt.translations[0]?.title || pt.slug,
-    subtitle: pt.translations[0]?.subtitle || '',
-    contentBlockCount: pt._count.contentBlocks,
+    title: pt.translations[0]?.title || pt.title,
+    description: pt.translations[0]?.description || pt.description || '',
     createdAt: pt.createdAt
   }))
 }
@@ -69,7 +65,6 @@ async function PageTypesTable() {
             <TableHead className="min-w-[200px] font-semibold">标题</TableHead>
             <TableHead className="w-[120px] font-semibold">类型</TableHead>
             <TableHead className="w-[100px] text-center font-semibold">状态</TableHead>
-            <TableHead className="w-[100px] text-center font-semibold">内容块</TableHead>
             <TableHead className="w-[150px] text-center font-semibold">操作</TableHead>
           </TableRow>
         </TableHeader>
@@ -83,8 +78,8 @@ async function PageTypesTable() {
               </TableCell>
               <TableCell>
                 <div className="font-semibold text-gray-900">{pageType.title}</div>
-                {pageType.subtitle && (
-                  <div className="text-sm text-gray-600 mt-0.5">{pageType.subtitle}</div>
+                {pageType.description && (
+                  <div className="text-sm text-gray-600 mt-0.5">{pageType.description}</div>
                 )}
               </TableCell>
               <TableCell>
@@ -95,11 +90,6 @@ async function PageTypesTable() {
               <TableCell className="text-center">
                 <Badge variant={pageType.isEnabled ? "default" : "secondary"} className="font-medium">
                   {pageType.isEnabled ? "启用" : "禁用"}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge variant="secondary" className="font-medium">
-                  {pageType.contentBlockCount}
                 </Badge>
               </TableCell>
               <TableCell>

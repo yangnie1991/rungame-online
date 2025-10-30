@@ -1,15 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { prisma } from "@/lib/prisma"
+import { getDashboardStats } from "@/lib/data/stats/cache"
 import { Gamepad2, FolderTree, Tags, Globe } from "lucide-react"
 
 export default async function DashboardPage() {
-  // 获取统计数据
-  const [gamesCount, categoriesCount, tagsCount, languagesCount] = await Promise.all([
-    prisma.game.count(),
-    prisma.category.count(),
-    prisma.tag.count(),
-    prisma.language.count(),
-  ])
+  // 获取统计数据（使用缓存）
+  const { gamesCount, categoriesCount, tagsCount, languagesCount } = await getDashboardStats()
 
   const stats = [
     { name: "游戏总数", value: gamesCount, icon: Gamepad2, color: "text-blue-600" },

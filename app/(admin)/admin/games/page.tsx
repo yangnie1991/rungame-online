@@ -24,11 +24,17 @@ async function getGames() {
         where: { locale: 'zh' },
         select: { title: true, description: true },
       },
-      category: {
+      gameCategories: {
+        where: { isPrimary: true },
+        take: 1,
         include: {
-          translations: {
-            where: { locale: 'zh' },
-            select: { name: true },
+          category: {
+            include: {
+              translations: {
+                where: { locale: 'zh' },
+                select: { name: true },
+              },
+            },
           },
         },
       },
@@ -48,19 +54,24 @@ async function getGames() {
     orderBy: { createdAt: 'desc' },
   })
 
-  return games.map((game) => ({
-    id: game.id,
-    slug: game.slug,
-    title: game.translations[0]?.title || game.slug,
-    description: game.translations[0]?.description || '',
-    thumbnail: game.thumbnail,
-    categoryName: game.category.translations[0]?.name || '',
-    tags: game.tags.map((gt) => gt.tag.translations[0]?.name || gt.tag.slug),
-    isPublished: game.isPublished,
-    isFeatured: game.isFeatured,
-    playCount: game.playCount,
-    rating: game.rating,
-  }))
+  return games.map((game) => {
+    const primaryCategory = game.gameCategories[0]?.category
+    return {
+      id: game.id,
+      slug: game.slug,
+      // 新架构: 优先使用翻译，回退到英文主表
+      title: game.translations[0]?.title || game.title,
+      description: game.translations[0]?.description || game.description || '',
+      thumbnail: game.thumbnail,
+      categoryName: primaryCategory?.translations[0]?.name || primaryCategory?.name || '未分类',
+      tags: game.tags.map((gt) => gt.tag.translations[0]?.name || gt.tag.name),
+      // 新架构: status 替代 isPublished
+      status: game.status,
+      isFeatured: game.isFeatured,
+      playCount: game.playCount,
+      rating: game.rating,
+    }
+  })
 }
 
 async function GamesTable() {
@@ -139,7 +150,7 @@ async function GamesTable() {
               <ToggleGamePublishStatus
                 gameId={game.id}
                 gameTitle={game.title}
-                currentStatus={game.isPublished}
+                currentStatus={game.status}
               />
             </TableCell>
             <TableCell>
