@@ -1,4 +1,4 @@
-import { getAllTags } from "@/app/(site)/actions"
+import { getAllTags } from "@/lib/data/tags"
 import type { Metadata } from "next"
 import { Link } from "@/i18n/routing"
 
