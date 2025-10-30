@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { getDecryptedAiConfig } from '@/lib/ai-config'
 import { AVAILABLE_TOOLS, executeTool as executeAiTool } from '@/lib/ai-tools'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 /**
  * AI 对话 API（支持工具调用和流式响应）
