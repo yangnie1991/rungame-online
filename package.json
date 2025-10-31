@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && prisma generate --schema=prisma/schema-cache.prisma && next build --turbopack",
+    "build": "unset NODE_ENV && prisma generate && prisma generate --schema=prisma/schema-cache.prisma && next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",

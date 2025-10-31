@@ -12,7 +12,7 @@ import {
 
 interface PageProps {
   params: Promise<{ locale: string; mainCategory: string; subCategory: string }>
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; sort?: string }>
 }
 
 export async function generateStaticParams() {
@@ -124,7 +124,9 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function SubCategoryPage({ params, searchParams }: PageProps) {
   const { locale, mainCategory, subCategory } = await params
-  const { page = "1", sort } = await searchParams
+  const resolvedSearchParams = await searchParams
+  const page = resolvedSearchParams.page || "1"
+  const sort = resolvedSearchParams.sort
   const currentPage = parseInt(page, 10)
   const currentSort = sort || "popular" // 默认排序为 popular
 
@@ -152,8 +154,8 @@ export default async function SubCategoryPage({ params, searchParams }: PageProp
       gameCount: cat.gameCount,
     }))
 
-  // 获取该子分类下的游戏
-  const gamesResult = await getGamesByCategory(subCategoryData.slug, locale, currentPage)
+  // 获取该子分类下的游戏（每页30个）
+  const gamesResult = await getGamesByCategory(subCategoryData.slug, locale, currentPage, 30)
   const t = await getTranslations({ locale, namespace: "common" })
 
   if (!gamesResult) {
@@ -300,7 +302,7 @@ export default async function SubCategoryPage({ params, searchParams }: PageProp
         </div>
         {games.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {games.map((game) => (
                 <GameCard
                   key={game.slug}
@@ -308,7 +310,9 @@ export default async function SubCategoryPage({ params, searchParams }: PageProp
                   thumbnail={game.thumbnail}
                   title={game.title}
                   description={game.description}
-                  categoryName={game.category}
+                  categoryName={subCategoryData.name}
+                  categorySlug={subCategory}
+                  mainCategorySlug={mainCategory}
                   locale={locale}
                 />
               ))}

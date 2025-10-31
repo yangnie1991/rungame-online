@@ -105,3 +105,29 @@ export async function getAllTagsInfoMap(locale: string) {
 
   return map
 }
+
+/**
+ * 获取热门标签列表（按游戏数量排序）
+ *
+ * 用途：首页、侧边栏等需要展示热门标签的地方
+ * 数据来源：从 getAllTagsFullData 派生，不查询数据库
+ *
+ * @param locale - 语言代码
+ * @param limit - 返回数量（默认 10）
+ * @example
+ * const tags = await getPopularTags("en", 10)
+ * // [{ slug: "multiplayer", name: "Multiplayer", gameCount: 150 }, ...]
+ */
+export async function getPopularTags(locale: string, limit: number = 10) {
+  const fullData = await getAllTagsFullData(locale)
+  return fullData
+    .filter((tag) => tag.gameCount > 0)
+    .sort((a, b) => b.gameCount - a.gameCount)
+    .slice(0, limit)
+    .map((tag) => ({
+      slug: tag.slug,
+      name: tag.name,
+      icon: tag.icon,
+      gameCount: tag.gameCount,
+    }))
+}

@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/routing"
 import type { Metadata } from "next"
-import { generateSEOMetadata } from "@/lib/seo-helpers"
+import { getSiteUrl, generateAlternateLanguages } from "@/lib/seo-helpers"
 
 interface PrivacyPageProps {
   params: Promise<{ locale: string }>
@@ -10,14 +10,47 @@ interface PrivacyPageProps {
 export async function generateMetadata({ params }: PrivacyPageProps): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: "privacy" })
+  const siteUrl = getSiteUrl()
 
-  return generateSEOMetadata({
-    title: t("metaTitle"),
-    description: t("metaDescription"),
-    locale,
-    path: `/privacy`,
-    type: 'website',
-  })
+  const title = t("metaTitle")
+  const description = t("metaDescription")
+  const path = `/privacy`
+
+  const ogLocaleMap: Record<string, string> = {
+    'zh': 'zh_CN',
+    'en': 'en_US',
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      siteName: 'RunGame',
+      locale: ogLocaleMap[locale] || 'en_US',
+      type: 'website',
+      images: [{
+        url: `${siteUrl}/assets/images/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: title,
+      }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [`${siteUrl}/assets/images/og-image.png`],
+      creator: '@rungame',
+      site: '@rungame',
+    },
+    alternates: {
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      languages: generateAlternateLanguages(path),
+    },
+  }
 }
 
 export default async function PrivacyPage({ params }: PrivacyPageProps) {

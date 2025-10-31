@@ -37,9 +37,11 @@ interface SidebarProps {
   categories: CategoryItem[]
   tags: TagItem[]
   pageTypes: PageTypeItem[]
+  totalSubCategories?: number
+  totalGames?: number
 }
 
-export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarProps) {
+export function Sidebar({ mainNavItems, categories, tags, pageTypes, totalSubCategories, totalGames }: SidebarProps) {
   const pathname = usePathname()
   const t = useTranslations()
 
@@ -163,6 +165,31 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarPr
           <div className="mb-6">
             <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-50"></div>
             <div className="space-y-1">
+              {/* 所有分类 */}
+              <Link
+                href="/category"
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all group ${
+                  isCurrentPage("/category")
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <div className="flex items-center">
+                  <span className="text-sm mr-2">📂</span>
+                  <span className="capitalize">{t("sidebar.allCategories")}</span>
+                </div>
+                {totalSubCategories !== undefined && (
+                  <span
+                    className={`text-xs transition-colors ${
+                      isCurrentPage("/category") ? "text-primary-foreground/70" : "text-muted-foreground/50 group-hover:text-foreground/70"
+                    }`}
+                  >
+                    {totalSubCategories}
+                  </span>
+                )}
+              </Link>
+
+              {/* 所有标签 */}
               <Link
                 href="/tag"
                 className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all group ${
@@ -183,6 +210,30 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarPr
                   {tags.length}
                 </span>
               </Link>
+
+              {/* 所有游戏 */}
+              <Link
+                href="/games"
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all group ${
+                  isCurrentPage("/games")
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <div className="flex items-center">
+                  <span className="text-sm mr-2">🎮</span>
+                  <span className="capitalize">{t("sidebar.allGames")}</span>
+                </div>
+                {totalGames !== undefined && (
+                  <span
+                    className={`text-xs transition-colors ${
+                      isCurrentPage("/games") ? "text-primary-foreground/70" : "text-muted-foreground/50 group-hover:text-foreground/70"
+                    }`}
+                  >
+                    {totalGames}
+                  </span>
+                )}
+              </Link>
             </div>
           </div>
         )}
@@ -201,6 +252,10 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes }: SidebarPr
 
           {/* Policy and Contact Links - Flexible Grid */}
           <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground mb-4">
+            <Link href="/about" className="hover:text-primary transition-colors px-2 py-1">
+              {t("sidebar.about")}
+            </Link>
+            <span className="text-muted-foreground/30">•</span>
             <Link href="/privacy" className="hover:text-primary transition-colors px-2 py-1">
               {t("sidebar.privacy")}
             </Link>

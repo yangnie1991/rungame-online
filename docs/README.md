@@ -157,6 +157,7 @@ GamePix 游戏导入完整指南，包括：
 - [SEO 内容生成](./SEO-CONTENT-GENERATION.md) - AI 驱动的 SEO 内容生成系统
 - [Google SEO 字符限制](./GOOGLE-SEO-META-LENGTH.md) - Google 搜索结果元标签显示长度
 - [Google API 配置](./GOOGLE-SEARCH-API-SETUP.md) - Google Custom Search API 申请教程
+- [元数据问题分析](./METADATA-ISSUES-ANALYSIS.md) - HTML head 标签元数据问题诊断与修复
 
 #### 🤖 AI 功能
 - [AI 功能概览](./AI-FEATURES.md)

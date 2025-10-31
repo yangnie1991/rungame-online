@@ -24,6 +24,9 @@ export {
   getAllGames,
 } from "./browse"
 
+// 搜索游戏
+export { searchGames } from "./search"
+
 // 游戏详情
 export { getGameBySlug, getRecommendedGames, getPublishedGames } from "./detail"
 

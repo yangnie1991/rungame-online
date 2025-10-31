@@ -4,6 +4,8 @@ import { getMainCategories, getSubCategoriesByParentSlug, getAllCategoriesFullDa
 import { getGamesByCategory } from "@/lib/data"
 import { GameCard } from "@/components/site/GameCard"
 import { Link } from "@/i18n/routing"
+import { getSiteUrl, generateAlternateLanguages } from "@/lib/seo-helpers"
+import { generateCategoryOGImageUrl } from "@/lib/og-image-helpers"
 import {
   generateCollectionPageSchema,
   generateBreadcrumbSchema,
@@ -46,6 +48,8 @@ export async function generateMetadata({ params }: PageProps) {
     }
   }
 
+  const siteUrl = getSiteUrl()
+
   // 优先使用数据库中的 SEO 字段，如果为空则生成默认值
   const title = categoryData.metaTitle || `${categoryData.name} Games - Free Online ${categoryData.name} Games | RunGame`
   const description = categoryData.metaDescription ||
@@ -60,10 +64,22 @@ export async function generateMetadata({ params }: PageProps) {
     'RunGame'
   ].join(', ')
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
-  const pathPrefix = locale === 'en' ? '' : `/${locale}`
-  const pageUrl = `${siteUrl}${pathPrefix}/category/${mainCategory}`
-  const ogImage = `${siteUrl}/assets/images/og-image.png`
+  // 生成动态 OG 图片 URL
+  const ogImageUrl = generateCategoryOGImageUrl({
+    name: categoryData.name,
+    description: categoryData.description,
+    gameCount: categoryData.gameCount,
+    icon: categoryData.icon || '🎮',
+  })
+
+  // 构建路径（不带语言前缀）
+  const path = `/category/${mainCategory}`
+
+  // Open Graph locale 映射
+  const ogLocaleMap: Record<string, string> = {
+    'zh': 'zh_CN',
+    'en': 'en_US',
+  }
 
   return {
     title,
@@ -72,12 +88,12 @@ export async function generateMetadata({ params }: PageProps) {
     openGraph: {
       title,
       description,
-      url: pageUrl,
+      url: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
       siteName: 'RunGame',
-      locale: locale === 'zh' ? 'zh_CN' : 'en_US',
+      locale: ogLocaleMap[locale] || 'en_US',
       type: 'website',
       images: [{
-        url: ogImage,
+        url: ogImageUrl,
         width: 1200,
         height: 630,
         alt: categoryData.name,
@@ -87,28 +103,13 @@ export async function generateMetadata({ params }: PageProps) {
       card: 'summary_large_image',
       title,
       description,
-      images: [ogImage],
+      images: [ogImageUrl],
       creator: '@rungame',
       site: '@rungame',
     },
     alternates: {
-      canonical: pageUrl,
-      languages: {
-        'en': `${siteUrl}/category/${mainCategory}`,
-        'zh': `${siteUrl}/zh/category/${mainCategory}`,
-        'x-default': `${siteUrl}/category/${mainCategory}`,
-      },
-    },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-      },
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      languages: generateAlternateLanguages(path),
     },
   }
 }
@@ -130,8 +131,8 @@ export default async function MainCategoryPage({ params, searchParams }: PagePro
   // 获取子分类
   const subCategories = await getSubCategoriesByParentSlug(mainCategory, locale)
 
-  // 获取该主分类下的游戏
-  const gamesResult = await getGamesByCategory(categoryData.slug, locale, currentPage)
+  // 获取该主分类下的游戏（每页30个）
+  const gamesResult = await getGamesByCategory(categoryData.slug, locale, currentPage, 30)
   const t = await getTranslations({ locale, namespace: "common" })
 
   if (!gamesResult) {
@@ -264,7 +265,7 @@ export default async function MainCategoryPage({ params, searchParams }: PagePro
         </div>
         {games.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {games.map((game) => (
                 <GameCard
                   key={game.slug}
@@ -273,6 +274,8 @@ export default async function MainCategoryPage({ params, searchParams }: PagePro
                   title={game.title}
                   description={game.description}
                   categoryName={game.category}
+                  categorySlug={game.categorySlug}
+                  mainCategorySlug={game.mainCategorySlug}
                   locale={locale}
                 />
               ))}

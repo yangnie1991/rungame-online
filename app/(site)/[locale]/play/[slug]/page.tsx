@@ -7,7 +7,8 @@ import { GameEmbed } from "@/components/site/GameEmbed"
 import { GameGallery } from "@/components/site/GameGallery"
 import { GameVideos } from "@/components/site/GameVideos"
 import { ContentRenderer } from "@/components/site/ContentRenderer"
-import { generateGameSEOMetadata } from "@/lib/seo-helpers"
+import { getSiteUrl, generateAlternateLanguages } from "@/lib/seo-helpers"
+import { generateGameOGImageUrl } from "@/lib/og-image-helpers"
 import {
   generateVideoGameSchema,
   generateBreadcrumbSchema,
@@ -28,20 +29,84 @@ export async function generateMetadata({ params }: GamePageProps): Promise<Metad
     }
   }
 
-  // 使用统一的 SEO 元数据生成函数
-  // 🎨 使用动态生成的 OG 图片（包含游戏标题、分类图标和缩略图）
-  return await generateGameSEOMetadata({
+  const siteUrl = getSiteUrl()
+
+  // 构建 SEO 友好的标题和描述
+  const titleTemplates: Record<string, string> = {
+    en: `${game.title} - Play Free Online`,
+    zh: `${game.title} - 免费在线玩`,
+  }
+
+  const descriptionTemplates: Record<string, string> = {
+    en: game.metaDescription || game.description || `Play ${game.title} for free on RunGame. ${game.category.name} game. No downloads, instant fun!`,
+    zh: game.metaDescription || game.description || `在 RunGame 上免费玩 ${game.title}。${game.category.name}游戏。无需下载，即刻畅玩！`,
+  }
+
+  const title = titleTemplates[locale] || titleTemplates.en
+  const description = descriptionTemplates[locale] || descriptionTemplates.en
+
+  // 生成动态 OG 图片 URL
+  const ogImageUrl = generateGameOGImageUrl({
     title: game.title,
-    description: game.metaDescription || game.description || `Play ${game.title} for free on RunGame. ${game.category.name} game. No downloads, instant fun!`,
-    locale,
-    slug: `play/${slug}`,
-    categoryName: game.category.name,
-    categoryIcon: game.category.icon || '🎮', // 传递分类图标
-    tags: game.tags.map(t => t.name),
-    thumbnail: game.banner || game.thumbnail, // 游戏缩略图会显示在 OG 图片中
-    publishedTime: game.createdAt ? new Date(game.createdAt).toISOString() : undefined,
-    modifiedTime: game.updatedAt ? new Date(game.updatedAt).toISOString() : undefined,
+    category: game.category.name,
+    categoryIcon: '🎮',
+    thumbnail: game.banner || game.thumbnail,
+    tags: game.tags.map(t => t.name).join(','),
   })
+
+  // 构建路径（不带语言前缀）
+  const path = `/play/${slug}`
+
+  // Open Graph locale 映射
+  const ogLocaleMap: Record<string, string> = {
+    'zh': 'zh_CN',
+    'en': 'en_US',
+  }
+
+  return {
+    title,
+    description,
+    keywords: [
+      game.title,
+      game.category.name,
+      ...game.tags.map(t => t.name),
+    ].join(', '),
+
+    // Open Graph
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      siteName: 'RunGame',
+      locale: ogLocaleMap[locale] || 'en_US',
+      type: 'article',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: game.title,
+        }
+      ],
+      publishedTime: game.createdAt ? new Date(game.createdAt).toISOString() : undefined,
+    },
+
+    // Twitter Card
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl],
+      creator: '@rungame',
+      site: '@rungame',
+    },
+
+    // 多语言 alternate 链接
+    alternates: {
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      languages: generateAlternateLanguages(path),
+    },
+  }
 }
 
 export default async function GamePage({ params }: GamePageProps) {
@@ -55,8 +120,35 @@ export default async function GamePage({ params }: GamePageProps) {
   // 增加播放次数（异步，不阻塞渲染）
   incrementPlayCount(game.id).catch(() => { })
 
-  // 获取推荐游戏
-  const recommendedGames = await getRecommendedGames(game.category.slug, game.slug, locale, 6)
+  // 准备推荐引擎需要的当前游戏数据（从已缓存的 game 对象中提取）
+  const currentGameData = {
+    id: game.id,
+    slug: game.slug,
+    categoryId: game.categoryId,
+    tagIds: game.tagIds,
+    playCount: game.playCount,
+    viewCount: game.viewCount,
+    rating: game.rating,
+    ratingCount: game.ratingCount,
+    qualityScore: game.qualityScore,
+    releaseDate: game.releaseDate,
+    createdAt: game.createdAt,
+  }
+
+  // 并行获取两个推荐模块的数据（不互相排重，提升性能）
+  const { getMixedRecommendedGames } = await import("@/lib/data/games/detail")
+  const [recommendedGames, sameCategoryGames] = await Promise.all([
+    // 侧边栏推荐：使用智能推荐引擎，复用已缓存的游戏数据
+    getRecommendedGames(currentGameData, locale, 6),
+    // 底部推荐：混合最多游玩、最新、高评分
+    getMixedRecommendedGames(
+      game.category.slug,
+      game.subCategory?.slug || null,
+      game.slug, // 只排除当前游戏
+      locale,
+      6
+    ),
+  ])
 
   // 翻译文本
   const t = {
@@ -167,12 +259,29 @@ export default async function GamePage({ params }: GamePageProps) {
               <div className="flex flex-wrap items-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-muted-foreground">{t.categoryLabel}</span>
+
+                  {/* 主分类 */}
                   <Link
-                    href={`/${game.category.slug}`}
-                    className="px-3 py-1 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors font-medium"
+                    href={`/category/${game.category.slug}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors font-medium"
                   >
+                    {game.category.icon && <span>{game.category.icon}</span>}
                     {game.category.name}
                   </Link>
+
+                  {/* 分隔符 + 子分类 */}
+                  {game.subCategory && (
+                    <>
+                      <span className="text-muted-foreground">›</span>
+                      <Link
+                        href={`/category/${game.category.slug}/${game.subCategory.slug}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary/80 text-secondary-foreground rounded-full hover:bg-secondary transition-colors font-medium"
+                      >
+                        {game.subCategory.icon && <span>{game.subCategory.icon}</span>}
+                        {game.subCategory.name}
+                      </Link>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-muted-foreground">{t.playCountLabel}</span>
@@ -267,6 +376,47 @@ export default async function GamePage({ params }: GamePageProps) {
           </div>
         </div>
       </div>
+
+      {/* 底部推荐模块 - 混合推荐（最多游玩、最新、高评分） */}
+      {sameCategoryGames.length > 0 && (
+        <div className="mt-12 space-y-8">
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <span className="text-2xl">🔥</span>
+                {locale === 'zh'
+                  ? `更多${game.subCategory?.name || game.category.name}游戏`
+                  : `More ${game.subCategory?.name || game.category.name} Games`}
+              </h2>
+              <Link
+                href={
+                  game.subCategory
+                    ? `/category/${game.category.slug}/${game.subCategory.slug}`
+                    : `/category/${game.category.slug}`
+                }
+                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                {locale === 'zh' ? '查看全部' : 'View All'} →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {sameCategoryGames.map((categoryGame) => (
+                <GameCard
+                  key={categoryGame.slug}
+                  slug={categoryGame.slug}
+                  thumbnail={categoryGame.thumbnail}
+                  title={categoryGame.title}
+                  description={categoryGame.description}
+                  categoryName={categoryGame.categoryName}
+                  categorySlug={categoryGame.categorySlug}
+                  tags={categoryGame.tags}
+                  locale={locale}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

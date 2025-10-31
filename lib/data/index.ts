@@ -15,6 +15,7 @@ export { getDefaultLanguage, getEnabledLanguages } from "./languages"
 export {
   getAllCategories,
   getAllCategoryTranslationsMap,
+  getAllCategoryInfoMap,
   getAllCategoriesDataMap,
   getAllCategoriesFullData,
   getMainCategories,
@@ -44,6 +45,8 @@ export {
   getGamesByTagSlug,
   getGamesByTagWithPagination,
   getAllGames,
+  // 搜索游戏
+  searchGames,
   // 游戏详情
   getGameBySlug,
   getRecommendedGames,

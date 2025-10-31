@@ -35,6 +35,25 @@ export async function getAllCategoryTranslationsMap(locale: string) {
 }
 
 /**
+ * 获取分类 ID → {name, slug} 的映射
+ *
+ * 用途：游戏列表中需要显示分类名称和链接时使用
+ * 数据来源：从 getAllCategoriesFullData 派生，不查询数据库
+ *
+ * @example
+ * const map = await getAllCategoryInfoMap("en")
+ * const categoryInfo = map[game.categoryId] // { name: "Action", slug: "action" }
+ */
+export async function getAllCategoryInfoMap(locale: string) {
+  const fullData = await getAllCategoriesFullData(locale)
+  const map: Record<string, { name: string; slug: string }> = {}
+  fullData.forEach((cat) => {
+    map[cat.id] = { name: cat.name, slug: cat.slug }
+  })
+  return map
+}
+
+/**
  * 获取分类 slug → 完整信息的映射
  *
  * 用途：分类页面需要显示分类详细信息时使用
@@ -54,6 +73,7 @@ export async function getAllCategoriesDataMap(locale: string) {
     description: string
     icon: string | null
     gameCount: number
+    parentId: string | null
   }> = {}
 
   fullData.forEach((cat) => {
@@ -64,6 +84,7 @@ export async function getAllCategoriesDataMap(locale: string) {
       description: cat.description,
       icon: cat.icon,
       gameCount: cat.gameCount,
+      parentId: cat.parentId,
     }
   })
 

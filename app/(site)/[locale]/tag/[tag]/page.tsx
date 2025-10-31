@@ -3,7 +3,8 @@ import { GameSection } from "@/components/site/GameSection"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { Link } from "@/i18n/routing"
-import { generateTagSEOMetadata } from "@/lib/seo-helpers"
+import { getSiteUrl, generateAlternateLanguages } from "@/lib/seo-helpers"
+import { generateTagOGImageUrl } from "@/lib/og-image-helpers"
 import {
   generateCollectionPageSchema,
   generateBreadcrumbSchema,
@@ -28,12 +29,83 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
     }
   }
 
-  return generateTagSEOMetadata({
-    tagName: tagInfo.name,
-    locale,
-    slug: tag,
+  const siteUrl = getSiteUrl()
+
+  // 构建 SEO 友好的标题和描述
+  const titleTemplates: Record<string, string> = {
+    en: `${tagInfo.name} Games - Play Free Online`,
+    zh: `${tagInfo.name}游戏 - 免费在线玩`,
+  }
+
+  const descriptionTemplates: Record<string, string> = {
+    en: `Discover ${tagInfo.gameCount}+ free ${tagInfo.name.toLowerCase()} games on RunGame. Enjoy instant play with no downloads required.`,
+    zh: `在 RunGame 上发现 ${tagInfo.gameCount}+ 款免费${tagInfo.name}游戏。无需下载即可畅玩。`,
+  }
+
+  const keywordsTemplates: Record<string, string[]> = {
+    en: [
+      tagInfo.name,
+      `${tagInfo.name} games`,
+      `free ${tagInfo.name} games`,
+    ],
+    zh: [
+      tagInfo.name,
+      `${tagInfo.name}游戏`,
+      `免费${tagInfo.name}游戏`,
+    ],
+  }
+
+  const title = titleTemplates[locale] || titleTemplates.en
+  const description = descriptionTemplates[locale] || descriptionTemplates.en
+  const keywords = (keywordsTemplates[locale] || keywordsTemplates.en).join(', ')
+
+  // 生成动态 OG 图片 URL
+  const ogImageUrl = generateTagOGImageUrl({
+    name: tagInfo.name,
     gameCount: tagInfo.gameCount,
+    icon: '🏷️',
   })
+
+  // 构建路径（不带语言前缀）
+  const path = `/tag/${tag}`
+
+  // Open Graph locale 映射
+  const ogLocaleMap: Record<string, string> = {
+    'zh': 'zh_CN',
+    'en': 'en_US',
+  }
+
+  return {
+    title,
+    description,
+    keywords,
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      siteName: 'RunGame',
+      locale: ogLocaleMap[locale] || 'en_US',
+      type: 'website',
+      images: [{
+        url: ogImageUrl,
+        width: 1200,
+        height: 630,
+        alt: tagInfo.name,
+      }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl],
+      creator: '@rungame',
+      site: '@rungame',
+    },
+    alternates: {
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      languages: generateAlternateLanguages(path),
+    },
+  }
 }
 
 export default async function TagPage({ params, searchParams }: TagPageProps) {
@@ -41,7 +113,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
   const { page: pageParam } = await searchParams
   const page = pageParam ? parseInt(pageParam) : 1
 
-  const data = await getGamesByTagWithPagination(tag, locale, page, 24)
+  const data = await getGamesByTagWithPagination(tag, locale, page, 30)
 
   if (!data) {
     notFound()

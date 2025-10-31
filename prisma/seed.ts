@@ -326,6 +326,16 @@ async function main() {
           orderDirection: 'desc',
           pageSize: 24,
         },
+        content: {
+          detailedDescription: 'Explore our collection of most played games, loved by millions of players worldwide. These games have proven their excellence through consistent player engagement and positive feedback. From action-packed adventures to brain-teasing puzzles, find your next favorite game here.',
+          features: [
+            { icon: '🔥', text: 'Community Favorites' },
+            { icon: '🎮', text: 'High Player Count' },
+            { icon: '⭐', text: 'Proven Quality' },
+            { icon: '🌍', text: 'Global Appeal' },
+          ],
+          summary: 'These most played games represent the best of what our platform has to offer. Join millions of players worldwide and discover why these games have captured the hearts of our community. Updated regularly based on real-time play statistics.',
+        },
       },
       translations: {
         create: [
@@ -342,6 +352,16 @@ async function main() {
                 orderBy: 'playCount',
                 orderDirection: 'desc',
                 pageSize: 24,
+              },
+              content: {
+                detailedDescription: '探索全球数百万玩家喜爱的最热门游戏合集。这些游戏通过持续的玩家参与度和积极反馈证明了它们的卓越品质。从动作冒险到益智解谜，在这里找到你的下一个最爱游戏。',
+                features: [
+                  { icon: '🔥', text: '社区最爱' },
+                  { icon: '🎮', text: '高人气游戏' },
+                  { icon: '⭐', text: '品质保证' },
+                  { icon: '🌍', text: '全球流行' },
+                ],
+                summary: '这些最多人游玩的游戏代表了我们平台的精华。加入全球数百万玩家，发现为什么这些游戏能够俘获我们社区的心。基于实时游玩数据定期更新。',
               },
             },
           },
@@ -366,6 +386,16 @@ async function main() {
           orderDirection: 'desc',
           pageSize: 24,
         },
+        content: {
+          detailedDescription: 'Discover the latest games freshly added to our collection. Be among the first to experience new adventures, innovative gameplay, and exciting challenges. Our platform is constantly updated with fresh content to keep your gaming experience exciting and new.',
+          features: [
+            { icon: '🆕', text: 'Recently Added' },
+            { icon: '🎯', text: 'Fresh Content' },
+            { icon: '🚀', text: 'Be the First' },
+            { icon: '📅', text: 'Daily Updates' },
+          ],
+          summary: 'Stay ahead of the curve with our newest game additions. Updated daily to bring you the freshest gaming content from around the world. Don\'t miss out on discovering your next favorite game before everyone else!',
+        },
       },
       translations: {
         create: [
@@ -382,6 +412,16 @@ async function main() {
                 orderBy: 'createdAt',
                 orderDirection: 'desc',
                 pageSize: 24,
+              },
+              content: {
+                detailedDescription: '发现最新添加到我们合集的游戏。抢先体验新冒险、创新玩法和激动人心的挑战。我们的平台持续更新新内容，让您的游戏体验始终充满新鲜感。',
+                features: [
+                  { icon: '🆕', text: '最新上架' },
+                  { icon: '🎯', text: '新鲜内容' },
+                  { icon: '🚀', text: '抢先体验' },
+                  { icon: '📅', text: '每日更新' },
+                ],
+                summary: '领先一步体验我们最新的游戏。每日更新，为您带来来自世界各地最新鲜的游戏内容。不要错过在其他人之前发现您的下一个最爱游戏！',
               },
             },
           },
@@ -408,6 +448,16 @@ async function main() {
           orderDirection: 'desc',
           pageSize: 24,
         },
+        content: {
+          detailedDescription: 'Experience hand-picked excellence with our featured games collection. Each game is carefully selected by our editorial team based on gameplay quality, innovation, and overall entertainment value. These are the games that define what great gaming should be.',
+          features: [
+            { icon: '⭐', text: 'Editor\'s Choice' },
+            { icon: '🎨', text: 'Premium Quality' },
+            { icon: '🏆', text: 'Award Winners' },
+            { icon: '✨', text: 'Exceptional Gameplay' },
+          ],
+          summary: 'Our featured games represent the pinnacle of online gaming. Handpicked by experts who understand what makes a game truly exceptional. Each title offers a unique and memorable gaming experience worth your time.',
+        },
       },
       translations: {
         create: [
@@ -426,6 +476,16 @@ async function main() {
                 orderBy: 'rating',
                 orderDirection: 'desc',
                 pageSize: 24,
+              },
+              content: {
+                detailedDescription: '体验编辑精心挑选的卓越游戏合集。每款游戏都是由我们的编辑团队根据游戏品质、创新性和整体娱乐价值精心挑选。这些游戏定义了优秀游戏的标准。',
+                features: [
+                  { icon: '⭐', text: '编辑之选' },
+                  { icon: '🎨', text: '高端品质' },
+                  { icon: '🏆', text: '获奖作品' },
+                  { icon: '✨', text: '卓越体验' },
+                ],
+                summary: '我们的精选游戏代表了在线游戏的巅峰。由了解什么是真正卓越游戏的专家精心挑选。每款游戏都提供独特且难忘的游戏体验，值得您花时间体验。',
               },
             },
           },
@@ -450,6 +510,16 @@ async function main() {
           orderDirection: 'desc',
           pageSize: 24,
         },
+        content: {
+          detailedDescription: 'Jump into the action with games that are trending right now. These are the titles everyone is talking about and playing today. Stay current with gaming trends and join the community in experiencing what\'s hot in the gaming world.',
+          features: [
+            { icon: '📈', text: 'Currently Trending' },
+            { icon: '🔥', text: 'Hot Right Now' },
+            { icon: '💬', text: 'Community Buzz' },
+            { icon: '⚡', text: 'Viral Favorites' },
+          ],
+          summary: 'Don\'t miss out on what\'s trending in gaming. These games are capturing the attention of players worldwide and creating buzz in the gaming community. Join the trend and see what everyone is excited about!',
+        },
       },
       translations: {
         create: [
@@ -466,6 +536,16 @@ async function main() {
                 orderBy: 'rating',
                 orderDirection: 'desc',
                 pageSize: 24,
+              },
+              content: {
+                detailedDescription: '投入当前正在流行的游戏行动中。这些是当今每个人都在谈论和游玩的游戏。紧跟游戏潮流，加入社区一起体验游戏世界的热门内容。',
+                features: [
+                  { icon: '📈', text: '当前趋势' },
+                  { icon: '🔥', text: '热门榜首' },
+                  { icon: '💬', text: '社区热议' },
+                  { icon: '⚡', text: '病毒式流行' },
+                ],
+                summary: '不要错过游戏界的流行趋势。这些游戏正在吸引全球玩家的注意力，并在游戏社区中引发热议。加入潮流，看看大家都在为什么兴奋！',
               },
             },
           },

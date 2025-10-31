@@ -14,6 +14,118 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // URL 重定向: 旧的主分类 slug → 新的复数后缀格式
+  async redirects() {
+    return [
+      // 主分类 slug 重定向 (301 永久重定向)
+      {
+        source: '/category/main-action',
+        destination: '/category/action-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-adventure',
+        destination: '/category/adventure-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-puzzle',
+        destination: '/category/puzzle-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-sports',
+        destination: '/category/sports-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-racing',
+        destination: '/category/racing-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-shooter',
+        destination: '/category/shooter-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-fighting',
+        destination: '/category/fighting-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-strategy',
+        destination: '/category/strategy-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-rpg',
+        destination: '/category/rpg-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-simulation',
+        destination: '/category/simulation-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-horror',
+        destination: '/category/horror-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-building',
+        destination: '/category/building-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-multiplayer',
+        destination: '/category/multiplayer-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-classics',
+        destination: '/category/classic-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-casual',
+        destination: '/category/casual-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-board',
+        destination: '/category/board-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-kids',
+        destination: '/category/kids-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-girls',
+        destination: '/category/girls-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-animal',
+        destination: '/category/animal-games',
+        permanent: true,
+      },
+      {
+        source: '/category/main-themed',
+        destination: '/category/themed-games',
+        permanent: true,
+      },
+      // 带语言前缀的重定向
+      {
+        source: '/:locale(zh|es|fr)/category/main-:slug',
+        destination: '/:locale/category/:slug-games',
+        permanent: true,
+      },
+    ]
+  },
   // 开发环境启用数据缓存
   // experimental: {
   //   staleTimes: {

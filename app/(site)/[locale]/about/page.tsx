@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/routing"
 import type { Metadata } from "next"
-import { generateSEOMetadata } from "@/lib/seo-helpers"
+import { getSiteUrl, generateAlternateLanguages } from "@/lib/seo-helpers"
 
 interface AboutPageProps {
   params: Promise<{ locale: string }>
@@ -10,14 +10,47 @@ interface AboutPageProps {
 export async function generateMetadata({ params }: AboutPageProps): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: "about" })
+  const siteUrl = getSiteUrl()
 
-  return generateSEOMetadata({
-    title: t("metaTitle"),
-    description: t("metaDescription"),
-    locale,
-    path: `/about`,
-    type: 'website',
-  })
+  const title = t("metaTitle")
+  const description = t("metaDescription")
+  const path = `/about`
+
+  const ogLocaleMap: Record<string, string> = {
+    'zh': 'zh_CN',
+    'en': 'en_US',
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      siteName: 'RunGame',
+      locale: ogLocaleMap[locale] || 'en_US',
+      type: 'website',
+      images: [{
+        url: `${siteUrl}/assets/images/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: title,
+      }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [`${siteUrl}/assets/images/og-image.png`],
+      creator: '@rungame',
+      site: '@rungame',
+    },
+    alternates: {
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+      languages: generateAlternateLanguages(path),
+    },
+  }
 }
 
 export default async function AboutPage({ params }: AboutPageProps) {
@@ -128,15 +161,43 @@ export default async function AboutPage({ params }: AboutPageProps) {
         </section>
       </article>
 
-      {/* 返回首页 */}
+      {/* CTA 区域 */}
       <div className="pt-8 border-t border-border">
-        <Link
-          href={`/${locale}`}
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <span>←</span>
-          <span>{common("home")}</span>
-        </Link>
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-8 text-center space-y-4">
+          <h3 className="text-2xl font-bold">
+            {locale === 'zh' ? '准备好开始游戏了吗？' : 'Ready to Start Playing?'}
+          </h3>
+          <p className="text-muted-foreground">
+            {locale === 'zh'
+              ? '探索我们精心挑选的游戏库，立即开始畅玩！'
+              : 'Explore our curated collection of games and start playing now!'}
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 pt-2">
+            <Link
+              href="/games"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors shadow-md"
+            >
+              {locale === 'zh' ? '浏览所有游戏' : 'Browse All Games'} →
+            </Link>
+            <Link
+              href="/category"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-card border-2 border-border rounded-lg font-semibold hover:bg-accent transition-colors"
+            >
+              {locale === 'zh' ? '按分类浏览' : 'Browse by Category'}
+            </Link>
+          </div>
+        </div>
+
+        {/* 返回首页 */}
+        <div className="mt-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span>←</span>
+            <span>{common("home")}</span>
+          </Link>
+        </div>
       </div>
     </div>
   )

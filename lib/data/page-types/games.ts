@@ -3,7 +3,7 @@
 import { unstable_cache } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getTranslatedField, buildLocaleCondition } from "@/lib/i18n-helpers"
-import { getAllCategoryTranslationsMap } from "../categories"
+import { getAllCategoryTranslationsMap, getAllCategoriesDataMap } from "../categories"
 import { getAllTagTranslationsMap } from "../tags"
 import { CACHE_TAGS, REVALIDATE_TIME } from "@/lib/cache-helpers"
 
@@ -36,7 +36,8 @@ export async function getPageTypeGames(
   }
 
   // 1. 先获取底层缓存数据
-  const [categoryTranslations, tagTranslations] = await Promise.all([
+  const [categoriesDataMap, categoryTranslations, tagTranslations] = await Promise.all([
+    getAllCategoriesDataMap(locale),
     getAllCategoryTranslationsMap(locale),
     getAllTagTranslationsMap(locale),
   ])
@@ -66,6 +67,7 @@ export async function getPageTypeGames(
               description: true,
               metaTitle: true,
               metaDescription: true,
+              pageInfo: true, // ✨ 新增：获取翻译版的 pageInfo（包含 content）
               locale: true,
             },
           },
@@ -83,7 +85,7 @@ export async function getPageTypeGames(
       const configOrderDirection = gameListConfig.orderDirection || "desc"
 
       // 获取游戏数据和总数
-      const [games, totalCount] = await Promise.all([
+      let [games, totalCount] = await Promise.all([
         prisma.game.findMany({
           where: {
             status: "PUBLISHED",
@@ -95,6 +97,19 @@ export async function getPageTypeGames(
             translations: {
               where: buildLocaleCondition(locale),
               select: { title: true, description: true, locale: true },
+            },
+            gameCategories: {
+              select: {
+                categoryId: true,
+                mainCategoryId: true,
+              },
+              where: {
+                isPrimary: true,
+              },
+              orderBy: {
+                sortOrder: 'asc',
+              },
+              take: 1,
             },
             tags: {
               select: { tagId: true },
@@ -109,6 +124,54 @@ export async function getPageTypeGames(
           },
         }),
       ])
+
+      // 回退处理：如果配置了 isFeatured 筛选但游戏数量不足，用热门游戏补充
+      if (configFilters.isFeatured === true && games.length < limit) {
+        const neededCount = limit - games.length
+        const existingSlugs = new Set(games.map(g => g.slug))
+
+        const additionalGames = await prisma.game.findMany({
+          where: {
+            status: "PUBLISHED",
+            slug: { notIn: Array.from(existingSlugs) },
+          },
+          take: neededCount,
+          include: {
+            translations: {
+              where: buildLocaleCondition(locale),
+              select: { title: true, description: true, locale: true },
+            },
+            gameCategories: {
+              select: {
+                categoryId: true,
+                mainCategoryId: true,
+              },
+              where: {
+                isPrimary: true,
+              },
+              orderBy: {
+                sortOrder: 'asc',
+              },
+              take: 1,
+            },
+            tags: {
+              select: { tagId: true },
+            },
+          },
+          orderBy: { playCount: "desc" },
+        })
+
+        games = [...games, ...additionalGames]
+
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `[Query] 📄 getPageTypeGames - 回退补充: 原始 ${games.length - additionalGames.length} 个，补充 ${additionalGames.length} 个热门游戏`
+          )
+        }
+      }
+
+      // 获取翻译版 pageInfo（如果存在）
+      const translationPageInfo = pageType.translations.find((t: any) => t.locale === locale)?.pageInfo
 
       // 组装并返回结果
       return {
@@ -125,15 +188,29 @@ export async function getPageTypeGames(
             "metaDescription",
             pageType.metaDescription || ""
           ),
+          pageInfo: pageType.pageInfo, // ✨ 主表的 pageInfo
+          translationPageInfo, // ✨ 翻译版的 pageInfo
         },
-        games: games.map((game) => ({
-          slug: game.slug,
-          thumbnail: game.thumbnail,
-          title: getTranslatedField(game.translations, locale, "title", "Untitled"),
-          description: getTranslatedField(game.translations, locale, "description", ""),
-          category: categoryTranslations[game.categoryId] || "",
-          tags: game.tags.map((t: any) => tagTranslations[t.tagId] || "").filter(Boolean),
-        })),
+        games: games.map((game) => {
+          // 获取子分类和主分类信息
+          const subCategoryId = game.gameCategories[0]?.categoryId
+          const mainCategoryId = game.gameCategories[0]?.mainCategoryId
+
+          // 通过 ID 查找 slug
+          const subCategoryInfo = subCategoryId ? Object.values(categoriesDataMap).find(cat => cat.id === subCategoryId) : undefined
+          const mainCategoryInfo = mainCategoryId ? Object.values(categoriesDataMap).find(cat => cat.id === mainCategoryId) : undefined
+
+          return {
+            slug: game.slug,
+            thumbnail: game.thumbnail,
+            title: getTranslatedField(game.translations, locale, "title", "Untitled"),
+            description: getTranslatedField(game.translations, locale, "description", ""),
+            category: categoryTranslations[subCategoryId || ""] || "",
+            categorySlug: subCategoryInfo?.slug,
+            mainCategorySlug: mainCategoryInfo?.slug,
+            tags: game.tags.map((t: any) => tagTranslations[t.tagId] || "").filter(Boolean),
+          }
+        }),
         pagination: {
           currentPage: page,
           totalGames: totalCount,
