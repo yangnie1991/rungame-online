@@ -1,4 +1,6 @@
-import Script from "next/script"
+"use client"
+
+import { useEffect } from "react"
 
 interface GoogleAdsenseProps {
   adClientId: string
@@ -7,10 +9,10 @@ interface GoogleAdsenseProps {
 /**
  * Google AdSense 组件
  *
- * 使用 next/script 的 afterInteractive 策略加载 AdSense
- * - 在页面可交互后立即加载
+ * 使用原生 script 标签加载 AdSense，避免 data-nscript 警告
+ * - 在客户端动态注入脚本
  * - 不阻塞首屏渲染
- * - 自动优化脚本加载
+ * - 避免 Next.js Script 组件的兼容性问题
  *
  * 配置方法：
  * 1. 在 .env 中配置 NEXT_PUBLIC_ADSENSE_ID
@@ -29,17 +31,34 @@ interface GoogleAdsenseProps {
  * }
  */
 export function GoogleAdsense({ adClientId }: GoogleAdsenseProps) {
-  // 如果没有配置 AdSense ID，则不渲染
-  if (!adClientId) {
-    return null
-  }
+  useEffect(() => {
+    // 如果没有配置 AdSense ID，则不加载
+    if (!adClientId) {
+      return
+    }
 
-  return (
-    <Script
-      async
-      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClientId}`}
-      crossOrigin="anonymous"
-      strategy="afterInteractive"
-    />
-  )
+    // 检查脚本是否已经加载
+    const existingScript = document.querySelector(
+      `script[src*="adsbygoogle.js"]`
+    )
+
+    if (existingScript) {
+      return
+    }
+
+    // 动态创建并注入 AdSense 脚本
+    const script = document.createElement("script")
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClientId}`
+    script.async = true
+    script.crossOrigin = "anonymous"
+
+    document.head.appendChild(script)
+
+    // 清理函数（可选）
+    return () => {
+      // AdSense 脚本通常不需要清理，因为它会在整个应用生命周期中使用
+    }
+  }, [adClientId])
+
+  return null
 }
