@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // 强制清除缓存
+  generateBuildId: async () => {
+    // 使用时间戳作为 build ID，确保每次构建都是新的
+    return `build-${Date.now()}`
+  },
   // URL 重定向: 旧的主分类 slug → 新的复数后缀格式
   async redirects() {
     return [
