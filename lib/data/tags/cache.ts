@@ -45,7 +45,13 @@ async function fetchTagsFromDB(locale: string, includeDisabled = false) {
       name: true,
       translations: {
         where: buildLocaleCondition(locale),
-        select: { name: true, locale: true },
+        select: {
+          name: true,
+          locale: true,
+          metaTitle: true,
+          metaDescription: true,
+          keywords: true,
+        },
       },
       _count: {
         select: { games: true },
@@ -59,6 +65,11 @@ async function fetchTagsFromDB(locale: string, includeDisabled = false) {
     const name = getTranslatedField(tag.translations, locale, "name", tag.name)
     const gameCount = tag._count.games
 
+    // SEO 字段（优先使用翻译）
+    const metaTitle = getTranslatedField(tag.translations, locale, "metaTitle", null)
+    const metaDescription = getTranslatedField(tag.translations, locale, "metaDescription", null)
+    const keywords = getTranslatedField(tag.translations, locale, "keywords", null)
+
     return {
       id: String(tag.id),
       slug: String(tag.slug),
@@ -66,6 +77,10 @@ async function fetchTagsFromDB(locale: string, includeDisabled = false) {
       isEnabled: Boolean(tag.isEnabled), // 管理端需要显示启用状态
       name: String(name),
       gameCount: Number(gameCount),
+      // SEO 字段
+      metaTitle: metaTitle ? String(metaTitle) : null,
+      metaDescription: metaDescription ? String(metaDescription) : null,
+      keywords: keywords ? String(keywords) : null,
     }
   })
 }

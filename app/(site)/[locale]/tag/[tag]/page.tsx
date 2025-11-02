@@ -10,14 +10,22 @@ import {
   generateBreadcrumbSchema,
   renderJsonLd
 } from "@/lib/schema-generators"
+import {
+  generateTagTitle,
+  generateTagDescription,
+  combineKeywords,
+  generateTagBaseKeywords
+} from "@/lib/seo-template-generator"
 
 interface TagPageProps {
   params: Promise<{ locale: string; tag: string }>
   searchParams: Promise<{ page?: string }>
 }
 
-export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: TagPageProps): Promise<Metadata> {
   const { locale, tag } = await params
+  const { page = "1" } = await searchParams
+  const currentPage = parseInt(page, 10)
 
   // 只获取标签信息，不查询游戏列表（避免重复查询）
   const tagsMap = await getAllTagsInfoMap(locale)
@@ -31,33 +39,45 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
 
   const siteUrl = getSiteUrl()
 
-  // 构建 SEO 友好的标题和描述
-  const titleTemplates: Record<string, string> = {
-    en: `${tagInfo.name} Games - Play Free Online`,
-    zh: `${tagInfo.name}游戏 - 免费在线玩`,
+  // ========================================
+  // 1. 标题：完全使用模板生成（不使用数据库的 metaTitle）
+  // ========================================
+  const baseTitle = generateTagTitle({
+    name: tagInfo.name,
+    gameCount: tagInfo.gameCount,
+  }, locale)
+
+  // 为分页页面添加页码
+  const title = currentPage > 1
+    ? `${baseTitle} (${locale === 'zh' ? '第' : 'Page '}${currentPage}${locale === 'zh' ? '页' : ''})`
+    : baseTitle
+
+  // ========================================
+  // 2. 描述：优先使用数据库的 metaDescription
+  // ========================================
+  let description: string
+  if (currentPage > 1) {
+    // 分页页面使用固定格式
+    description = locale === 'zh'
+      ? `浏览更多${tagInfo.name}游戏 - 第${currentPage}页。在 RunGame 上免费畅玩，无需下载。`
+      : `Discover more ${tagInfo.name.toLowerCase()} games - Page ${currentPage}. Enjoy instant play with no downloads required.`
+  } else {
+    // 第一页：优先使用数据库的 metaDescription，回退到模板生成
+    description = tagInfo.metaDescription || generateTagDescription({
+      name: tagInfo.name,
+      gameCount: tagInfo.gameCount,
+    }, locale)
   }
 
-  const descriptionTemplates: Record<string, string> = {
-    en: `Discover ${tagInfo.gameCount}+ free ${tagInfo.name.toLowerCase()} games on RunGame. Enjoy instant play with no downloads required.`,
-    zh: `在 RunGame 上发现 ${tagInfo.gameCount}+ 款免费${tagInfo.name}游戏。无需下载即可畅玩。`,
-  }
+  // ========================================
+  // 3. 关键词：固定模板 + 数据库个性关键词
+  // ========================================
+  const baseKeywords = generateTagBaseKeywords({
+    name: tagInfo.name,
+    gameCount: tagInfo.gameCount,
+  }, locale)
 
-  const keywordsTemplates: Record<string, string[]> = {
-    en: [
-      tagInfo.name,
-      `${tagInfo.name} games`,
-      `free ${tagInfo.name} games`,
-    ],
-    zh: [
-      tagInfo.name,
-      `${tagInfo.name}游戏`,
-      `免费${tagInfo.name}游戏`,
-    ],
-  }
-
-  const title = titleTemplates[locale] || titleTemplates.en
-  const description = descriptionTemplates[locale] || descriptionTemplates.en
-  const keywords = (keywordsTemplates[locale] || keywordsTemplates.en).join(', ')
+  const keywords = combineKeywords(baseKeywords, tagInfo.keywords)
 
   // 生成动态 OG 图片 URL
   const ogImageUrl = generateTagOGImageUrl({
@@ -66,14 +86,20 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
     icon: '🏷️',
   })
 
-  // 构建路径（不带语言前缀）
-  const path = `/tag/${tag}`
+  // 构建路径（包含页码）
+  const path = currentPage > 1
+    ? `/tag/${tag}?page=${currentPage}`
+    : `/tag/${tag}`
 
   // Open Graph locale 映射
   const ogLocaleMap: Record<string, string> = {
     'zh': 'zh_CN',
     'en': 'en_US',
   }
+
+  // 获取分页信息以生成 prev/next 链接
+  const data = await getGamesByTagWithPagination(tag, locale, currentPage, 30)
+  const pagination = data?.pagination
 
   return {
     title,
@@ -102,8 +128,24 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
       site: '@rungame',
     },
     alternates: {
+      // 自引用 canonical（包含当前页码）
       canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
-      languages: generateAlternateLanguages(path),
+
+      // Prev link（如果不是第一页）
+      ...(currentPage > 1 && {
+        prev: currentPage === 2
+          ? `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/tag/${tag}`
+          : `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/tag/${tag}?page=${currentPage - 1}`,
+      }),
+
+      // Next link（如果有更多页面）
+      ...(pagination?.hasMore && {
+        next: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/tag/${tag}?page=${currentPage + 1}`,
+      }),
+
+      languages: generateAlternateLanguages(
+        currentPage > 1 ? `/tag/${tag}?page=${currentPage}` : `/tag/${tag}`
+      ),
     },
   }
 }
@@ -145,12 +187,16 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
     { name: data.tag.name, url: '' },
   ])
 
-  // 标签集合 Schema
+  // 标签集合 Schema（页面感知）
   const collectionSchema = generateCollectionPageSchema({
-    name: `${data.tag.name} Games`,
+    name: page > 1
+      ? `${data.tag.name} Games - ${t.page} ${page}`
+      : `${data.tag.name} Games`,
     description: `Play the best ${data.tag.name} games online for free`,
-    url: `/${locale}/tag/${tag}`,
-    numberOfItems: data.pagination.totalGames,
+    url: page > 1
+      ? `/${locale}/tag/${tag}?page=${page}`
+      : `/${locale}/tag/${tag}`,
+    numberOfItems: data.games.length, // 当前页面的游戏数量，而不是总数
   })
 
   return (

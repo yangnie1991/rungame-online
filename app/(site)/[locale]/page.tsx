@@ -26,16 +26,45 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   const title = t("homeTitle")
   const description = t("homeDescription")
 
+  // Keywords for homepage
+  const keywordsTemplates: Record<string, string[]> = {
+    en: [
+      'free online games',
+      'play games online',
+      'browser games',
+      'HTML5 games',
+      'no download games',
+      'instant play games',
+      'RunGame',
+      'online gaming platform',
+    ],
+    zh: [
+      '免费在线游戏',
+      '在线玩游戏',
+      '浏览器游戏',
+      'HTML5游戏',
+      '无需下载游戏',
+      '即时游戏',
+      'RunGame',
+      '在线游戏平台',
+    ],
+  }
+
+  const keywords = (keywordsTemplates[locale] || keywordsTemplates.en).join(', ')
+
   // Open Graph locale 映射
   const ogLocaleMap: Record<string, string> = {
     'zh': 'zh_CN',
     'en': 'en_US',
   }
 
-  // 覆盖title为字符串，避免继承layout的template导致重复
+  // 使用 absolute title 来完全覆盖 layout template，避免添加 | RunGame
   return {
-    title,
+    title: {
+      absolute: title  // 完全覆盖，不应用 template
+    },
     description,
+    keywords,
     openGraph: {
       title,
       description,
@@ -253,7 +282,7 @@ export default async function HomePage({ params }: HomePageProps) {
             {locale === 'zh' ? '查看全部' : 'View All'} →
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {popularCategories.map(category => (
             <Link
               key={category.id}

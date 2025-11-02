@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl"
 import { getMessages } from "next-intl/server"
 import { SiteHeader } from "@/components/site/Header"
 import { Sidebar } from "@/components/site/Sidebar"
+import { SiteFooter } from "@/components/site/Footer"
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics"
@@ -73,7 +74,24 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
           <NextIntlClientProvider messages={messages}>
             <div className="flex h-screen flex-col overflow-hidden">
               {/* Top Banner - 固定高度顶部导航栏 */}
-              <SiteHeader languages={languages} currentLocale={locale} />
+              <SiteHeader
+                languages={languages}
+                currentLocale={locale}
+                mainNavItems={mainNavItems}
+                categories={categoriesData.map((cat) => ({
+                  slug: cat.slug,
+                  name: cat.name,
+                  icon: cat.icon,
+                  count: cat.gameCount,
+                }))}
+                pageTypes={pageTypesData.map((pt) => ({
+                  slug: pt.slug,
+                  type: pt.type,
+                  icon: pt.icon,
+                  title: pt.title,
+                  description: pt.description,
+                }))}
+              />
 
               {/* Main Layout: Sidebar + Content 填充剩余空间 */}
               <div className="flex w-full flex-1 overflow-hidden">
@@ -104,6 +122,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                 {/* Main Content - 填充剩余空间，支持滚动 */}
                 <main className="flex-1 bg-background overflow-y-auto">
                   <div className="p-4 md:p-6">{children}</div>
+                  <SiteFooter locale={locale} />
                 </main>
               </div>
             </div>

@@ -92,6 +92,9 @@ export async function getAllTagsInfoMap(locale: string) {
     name: string
     icon: string | null
     gameCount: number
+    metaTitle: string | null
+    metaDescription: string | null
+    keywords: string | null
   }> = {}
 
   fullData.forEach((tag) => {
@@ -100,6 +103,9 @@ export async function getAllTagsInfoMap(locale: string) {
       name: tag.name,
       icon: tag.icon,
       gameCount: tag.gameCount,
+      metaTitle: tag.metaTitle,
+      metaDescription: tag.metaDescription,
+      keywords: tag.keywords,
     }
   })
 
