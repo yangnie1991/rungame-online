@@ -75,8 +75,8 @@ export async function generateMetadata({ params, searchParams }: SearchPageProps
       languages: generateAlternateLanguages(path),
     },
     robots: {
-      index: !!q, // 只有有搜索词时才索引
-      follow: true,
+      index: false, // 搜索页不应该被索引，避免重复内容和稀薄内容问题
+      follow: true, // 但跟随页面内的链接
     },
   }
 }

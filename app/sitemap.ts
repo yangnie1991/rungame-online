@@ -37,11 +37,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   })
 
   // 2. 静态页面（重要的聚合页和信息页）
+  // 注意：search 页面不包含在 sitemap 中，因为设置了 noindex
   const staticPages = [
     { path: 'games', priority: 0.9, changeFrequency: 'daily' as const },
     { path: 'category', priority: 0.8, changeFrequency: 'daily' as const },
     { path: 'tag', priority: 0.7, changeFrequency: 'weekly' as const },
-    { path: 'search', priority: 0.5, changeFrequency: 'weekly' as const },
     { path: 'about', priority: 0.3, changeFrequency: 'monthly' as const },
     { path: 'contact', priority: 0.3, changeFrequency: 'monthly' as const },
     { path: 'privacy', priority: 0.3, changeFrequency: 'monthly' as const },
