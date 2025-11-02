@@ -23,15 +23,24 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
   const t = await getTranslations({ locale, namespace: "common" })
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-6">
+      {/* 面包屑导航 */}
+      <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition-colors">
+          {t("home")}
+        </Link>
+        <span>/</span>
+        <span className="text-foreground">{t("allCategories")}</span>
+      </nav>
+
       {/* 页面标题 */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">{t("allCategories")}</h1>
+      <div>
+        <h1 className="text-3xl font-bold mb-2">{t("allCategories")}</h1>
         <p className="text-muted-foreground">{t("browseCategoriesDescription")}</p>
       </div>
 
       {/* 分类网格 */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {categories.map((category) => (
           <Link
             key={category.slug}

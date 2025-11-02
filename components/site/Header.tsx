@@ -1,11 +1,19 @@
 "use client"
 
 import { Link, usePathname, useRouter } from "@/i18n/routing"
-import { Search, Menu } from "lucide-react"
+import { Search } from "lucide-react"
 import { useState } from "react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { useTranslations } from "next-intl"
 import Image from "next/image"
+import { MobileSidebar } from "./MobileSidebar"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
 interface Language {
   code: string
@@ -14,15 +22,40 @@ interface Language {
   flag: string | null
 }
 
+interface NavItem {
+  href: string
+  icon: string
+  text: string
+}
+
+interface CategoryItem {
+  slug: string
+  name: string
+  icon: string | null
+  count: number
+}
+
+interface PageTypeItem {
+  slug: string
+  type: string
+  icon: string | null
+  title: string
+  description: string
+}
+
 interface HeaderProps {
   languages: Language[]
   currentLocale: string
+  mainNavItems: NavItem[]
+  categories: CategoryItem[]
+  pageTypes: PageTypeItem[]
 }
 
-export function SiteHeader({ languages, currentLocale }: HeaderProps) {
+export function SiteHeader({ languages, currentLocale, mainNavItems, categories, pageTypes }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [mobileLanguageOpen, setMobileLanguageOpen] = useState(false)
   const t = useTranslations("header")
 
   // 处理搜索提交
@@ -34,8 +67,9 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
   }
 
   return (
-    <header className="bg-card py-4 z-50 shadow-sm flex-shrink-0">
+    <header className="bg-card py-3 md:py-4 z-50 shadow-sm flex-shrink-0">
       <div className="w-full px-4 sm:px-6 lg:px-8">
+        {/* 第一行：Logo + 工具栏 */}
         <div className="flex items-center justify-between">
           {/* Logo 和品牌关键词 */}
           <div className="flex items-center space-x-3 sm:space-x-6">
@@ -59,8 +93,8 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
             </div>
           </div>
 
-          {/* Search Box - 扩大搜索框 */}
-          <div className="flex-1 max-w-xl mx-8">
+          {/* Search Box - 桌面端显示 */}
+          <div className="hidden md:block flex-1 max-w-xl mx-8">
             <form onSubmit={handleSearch} className="relative">
               <input
                 type="text"
@@ -82,7 +116,7 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
 
           {/* 右侧工具栏 */}
           <div className="flex items-center space-x-2">
-            {/* 语言切换 */}
+            {/* 语言切换 - 桌面端显示文字 */}
             <div className="hidden md:block relative group">
               <button className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center">
                 {languages.find((l) => l.code === currentLocale)?.flag || "🌐"}
@@ -115,16 +149,76 @@ export function SiteHeader({ languages, currentLocale }: HeaderProps) {
               </div>
             </div>
 
-            {/* 主题切换 */}
-            <div className="hidden md:block">
-              <ThemeToggle />
+            {/* 语言切换 - 移动端显示图标 */}
+            <div className="md:hidden">
+              <Sheet open={mobileLanguageOpen} onOpenChange={setMobileLanguageOpen}>
+                <SheetTrigger asChild>
+                  <button className="inline-flex items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-10 w-10 transition-colors">
+                    <span className="text-xl">
+                      {languages.find((l) => l.code === currentLocale)?.flag || "🌐"}
+                    </span>
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-auto">
+                  <SheetHeader>
+                    <SheetTitle>选择语言 / Select Language</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {languages.map((lang) => {
+                      const isActive = lang.code === currentLocale
+                      return (
+                        <Link
+                          key={lang.code}
+                          href={pathname}
+                          locale={lang.code as "en" | "zh" | "es" | "fr"}
+                          onClick={() => setMobileLanguageOpen(false)}
+                          className={`flex items-center justify-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                            isActive
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-accent text-accent-foreground hover:bg-accent/80"
+                          }`}
+                        >
+                          {lang.flag && <span className="mr-2 text-xl">{lang.flag}</span>}
+                          {lang.nativeName}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
 
-            {/* 移动端菜单按钮 */}
-            <button className="md:hidden p-2 text-muted-foreground hover:text-primary transition-colors" aria-label="菜单">
-              <Menu className="w-6 h-6" />
-            </button>
+            {/* 主题切换 - 移动端和桌面端都显示 */}
+            <ThemeToggle />
+
+            {/* 移动端菜单 */}
+            <MobileSidebar
+              mainNavItems={mainNavItems}
+              categories={categories}
+              pageTypes={pageTypes}
+            />
           </div>
+        </div>
+
+        {/* 第二行：搜索框 - 仅移动端显示 */}
+        <div className="md:hidden mt-3">
+          <form onSubmit={handleSearch} className="relative">
+            <input
+              type="text"
+              name="q"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t("searchPlaceholder")}
+              className="w-full px-4 py-2.5 rounded-lg bg-background border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary pr-11 text-base transition-all"
+            />
+            <button
+              type="submit"
+              className="absolute right-2.5 top-2.5 p-1 text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          </form>
         </div>
       </div>
     </header>

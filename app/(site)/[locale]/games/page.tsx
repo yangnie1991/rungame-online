@@ -15,31 +15,55 @@ interface GamesPageProps {
   searchParams: Promise<{ page?: string; sort?: string }>
 }
 
-export async function generateMetadata({ params }: GamesPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: GamesPageProps): Promise<Metadata> {
   const { locale } = await params
+  const { page = "1" } = await searchParams
+  const currentPage = parseInt(page, 10)
   const siteUrl = getSiteUrl()
 
-  const titles: Record<string, string> = {
-    en: 'All Games - Free Online Games | RunGame',
-    zh: '所有游戏 - 免费在线游戏 | RunGame',
-    es: 'Todos los Juegos - Juegos Gratis en Línea | RunGame',
-    fr: 'Tous les Jeux - Jeux Gratuits en Ligne | RunGame',
+  // 基础 titles (不包含 | RunGame，由 layout 的 template 自动添加)
+  const baseTitles: Record<string, string> = {
+    en: 'All Games - Free Online Games',
+    zh: '所有游戏 - 免费在线游戏',
+    es: 'Todos los Juegos - Juegos Gratis en Línea',
+    fr: 'Tous les Jeux - Jeux Gratuits en Ligne',
   }
 
-  const descriptions: Record<string, string> = {
+  // 如果不是第1页，添加页码标识
+  const title = currentPage > 1
+    ? `${baseTitles[locale] || baseTitles.en} (${locale === 'zh' ? '第' : 'Page '}${currentPage}${locale === 'zh' ? '页' : ''})`
+    : (baseTitles[locale] || baseTitles.en)
+
+  // 基础 descriptions
+  const baseDescriptions: Record<string, string> = {
     en: `Browse thousands of free online games. Play instantly, no downloads!`,
     zh: `浏览数千款免费在线游戏。即刻畅玩,无需下载!`,
     es: `Explora miles de juegos gratis en línea. ¡Juega al instante!`,
     fr: `Parcourez des milliers de jeux gratuits en ligne. Jouez instantanément!`,
   }
 
-  const title = titles[locale] || titles.en
-  const description = descriptions[locale] || descriptions.en
-  const path = `/games`
+  const pageDescriptions: Record<string, string> = {
+    en: `Discover more exciting games - Page ${currentPage}. Play instantly, no downloads!`,
+    zh: `发现更多精彩游戏 - 第${currentPage}页。即刻畅玩,无需下载!`,
+    es: `Descubre más juegos emocionantes - Página ${currentPage}. ¡Juega al instante!`,
+    fr: `Découvrez plus de jeux passionnants - Page ${currentPage}. Jouez instantanément!`,
+  }
+
+  const description = currentPage > 1
+    ? (pageDescriptions[locale] || pageDescriptions.en)
+    : (baseDescriptions[locale] || baseDescriptions.en)
+
+  // 构建包含页码的 path（用于 canonical 和 OG）
+  const path = currentPage > 1 ? `/games?page=${currentPage}` : `/games`
+
+  // 获取分页信息（用于 prev/next 链接）
+  const { pagination } = await getAllGames(locale, currentPage, 30, 'popular')
 
   const ogLocaleMap: Record<string, string> = {
     'zh': 'zh_CN',
     'en': 'en_US',
+    'es': 'es_ES',
+    'fr': 'fr_FR',
   }
 
   return {
@@ -69,8 +93,22 @@ export async function generateMetadata({ params }: GamesPageProps): Promise<Meta
       site: '@rungame',
     },
     alternates: {
+      // Self-referencing canonical (每个分页指向自己)
       canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
-      languages: generateAlternateLanguages(path),
+
+      // Prev link (如果不是第1页)
+      ...(currentPage > 1 && {
+        prev: currentPage === 2
+          ? `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/games`
+          : `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/games?page=${currentPage - 1}`,
+      }),
+
+      // Next link (如果还有更多页)
+      ...(pagination.hasMore && {
+        next: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/games?page=${currentPage + 1}`,
+      }),
+
+      languages: generateAlternateLanguages(currentPage > 1 ? `/games?page=${currentPage}` : `/games`),
     },
   }
 }
@@ -95,14 +133,14 @@ export default async function GamesPage({ params, searchParams }: GamesPageProps
 
   // 生成CollectionPage Schema
   const collectionSchema = generateCollectionPageSchema({
-    name: t("title"),
+    name: currentPage > 1 ? `${t("title")} - ${tCommon("page")} ${currentPage}` : t("title"),
     description: t("description"),
-    url: `/${locale}/games`,
-    numberOfItems: pagination.totalGames,
+    url: currentPage > 1 ? `/${locale}/games?page=${currentPage}` : `/${locale}/games`,
+    numberOfItems: games.length, // 当前页的游戏数量
   })
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="py-8 px-4 md:px-6 lg:px-8 space-y-8">
       {/* 添加结构化数据 */}
       <script
         type="application/ld+json"
@@ -114,58 +152,56 @@ export default async function GamesPage({ params, searchParams }: GamesPageProps
       />
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-primary">
+      <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition-colors">
           {tCommon("home")}
         </Link>
         <span>/</span>
-        <span>{tCommon("allGames")}</span>
+        <span className="text-foreground">{tCommon("allGames")}</span>
+      </nav>
+
+      {/* 页面标题 */}
+      <div>
+        <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+        <p className="text-muted-foreground">
+          {t("description")} ({tCommon("gamesCount", { count: pagination.totalGames })})
+        </p>
       </div>
 
-      {/* Header with Sort */}
-      <div className="flex items-baseline justify-between">
-        <div className="space-y-3">
-          <h1 className="text-3xl md:text-4xl font-bold">{t("title")}</h1>
-          <p className="text-lg text-muted-foreground">
-            {t("description")} ({tCommon("gamesCount", { count: pagination.totalGames })})
-          </p>
-        </div>
-
-        {/* 排序选项 */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{tCommon("sortBy")}:</span>
-          <div className="flex gap-1.5">
-            <Link
-              href="/games?sort=popular"
-              className={`inline-flex items-center px-2.5 py-1 text-xs rounded transition-colors ${
-                currentSort === "popular"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/60 hover:bg-muted"
-              }`}
-            >
-              {tCommon("sortByPopular")}
-            </Link>
-            <Link
-              href="/games?sort=newest"
-              className={`inline-flex items-center px-2.5 py-1 text-xs rounded transition-colors ${
-                currentSort === "newest"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/60 hover:bg-muted"
-              }`}
-            >
-              {tCommon("sortByNewest")}
-            </Link>
-            <Link
-              href="/games?sort=name"
-              className={`inline-flex items-center px-2.5 py-1 text-xs rounded transition-colors ${
-                currentSort === "name"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/60 hover:bg-muted"
-              }`}
-            >
-              {tCommon("sortByName")}
-            </Link>
-          </div>
+      {/* 排序选项 */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-muted-foreground hidden sm:inline">{tCommon("sortBy")}:</span>
+        <div className="flex gap-1.5 flex-wrap">
+          <Link
+            href="/games?sort=popular"
+            className={`inline-flex items-center px-2.5 py-1 text-xs rounded transition-colors ${
+              currentSort === "popular"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/60 hover:bg-muted"
+            }`}
+          >
+            {tCommon("sortByPopular")}
+          </Link>
+          <Link
+            href="/games?sort=newest"
+            className={`inline-flex items-center px-2.5 py-1 text-xs rounded transition-colors ${
+              currentSort === "newest"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/60 hover:bg-muted"
+            }`}
+          >
+            {tCommon("sortByNewest")}
+          </Link>
+          <Link
+            href="/games?sort=name"
+            className={`inline-flex items-center px-2.5 py-1 text-xs rounded transition-colors ${
+              currentSort === "name"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/60 hover:bg-muted"
+            }`}
+          >
+            {tCommon("sortByName")}
+          </Link>
         </div>
       </div>
 
