@@ -111,7 +111,7 @@ export function GameEmbed({
   }, [])
 
   return (
-    <div className="w-full">
+    <div className="w-[90%] mx-auto">
       <div
         className="bg-card rounded-lg overflow-hidden shadow-md flex flex-col"
         style={{
