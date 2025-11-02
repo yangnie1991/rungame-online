@@ -222,14 +222,15 @@ export default async function GamePage({ params }: GamePageProps) {
       </div>
 
       {/* 游戏播放器 - 全宽 */}
-      <div className="bg-black rounded-lg overflow-hidden">
-        <GameEmbed
-          embedUrl={game.embedUrl}
-          title={game.title}
-          width={game.dimensions.width}
-          height={game.dimensions.height}
-        />
-      </div>
+      <GameEmbed
+        embedUrl={game.embedUrl}
+        title={game.title}
+        width={game.dimensions.width}
+        height={game.dimensions.height}
+        playCount={game.playCount}
+        gameSlug={game.slug}
+        locale={locale}
+      />
 
       {/* 下方内容区 - 3/4 和 1/4 分栏 */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
