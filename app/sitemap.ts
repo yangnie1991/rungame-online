@@ -36,7 +36,45 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   })
 
-  // 2. 获取所有已发布的游戏
+  // 2. 静态页面（重要的聚合页和信息页）
+  const staticPages = [
+    { path: 'games', priority: 0.9, changeFrequency: 'daily' as const },
+    { path: 'category', priority: 0.8, changeFrequency: 'daily' as const },
+    { path: 'tag', priority: 0.7, changeFrequency: 'weekly' as const },
+    { path: 'search', priority: 0.5, changeFrequency: 'weekly' as const },
+    { path: 'about', priority: 0.3, changeFrequency: 'monthly' as const },
+    { path: 'contact', priority: 0.3, changeFrequency: 'monthly' as const },
+    { path: 'privacy', priority: 0.3, changeFrequency: 'monthly' as const },
+    { path: 'terms', priority: 0.3, changeFrequency: 'monthly' as const },
+  ]
+
+  staticPages.forEach((page) => {
+    locales.forEach((locale) => {
+      const url =
+        locale === defaultLocale
+          ? `${baseUrl}/${page.path}`
+          : `${baseUrl}/${locale}/${page.path}`
+
+      sitemap.push({
+        url,
+        lastModified: new Date(),
+        changeFrequency: page.changeFrequency,
+        priority: page.priority,
+        alternates: {
+          languages: Object.fromEntries(
+            locales.map((l) => [
+              l,
+              l === defaultLocale
+                ? `${baseUrl}/${page.path}`
+                : `${baseUrl}/${l}/${page.path}`,
+            ])
+          ),
+        },
+      })
+    })
+  })
+
+  // 3. 获取所有已发布的游戏
   const games = await prisma.game.findMany({
     where: { status: 'PUBLISHED' },
     select: {
@@ -73,7 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   })
 
-  // 3. 获取所有启用的分类
+  // 4. 获取所有启用的分类
   const categories = await prisma.category.findMany({
     where: { isEnabled: true },
     select: {
@@ -120,7 +158,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   })
 
-  // 4. 获取所有启用的标签
+  // 5. 获取所有启用的标签
   const tags = await prisma.tag.findMany({
     where: { isEnabled: true },
     select: {
@@ -161,7 +199,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   })
 
-  // 5. 获取所有启用的 PageType
+  // 6. 获取所有启用的 PageType
   const pageTypes = await prisma.pageType.findMany({
     where: { isEnabled: true },
     select: {
