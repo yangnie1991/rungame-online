@@ -11,33 +11,51 @@ import {
   generateBreadcrumbSchema,
   renderJsonLd
 } from "@/lib/schema-generators"
+import {
+  generateCategoryTitle,
+  generateCategoryDescription,
+  combineKeywords,
+  generateCategoryBaseKeywords
+} from "@/lib/seo-template-generator"
 
 interface PageProps {
   params: Promise<{ locale: string; mainCategory: string }>
   searchParams: Promise<{ page?: string; sort?: string }>
 }
 
+// 允许动态渲染未预生成的路径
+export const dynamicParams = true
+
 export async function generateStaticParams() {
-  // 获取所有启用的语言
-  const languages = await getEnabledLanguages()
+  try {
+    // 获取所有启用的语言
+    const languages = await getEnabledLanguages()
 
-  // 为每个语言生成主分类的静态参数
-  const allParams = []
-  for (const lang of languages) {
-    const mainCategories = await getMainCategories(lang.code)
-    for (const cat of mainCategories) {
-      allParams.push({
-        locale: lang.code,
-        mainCategory: cat.slug,
-      })
+    // 为每个语言生成主分类的静态参数
+    const allParams = []
+    for (const lang of languages) {
+      const mainCategories = await getMainCategories(lang.code)
+      for (const cat of mainCategories) {
+        allParams.push({
+          locale: lang.code,
+          mainCategory: cat.slug,
+        })
+      }
     }
-  }
 
-  return allParams
+    console.log(`✅ Generated ${allParams.length} static params for main categories`)
+    return allParams
+  } catch (error) {
+    console.error('❌ Error generating static params for main categories:', error)
+    // 返回空数组，让所有路径在请求时动态渲染
+    return []
+  }
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params, searchParams }: PageProps) {
   const { locale, mainCategory } = await params
+  const { page = "1" } = await searchParams
+  const currentPage = parseInt(page, 10)
 
   const allCategories = await getAllCategoriesFullData(locale)
   const categoryData = allCategories.find((cat) => cat.slug === mainCategory && cat.parentId === null)
@@ -50,19 +68,48 @@ export async function generateMetadata({ params }: PageProps) {
 
   const siteUrl = getSiteUrl()
 
-  // 优先使用数据库中的 SEO 字段，如果为空则生成默认值
-  const title = categoryData.metaTitle || `${categoryData.name} Games - Free Online ${categoryData.name} Games | RunGame`
-  const description = categoryData.metaDescription ||
-    categoryData.description ||
-    `Play ${categoryData.gameCount}+ free ${categoryData.name.toLowerCase()} games on RunGame. Enjoy browser-based gaming with no downloads required.`
+  // ========================================
+  // 1. 标题：完全使用模板生成（不使用数据库的 metaTitle）
+  // ========================================
+  const baseTitle = generateCategoryTitle({
+    name: categoryData.name,
+    gameCount: categoryData.gameCount,
+    isMainCategory: true, // 这是主分类
+  }, locale)
 
-  const keywords = categoryData.keywords || [
-    categoryData.name,
-    `${categoryData.name} games`,
-    `free ${categoryData.name} games`,
-    `online ${categoryData.name} games`,
-    'RunGame'
-  ].join(', ')
+  // 为分页页面添加页码
+  const title = currentPage > 1
+    ? `${baseTitle} (${locale === 'zh' ? '第' : 'Page '}${currentPage}${locale === 'zh' ? '页' : ''})`
+    : baseTitle
+
+  // ========================================
+  // 2. 描述：优先使用数据库的 metaDescription
+  // ========================================
+  let description: string
+  if (currentPage > 1) {
+    // 分页页面使用固定格式
+    description = locale === 'zh'
+      ? `浏览更多${categoryData.name}游戏 - 第${currentPage}页。在 RunGame 上免费畅玩，无需下载。`
+      : `Discover more ${categoryData.name.toLowerCase()} games - Page ${currentPage}. Play instantly on RunGame, no downloads required.`
+  } else {
+    // 第一页：优先使用数据库的 metaDescription，回退到模板生成
+    description = categoryData.metaDescription || generateCategoryDescription({
+      name: categoryData.name,
+      gameCount: categoryData.gameCount,
+      isMainCategory: true,
+    }, locale)
+  }
+
+  // ========================================
+  // 3. 关键词：固定模板 + 数据库个性关键词
+  // ========================================
+  const baseKeywords = generateCategoryBaseKeywords({
+    name: categoryData.name,
+    gameCount: categoryData.gameCount,
+    isMainCategory: true,
+  }, locale)
+
+  const keywords = combineKeywords(baseKeywords, categoryData.keywords)
 
   // 生成动态 OG 图片 URL
   const ogImageUrl = generateCategoryOGImageUrl({
@@ -72,14 +119,20 @@ export async function generateMetadata({ params }: PageProps) {
     icon: categoryData.icon || '🎮',
   })
 
-  // 构建路径（不带语言前缀）
-  const path = `/category/${mainCategory}`
+  // 构建路径（包含页码）
+  const path = currentPage > 1
+    ? `/category/${mainCategory}?page=${currentPage}`
+    : `/category/${mainCategory}`
 
   // Open Graph locale 映射
   const ogLocaleMap: Record<string, string> = {
     'zh': 'zh_CN',
     'en': 'en_US',
   }
+
+  // 获取分页信息以生成 prev/next 链接
+  const gamesResult = await getGamesByCategory(mainCategory, locale, currentPage, 30)
+  const pagination = gamesResult?.pagination
 
   return {
     title,
@@ -108,8 +161,24 @@ export async function generateMetadata({ params }: PageProps) {
       site: '@rungame',
     },
     alternates: {
+      // 自引用 canonical（包含当前页码）
       canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
-      languages: generateAlternateLanguages(path),
+
+      // Prev link（如果不是第一页）
+      ...(currentPage > 1 && {
+        prev: currentPage === 2
+          ? `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}`
+          : `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}?page=${currentPage - 1}`,
+      }),
+
+      // Next link（如果有更多页面）
+      ...(pagination?.hasMore && {
+        next: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}?page=${currentPage + 1}`,
+      }),
+
+      languages: generateAlternateLanguages(
+        currentPage > 1 ? `/category/${mainCategory}?page=${currentPage}` : `/category/${mainCategory}`
+      ),
     },
   }
 }
@@ -148,12 +217,16 @@ export default async function MainCategoryPage({ params, searchParams }: PagePro
     { name: categoryData.name, url: '' },
   ])
 
-  // 分类集合 Schema
+  // 分类集合 Schema（页面感知）
   const collectionSchema = generateCollectionPageSchema({
-    name: `${categoryData.name} Games`,
+    name: currentPage > 1
+      ? `${categoryData.name} Games - ${t("page")} ${currentPage}`
+      : `${categoryData.name} Games`,
     description: categoryData.description || `Play ${categoryData.name} games online for free`,
-    url: `/${locale}/category/${mainCategory}`,
-    numberOfItems: pagination.totalGames,
+    url: currentPage > 1
+      ? `/${locale}/category/${mainCategory}?page=${currentPage}`
+      : `/${locale}/category/${mainCategory}`,
+    numberOfItems: games.length, // 当前页面的游戏数量，而不是总数
   })
 
   return (
@@ -265,7 +338,7 @@ export default async function MainCategoryPage({ params, searchParams }: PagePro
         </div>
         {games.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
               {games.map((game) => (
                 <GameCard
                   key={game.slug}

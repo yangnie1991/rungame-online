@@ -4,47 +4,67 @@ import { getAllCategoriesFullData, getEnabledLanguages } from "@/lib/data"
 import { getGamesByCategory } from "@/lib/data"
 import { GameCard } from "@/components/site/GameCard"
 import { Link } from "@/i18n/routing"
+import { getSiteUrl, generateAlternateLanguages } from "@/lib/seo-helpers"
+import { generateCategoryOGImageUrl } from "@/lib/og-image-helpers"
 import {
   generateCollectionPageSchema,
   generateBreadcrumbSchema,
   renderJsonLd
 } from "@/lib/schema-generators"
+import {
+  generateCategoryTitle,
+  generateCategoryDescription,
+  combineKeywords,
+  generateCategoryBaseKeywords
+} from "@/lib/seo-template-generator"
 
 interface PageProps {
   params: Promise<{ locale: string; mainCategory: string; subCategory: string }>
   searchParams: Promise<{ page?: string; sort?: string }>
 }
 
+// 允许动态渲染未预生成的路径
+export const dynamicParams = true
+
 export async function generateStaticParams() {
-  // 获取所有启用的语言
-  const languages = await getEnabledLanguages()
+  try {
+    // 获取所有启用的语言
+    const languages = await getEnabledLanguages()
 
-  // 为每个语言生成所有分类组合的静态参数
-  const allParams = []
-  for (const lang of languages) {
-    const allCategories = await getAllCategoriesFullData(lang.code)
+    // 为每个语言生成所有分类组合的静态参数
+    const allParams = []
+    for (const lang of languages) {
+      const allCategories = await getAllCategoriesFullData(lang.code)
 
-    // 获取所有主分类
-    const mainCategories = allCategories.filter((cat) => cat.parentId === null)
+      // 获取所有主分类
+      const mainCategories = allCategories.filter((cat) => cat.parentId === null)
 
-    // 为每个主分类生成其子分类的参数
-    for (const mainCat of mainCategories) {
-      const subCategories = allCategories.filter((cat) => cat.parentId === mainCat.id)
-      for (const subCat of subCategories) {
-        allParams.push({
-          locale: lang.code,
-          mainCategory: mainCat.slug,
-          subCategory: subCat.slug,
-        })
+      // 为每个主分类生成其子分类的参数
+      for (const mainCat of mainCategories) {
+        const subCategories = allCategories.filter((cat) => cat.parentId === mainCat.id)
+        for (const subCat of subCategories) {
+          allParams.push({
+            locale: lang.code,
+            mainCategory: mainCat.slug,
+            subCategory: subCat.slug,
+          })
+        }
       }
     }
-  }
 
-  return allParams
+    console.log(`✅ Generated ${allParams.length} static params for sub categories`)
+    return allParams
+  } catch (error) {
+    console.error('❌ Error generating static params for sub categories:', error)
+    // 返回空数组，让所有路径在请求时动态渲染
+    return []
+  }
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params, searchParams }: PageProps) {
   const { locale, mainCategory, subCategory } = await params
+  const { page = "1" } = await searchParams
+  const currentPage = parseInt(page, 10)
 
   const allCategories = await getAllCategoriesFullData(locale)
   const categoryData = allCategories.find((cat) => cat.slug === subCategory && cat.parentId !== null)
@@ -55,24 +75,73 @@ export async function generateMetadata({ params }: PageProps) {
     }
   }
 
-  // 优先使用数据库中的 SEO 字段，如果为空则生成默认值
-  const title = categoryData.metaTitle || `${categoryData.name} Games - Free Online ${categoryData.name} Games | RunGame`
-  const description = categoryData.metaDescription ||
-    categoryData.description ||
-    `Play ${categoryData.gameCount}+ free ${categoryData.name.toLowerCase()} games on RunGame. Enjoy browser-based gaming with no downloads required.`
+  const siteUrl = getSiteUrl()
 
-  const keywords = categoryData.keywords || [
-    categoryData.name,
-    `${categoryData.name} games`,
-    `free ${categoryData.name} games`,
-    `online ${categoryData.name} games`,
-    'RunGame'
-  ].join(', ')
+  // ========================================
+  // 1. 标题：完全使用模板生成（不使用数据库的 metaTitle）
+  // ========================================
+  const baseTitle = generateCategoryTitle({
+    name: categoryData.name,
+    gameCount: categoryData.gameCount,
+    isMainCategory: false, // 这是子分类
+  }, locale)
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
-  const pathPrefix = locale === 'en' ? '' : `/${locale}`
-  const pageUrl = `${siteUrl}${pathPrefix}/category/${mainCategory}/${subCategory}`
-  const ogImage = `${siteUrl}/assets/images/og-image.png`
+  // 为分页页面添加页码
+  const title = currentPage > 1
+    ? `${baseTitle} (${locale === 'zh' ? '第' : 'Page '}${currentPage}${locale === 'zh' ? '页' : ''})`
+    : baseTitle
+
+  // ========================================
+  // 2. 描述：优先使用数据库的 metaDescription
+  // ========================================
+  let description: string
+  if (currentPage > 1) {
+    // 分页页面使用固定格式
+    description = locale === 'zh'
+      ? `浏览更多${categoryData.name}游戏 - 第${currentPage}页。在 RunGame 上免费畅玩，无需下载。`
+      : `Discover more ${categoryData.name.toLowerCase()} games - Page ${currentPage}. Play instantly on RunGame, no downloads required.`
+  } else {
+    // 第一页：优先使用数据库的 metaDescription，回退到模板生成
+    description = categoryData.metaDescription || generateCategoryDescription({
+      name: categoryData.name,
+      gameCount: categoryData.gameCount,
+      isMainCategory: false,
+    }, locale)
+  }
+
+  // ========================================
+  // 3. 关键词：固定模板 + 数据库个性关键词
+  // ========================================
+  const baseKeywords = generateCategoryBaseKeywords({
+    name: categoryData.name,
+    gameCount: categoryData.gameCount,
+    isMainCategory: false,
+  }, locale)
+
+  const keywords = combineKeywords(baseKeywords, categoryData.keywords)
+
+  // 生成动态 OG 图片 URL
+  const ogImageUrl = generateCategoryOGImageUrl({
+    name: categoryData.name,
+    description: categoryData.description,
+    gameCount: categoryData.gameCount,
+    icon: categoryData.icon || '🎮',
+  })
+
+  // 构建路径（包含页码）
+  const path = currentPage > 1
+    ? `/category/${mainCategory}/${subCategory}?page=${currentPage}`
+    : `/category/${mainCategory}/${subCategory}`
+
+  // Open Graph locale 映射
+  const ogLocaleMap: Record<string, string> = {
+    'zh': 'zh_CN',
+    'en': 'en_US',
+  }
+
+  // 获取分页信息以生成 prev/next 链接
+  const gamesResult = await getGamesByCategory(subCategory, locale, currentPage, 30)
+  const pagination = gamesResult?.pagination
 
   return {
     title,
@@ -81,12 +150,12 @@ export async function generateMetadata({ params }: PageProps) {
     openGraph: {
       title,
       description,
-      url: pageUrl,
+      url: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
       siteName: 'RunGame',
-      locale: locale === 'zh' ? 'zh_CN' : 'en_US',
+      locale: ogLocaleMap[locale] || 'en_US',
       type: 'website',
       images: [{
-        url: ogImage,
+        url: ogImageUrl,
         width: 1200,
         height: 630,
         alt: categoryData.name,
@@ -96,17 +165,29 @@ export async function generateMetadata({ params }: PageProps) {
       card: 'summary_large_image',
       title,
       description,
-      images: [ogImage],
+      images: [ogImageUrl],
       creator: '@rungame',
       site: '@rungame',
     },
     alternates: {
-      canonical: pageUrl,
-      languages: {
-        'en': `${siteUrl}/category/${mainCategory}/${subCategory}`,
-        'zh': `${siteUrl}/zh/category/${mainCategory}/${subCategory}`,
-        'x-default': `${siteUrl}/category/${mainCategory}/${subCategory}`,
-      },
+      // 自引用 canonical（包含当前页码）
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}${path}`,
+
+      // Prev link（如果不是第一页）
+      ...(currentPage > 1 && {
+        prev: currentPage === 2
+          ? `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}/${subCategory}`
+          : `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}/${subCategory}?page=${currentPage - 1}`,
+      }),
+
+      // Next link（如果有更多页面）
+      ...(pagination?.hasMore && {
+        next: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}/${subCategory}?page=${currentPage + 1}`,
+      }),
+
+      languages: generateAlternateLanguages(
+        currentPage > 1 ? `/category/${mainCategory}/${subCategory}?page=${currentPage}` : `/category/${mainCategory}/${subCategory}`
+      ),
     },
     robots: {
       index: true,
@@ -172,12 +253,16 @@ export default async function SubCategoryPage({ params, searchParams }: PageProp
     { name: subCategoryData.name, url: '' },
   ])
 
-  // 分类集合 Schema
+  // 分类集合 Schema（页面感知）
   const collectionSchema = generateCollectionPageSchema({
-    name: `${subCategoryData.name} Games`,
+    name: currentPage > 1
+      ? `${subCategoryData.name} Games - ${t("page")} ${currentPage}`
+      : `${subCategoryData.name} Games`,
     description: subCategoryData.description || `Play ${subCategoryData.name} games online for free`,
-    url: `/${locale}/category/${mainCategory}/${subCategory}`,
-    numberOfItems: pagination.totalGames,
+    url: currentPage > 1
+      ? `/${locale}/category/${mainCategory}/${subCategory}?page=${currentPage}`
+      : `/${locale}/category/${mainCategory}/${subCategory}`,
+    numberOfItems: games.length, // 当前页面的游戏数量，而不是总数
   })
 
   return (
@@ -302,7 +387,7 @@ export default async function SubCategoryPage({ params, searchParams }: PageProp
         </div>
         {games.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
               {games.map((game) => (
                 <GameCard
                   key={game.slug}
