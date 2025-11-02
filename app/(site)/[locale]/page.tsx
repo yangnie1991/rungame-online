@@ -94,9 +94,9 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   }
 }
 
-// 使用动态SSR渲染，每10分钟重新验证缓存
-// 这样既保证SEO友好，又能提升性能
-export const revalidate = 600 // 10分钟
+// ISR 模式：在 Vercel Edge 缓存 30 分钟，平衡性能和数据新鲜度
+// 首页包含最新游戏和统计数据，30分钟是合理的更新频率
+export const revalidate = 1800 // 30分钟
 
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params

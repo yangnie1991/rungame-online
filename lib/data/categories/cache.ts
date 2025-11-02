@@ -16,9 +16,10 @@ import { CACHE_TAGS, REVALIDATE_TIME } from "@/lib/cache-helpers"
  * 其他所有分类相关函数都从这个缓存派生数据，不再直接查询数据库
  *
  * 缓存策略：
- * - 时间：24小时重新验证
- * - 原因：数据相对静态，只在管理员操作时变化
+ * - 时间：5分钟重新验证（MEDIUM）
+ * - 原因：包含游戏计数等统计数据，需要相对及时的更新
  * - 机制：使用 unstable_cache 持久化缓存
+ * - 平衡：既能保证性能，又能让统计数据在5分钟内更新
  */
 
 /**
@@ -108,7 +109,7 @@ const getCachedCategoriesData = unstable_cache(
   async (locale: string) => fetchCategoriesFromDB(locale, false),
   ["categories-full-data"], // keyParts: locale 参数会自动添加到缓存键中
   {
-    revalidate: REVALIDATE_TIME.VERY_LONG, // 24小时
+    revalidate: REVALIDATE_TIME.MEDIUM, // 5分钟 - 包含游戏计数，需要相对及时更新
     tags: [CACHE_TAGS.CATEGORIES],
   }
 )
@@ -120,7 +121,7 @@ const getCachedAllCategoriesData = unstable_cache(
   async (locale: string) => fetchCategoriesFromDB(locale, true),
   ["categories-all-data"], // 不同的缓存键
   {
-    revalidate: REVALIDATE_TIME.LONG, // 1小时（管理端更频繁更新）
+    revalidate: REVALIDATE_TIME.MEDIUM, // 5分钟 - 管理端也使用相同的缓存时间
     tags: [CACHE_TAGS.CATEGORIES],
   }
 )

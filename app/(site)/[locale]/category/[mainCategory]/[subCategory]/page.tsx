@@ -23,9 +23,9 @@ interface PageProps {
   searchParams: Promise<{ page?: string; sort?: string }>
 }
 
-// 强制所有路径动态渲染（修复404问题）
-export const dynamic = 'force-dynamic'
-export const revalidate = 60 // 缓存60秒
+// ISR 模式：在 Vercel Edge 缓存 30 分钟，平衡性能和数据新鲜度
+// 底层数据每 5 分钟更新，页面重新渲染时会获取最新数据
+export const revalidate = 1800 // 30分钟
 
 export async function generateMetadata({ params, searchParams }: PageProps) {
   const { locale, mainCategory, subCategory } = await params
