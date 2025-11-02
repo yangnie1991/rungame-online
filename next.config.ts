@@ -118,10 +118,105 @@ const nextConfig: NextConfig = {
         destination: '/category/themed-games',
         permanent: true,
       },
-      // 带语言前缀的重定向
+      // 带语言前缀的重定向 - 具体规则
       {
-        source: '/:locale(zh|es|fr)/category/main-:slug',
-        destination: '/:locale/category/:slug-games',
+        source: '/:locale(zh|es|fr)/category/main-action',
+        destination: '/:locale/category/action-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-adventure',
+        destination: '/:locale/category/adventure-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-puzzle',
+        destination: '/:locale/category/puzzle-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-sports',
+        destination: '/:locale/category/sports-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-racing',
+        destination: '/:locale/category/racing-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-shooter',
+        destination: '/:locale/category/shooter-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-fighting',
+        destination: '/:locale/category/fighting-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-strategy',
+        destination: '/:locale/category/strategy-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-rpg',
+        destination: '/:locale/category/rpg-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-simulation',
+        destination: '/:locale/category/simulation-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-horror',
+        destination: '/:locale/category/horror-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-building',
+        destination: '/:locale/category/building-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-multiplayer',
+        destination: '/:locale/category/multiplayer-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-classics',
+        destination: '/:locale/category/classic-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-casual',
+        destination: '/:locale/category/casual-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-board',
+        destination: '/:locale/category/board-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-kids',
+        destination: '/:locale/category/kids-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-girls',
+        destination: '/:locale/category/girls-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-animal',
+        destination: '/:locale/category/animal-games',
+        permanent: true,
+      },
+      {
+        source: '/:locale(zh|es|fr)/category/main-themed',
+        destination: '/:locale/category/themed-games',
         permanent: true,
       },
     ]
