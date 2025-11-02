@@ -1,6 +1,8 @@
 import { getAllTags } from "@/lib/data/tags"
 import type { Metadata } from "next"
 import { Link } from "@/i18n/routing"
+import { getTranslations } from "next-intl/server"
+import { TagSearch } from "@/components/site/TagSearch"
 
 interface AllTagsPageProps {
   params: Promise<{ locale: string }>
@@ -8,60 +10,84 @@ interface AllTagsPageProps {
 
 export async function generateMetadata({ params }: AllTagsPageProps): Promise<Metadata> {
   const { locale } = await params
-
-  const title = locale === "zh" ? "所有标签" : "All Tags"
-  const description = locale === "zh" ? "浏览所有游戏标签" : "Browse all game tags"
+  const t = await getTranslations({ locale, namespace: "common" })
+  const tags = await getAllTags(locale)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
 
   return {
-    title: `${title} | RunGame`,
-    description,
+    title: `${t("allTags")} - ${tags.length}+ ${t("gameTags")} - ${t("siteName")}`,
+    description: `浏览 RunGame 的所有游戏标签，包含 ${tags.length} 个特色标签。按游戏特点查找你喜欢的游戏，免费在线玩。`,
+    keywords: "游戏标签,游戏特点,在线游戏,免费游戏,多人游戏,单人游戏,3D游戏",
+    openGraph: {
+      title: `${t("allTags")} - ${tags.length}+ 游戏标签`,
+      description: `探索 ${tags.length} 个游戏标签，按特点查找游戏`,
+      url: `${siteUrl}/${locale}/tag`,
+      type: 'website',
+    },
   }
 }
 
 export default async function AllTagsPage({ params }: AllTagsPageProps) {
   const { locale } = await params
-
   const tags = await getAllTags(locale)
+  const t = await getTranslations({ locale, namespace: "common" })
 
-  // 翻译文本
-  const t = {
-    home: locale === "zh" ? "首页" : "Home",
-    allTags: locale === "zh" ? "所有标签" : "All Tags",
-    games: locale === "zh" ? "游戏" : "Games",
-    browseTags: locale === "zh" ? "浏览所有游戏标签，按游戏特点查找游戏" : "Browse all game tags and find games by their features",
+  // 生成结构化数据（ItemList Schema）
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": t("allTags"),
+    "description": t("browseTagsDescription"),
+    "numberOfItems": tags.length,
+    "itemListElement": tags.map((tag, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": tag.name,
+      "url": `${siteUrl}/${locale}/tag/${tag.slug}`,
+      "item": {
+        "@type": "Thing",
+        "name": tag.name,
+        "url": `${siteUrl}/${locale}/tag/${tag.slug}`,
+      }
+    }))
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* 结构化数据 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+      />
+
       {/* 面包屑导航 */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground transition-colors">
-          {t.home}
+          {t("home")}
         </Link>
         <span>/</span>
-        <span className="text-foreground">{t.allTags}</span>
+        <span className="text-foreground">{t("allTags")}</span>
       </nav>
 
       {/* 页面标题 */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">{t.allTags}</h1>
-        <p className="text-muted-foreground">{t.browseTags}</p>
+      <div>
+        <h1 className="text-3xl font-bold mb-2">{t("allTags")}</h1>
+        <p className="text-muted-foreground">{t("browseTagsDescription")}</p>
       </div>
 
-      {/* 标签云 */}
-      <div className="flex flex-wrap gap-3">
-        {tags.map((tag) => (
-          <Link
-            key={tag.slug}
-            href={`/tag/${tag.slug}`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-accent/50 hover:bg-accent text-accent-foreground rounded-full transition-all hover:scale-105"
-          >
-            {tag.icon && <span>{tag.icon}</span>}
-            <span className="font-medium">{tag.name}</span>
-            <span className="text-sm text-muted-foreground">({tag.gameCount})</span>
-          </Link>
-        ))}
-      </div>
+      {/* 客户端搜索组件 */}
+      <TagSearch
+        tags={tags}
+        locale={locale}
+        translations={{
+          search: t("search"),
+          searchPlaceholder: t("searchTagsPlaceholder"),
+          noResults: t("noResults"),
+          games: t("games"),
+          clearSearch: t("clearSearch"),
+        }}
+      />
     </div>
   )
 }

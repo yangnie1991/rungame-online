@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Loader2, Maximize2, Minimize2, ThumbsUp, ThumbsDown, Share2, Eye } from "lucide-react"
+import { voteGame } from "@/app/(site)/actions/game-vote"
 
 interface GameEmbedProps {
   embedUrl: string
@@ -9,8 +10,12 @@ interface GameEmbedProps {
   width: number
   height: number
   playCount?: number
+  gameId?: string
   gameSlug?: string
   locale?: string
+  initialLikes?: number
+  initialDislikes?: number
+  initialUserVote?: 'like' | 'dislike' | null
 }
 
 export function GameEmbed({
@@ -19,44 +24,115 @@ export function GameEmbed({
   width,
   height,
   playCount = 0,
+  gameId = '',
   gameSlug = '',
-  locale = 'en'
+  locale = 'en',
+  initialLikes = 0,
+  initialDislikes = 0,
+  initialUserVote = null,
 }: GameEmbedProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [likes, setLikes] = useState(0)
-  const [dislikes, setDislikes] = useState(0)
-  const [userVote, setUserVote] = useState<'like' | 'dislike' | null>(null)
+  const [likes, setLikes] = useState(initialLikes)
+  const [dislikes, setDislikes] = useState(initialDislikes)
+  const [userVote, setUserVote] = useState<'like' | 'dislike' | null>(initialUserVote)
+  const [isVoting, setIsVoting] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // 计算游戏的宽高比
   const aspectRatio = width / height
 
   // 处理点赞
-  const handleLike = () => {
+  const handleLike = async () => {
+    if (!gameId || isVoting) return
+
+    // 保存旧状态（用于失败时回滚）
+    const oldLikes = likes
+    const oldDislikes = dislikes
+    const oldVote = userVote
+
+    // 🚀 立即乐观更新UI（不等待服务器）
     if (userVote === 'like') {
+      // 取消赞
       setLikes(likes - 1)
       setUserVote(null)
     } else {
+      // 新赞或从踩切换到赞
       if (userVote === 'dislike') {
         setDislikes(dislikes - 1)
       }
       setLikes(likes + 1)
       setUserVote('like')
     }
+
+    // 后台调用服务器（不阻塞UI）
+    setIsVoting(true)
+    try {
+      const result = await voteGame(gameId, true)
+
+      if (!result.success) {
+        // 只在失败时回滚
+        setLikes(oldLikes)
+        setDislikes(oldDislikes)
+        setUserVote(oldVote)
+        console.error('投票失败:', result.error)
+      } else {
+        // 成功：用服务器数据校准（防止并发问题）
+        // 只有当本地计算结果与服务器不一致时才更新
+        if (result.likes !== likes || result.dislikes !== dislikes) {
+          setLikes(result.likes)
+          setDislikes(result.dislikes)
+        }
+      }
+    } finally {
+      setIsVoting(false)
+    }
   }
 
   // 处理踩
-  const handleDislike = () => {
+  const handleDislike = async () => {
+    if (!gameId || isVoting) return
+
+    // 保存旧状态（用于失败时回滚）
+    const oldLikes = likes
+    const oldDislikes = dislikes
+    const oldVote = userVote
+
+    // 🚀 立即乐观更新UI（不等待服务器）
     if (userVote === 'dislike') {
+      // 取消踩
       setDislikes(dislikes - 1)
       setUserVote(null)
     } else {
+      // 新踩或从赞切换到踩
       if (userVote === 'like') {
         setLikes(likes - 1)
       }
       setDislikes(dislikes + 1)
       setUserVote('dislike')
+    }
+
+    // 后台调用服务器（不阻塞UI）
+    setIsVoting(true)
+    try {
+      const result = await voteGame(gameId, false)
+
+      if (!result.success) {
+        // 只在失败时回滚
+        setLikes(oldLikes)
+        setDislikes(oldDislikes)
+        setUserVote(oldVote)
+        console.error('投票失败:', result.error)
+      } else {
+        // 成功：用服务器数据校准（防止并发问题）
+        // 只有当本地计算结果与服务器不一致时才更新
+        if (result.likes !== likes || result.dislikes !== dislikes) {
+          setLikes(result.likes)
+          setDislikes(result.dislikes)
+        }
+      }
+    } finally {
+      setIsVoting(false)
     }
   }
 
@@ -112,18 +188,14 @@ export function GameEmbed({
 
   return (
     <div className="w-[90%] mx-auto">
-      <div
-        className="bg-card rounded-lg overflow-hidden shadow-md flex flex-col"
-        style={{
-          maxHeight: "75vh", // 整体最大高度 75vh
-        }}
-      >
+      <div className="bg-card rounded-lg overflow-hidden shadow-md">
         {/* 游戏播放器 */}
         <div
           ref={containerRef}
-          className="relative w-full bg-black flex-1"
+          className="relative w-full bg-black"
           style={{
             aspectRatio: aspectRatio.toString(),
+            maxHeight: "calc(70vh - 64px)", // 为底部控制栏预留 64px
           }}
         >
           {isLoading && (
@@ -144,7 +216,7 @@ export function GameEmbed({
         </div>
 
         {/* 底部控制栏 */}
-        <div className="flex items-center justify-between gap-4 px-4 py-3 bg-card border-t">
+        <div className="flex items-center justify-between gap-4 px-4 py-3 bg-card border-t flex-shrink-0">
           {/* 左侧：游玩次数 */}
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">

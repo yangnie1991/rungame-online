@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics"
 import { GoogleAdsense } from "@/components/analytics/GoogleAdsense"
-import { getEnabledLanguages, getMainCategories, getAllTags, getAllPageTypes } from "@/lib/data"
+import { getEnabledLanguages, getMainCategories, getAllTags, getAllPageTypes, getTotalGamesCount, getSubCategoriesCount } from "@/lib/data"
 import { routing } from "@/i18n/routing"
 import { generateOrganizationSchema, renderJsonLd } from "@/lib/schema-generators"
 import "@/app/globals.css"
@@ -42,6 +42,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   // 获取页面类型列表（用于侧边栏）
   const pageTypesData = await getAllPageTypes(locale)
+
+  // 获取统计数据（30分钟缓存）
+  const [totalGames, totalSubCategories] = await Promise.all([
+    getTotalGamesCount(),
+    getSubCategoriesCount(locale),
+  ])
 
   // 准备主导航数据（首页）
   const mainNavItems = [
@@ -117,6 +123,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                     icon: tag.icon,
                     count: tag.gameCount,
                   }))}
+                  totalSubCategories={totalSubCategories}
+                  totalGames={totalGames}
                 />
 
                 {/* Main Content - 填充剩余空间，支持滚动，页脚固定在底部 */}
