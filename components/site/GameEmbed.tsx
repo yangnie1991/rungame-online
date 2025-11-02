@@ -17,11 +17,12 @@ export function GameEmbed({ embedUrl, title, width, height }: GameEmbedProps) {
   const aspectRatio = width / height
 
   return (
-    <div className="w-full">
+    <div className="w-full flex justify-center">
       <div
         className="relative w-full rounded-lg overflow-hidden bg-black"
         style={{
           aspectRatio: aspectRatio.toString(),
+          maxHeight: "700px", // 最大高度限制
         }}
       >
         {isLoading && (
