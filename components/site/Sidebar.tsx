@@ -2,7 +2,6 @@
 
 import { Link, usePathname } from "@/i18n/routing"
 import { useTranslations } from "next-intl"
-import { Twitter, Github, Mail } from "lucide-react"
 
 interface NavItem {
   href: string
@@ -238,75 +237,6 @@ export function Sidebar({ mainNavItems, categories, tags, pageTypes, totalSubCat
           </div>
         )}
 
-        {/* About Info */}
-        <div className="mt-6 pt-4">
-          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-50"></div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            🎮 {t("sidebar.aboutInfo")}
-          </p>
-        </div>
-
-        {/* Support Links */}
-        <div className="mt-4 pt-3">
-          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-30"></div>
-
-          {/* Policy and Contact Links - Flexible Grid */}
-          <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground mb-4">
-            <Link href="/about" className="hover:text-primary transition-colors px-2 py-1">
-              {t("sidebar.about")}
-            </Link>
-            <span className="text-muted-foreground/30">•</span>
-            <Link href="/privacy" className="hover:text-primary transition-colors px-2 py-1">
-              {t("sidebar.privacy")}
-            </Link>
-            <span className="text-muted-foreground/30">•</span>
-            <Link href="/terms" className="hover:text-primary transition-colors px-2 py-1">
-              {t("sidebar.terms")}
-            </Link>
-            <span className="text-muted-foreground/30">•</span>
-            <Link href="/contact" className="hover:text-primary transition-colors px-2 py-1">
-              {t("sidebar.contact")}
-            </Link>
-          </div>
-
-          {/* Social Media Buttons - Full Width */}
-          <div className="flex justify-center space-x-3">
-            <a
-              href="https://twitter.com/rungame"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative w-9 h-9 rounded-lg bg-accent hover:bg-blue-500 transition-all hover:scale-110 flex items-center justify-center shadow-sm"
-              aria-label="Follow us on Twitter"
-            >
-              <Twitter className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors" />
-              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                Twitter
-              </span>
-            </a>
-            <a
-              href="https://github.com/rungame"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative w-9 h-9 rounded-lg bg-accent hover:bg-gray-800 dark:hover:bg-gray-700 transition-all hover:scale-110 flex items-center justify-center shadow-sm"
-              aria-label="Visit our GitHub"
-            >
-              <Github className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors" />
-              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                GitHub
-              </span>
-            </a>
-            <a
-              href="mailto:hello@rungame.online"
-              className="group relative w-9 h-9 rounded-lg bg-accent hover:bg-green-500 transition-all hover:scale-110 flex items-center justify-center shadow-sm"
-              aria-label="Send us an email"
-            >
-              <Mail className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors" />
-              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                Email
-              </span>
-            </a>
-          </div>
-        </div>
       </div>
     </aside>
   )
