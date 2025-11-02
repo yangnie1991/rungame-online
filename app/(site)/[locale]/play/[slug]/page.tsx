@@ -1,12 +1,13 @@
-import { getGameBySlug, getRecommendedGames, incrementPlayCount } from "@/lib/data"
+import { getGameBySlug, incrementPlayCount } from "@/lib/data"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { Link } from "@/i18n/routing"
-import { GameCard } from "@/components/site/GameCard"
+import { Suspense } from "react"
 import { GameEmbed } from "@/components/site/GameEmbed"
 import { GameGallery } from "@/components/site/GameGallery"
 import { GameVideos } from "@/components/site/GameVideos"
 import { ContentRenderer } from "@/components/site/ContentRenderer"
+import { RecommendedGamesSidebar, SameCategoryGames } from "@/components/site/RecommendedGames"
 import { getSiteUrl, generateAlternateLanguages } from "@/lib/seo-helpers"
 import { generateGameOGImageUrl } from "@/lib/og-image-helpers"
 import {
@@ -120,7 +121,7 @@ export default async function GamePage({ params }: GamePageProps) {
   // 增加播放次数（异步，不阻塞渲染）
   incrementPlayCount(game.id).catch(() => { })
 
-  // 准备推荐引擎需要的当前游戏数据（从已缓存的 game 对象中提取）
+  // 准备推荐引擎需要的当前游戏数据（传递给异步组件）
   const currentGameData = {
     id: game.id,
     slug: game.slug,
@@ -134,21 +135,6 @@ export default async function GamePage({ params }: GamePageProps) {
     releaseDate: game.releaseDate,
     createdAt: game.createdAt,
   }
-
-  // 并行获取两个推荐模块的数据（不互相排重，提升性能）
-  const { getMixedRecommendedGames } = await import("@/lib/data/games/detail")
-  const [recommendedGames, sameCategoryGames] = await Promise.all([
-    // 侧边栏推荐：使用智能推荐引擎，复用已缓存的游戏数据
-    getRecommendedGames(currentGameData, locale, 6),
-    // 底部推荐：混合最多游玩、最新、高评分
-    getMixedRecommendedGames(
-      game.category.slug,
-      game.subCategory?.slug || null,
-      game.slug, // 只排除当前游戏
-      locale,
-      6
-    ),
-  ])
 
   // 翻译文本
   const t = {
@@ -356,67 +342,88 @@ export default async function GamePage({ params }: GamePageProps) {
         </div>
 
         {/* 侧边栏 - 推荐游戏 - 1/4 */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-4 space-y-4">
-            <h2 className="text-xl font-bold">{t.recommended}</h2>
-            <div className="space-y-4">
-              {recommendedGames.map((recommendedGame) => (
-                <GameCard
-                  key={recommendedGame.slug}
-                  slug={recommendedGame.slug}
-                  thumbnail={recommendedGame.thumbnail}
-                  title={recommendedGame.title}
-                  description={recommendedGame.description}
-                  categoryName={recommendedGame.category}
-                  tags={recommendedGame.tags}
-                  locale={locale}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        <Suspense fallback={<RecommendedGamesSkeleton title={t.recommended} />}>
+          <RecommendedGamesSidebar
+            currentGameData={currentGameData}
+            locale={locale}
+            title={t.recommended}
+          />
+        </Suspense>
       </div>
 
       {/* 底部推荐模块 - 混合推荐（最多游玩、最新、高评分） */}
-      {sameCategoryGames.length > 0 && (
-        <div className="mt-12 space-y-8">
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <span className="text-2xl">🔥</span>
-                {locale === 'zh'
-                  ? `更多${game.subCategory?.name || game.category.name}游戏`
-                  : `More ${game.subCategory?.name || game.category.name} Games`}
-              </h2>
-              <Link
-                href={
-                  game.subCategory
-                    ? `/category/${game.category.slug}/${game.subCategory.slug}`
-                    : `/category/${game.category.slug}`
-                }
-                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-              >
-                {locale === 'zh' ? '查看全部' : 'View All'} →
-              </Link>
+      <Suspense fallback={<SameCategoryGamesSkeleton />}>
+        <SameCategoryGames
+          categorySlug={game.category.slug}
+          subCategorySlug={game.subCategory?.slug || null}
+          currentGameSlug={game.slug}
+          locale={locale}
+          categoryName={game.category.name}
+          subCategoryName={game.subCategory?.name || null}
+        />
+      </Suspense>
+    </div>
+  )
+}
+
+/**
+ * 侧边栏推荐游戏加载骨架屏
+ */
+function RecommendedGamesSkeleton({ title }: { title: string }) {
+  return (
+    <div className="lg:col-span-1">
+      <div className="sticky top-4 space-y-4">
+        <h2 className="text-xl font-bold">{title}</h2>
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="bg-card rounded-lg overflow-hidden border animate-pulse"
+            >
+              {/* 缩略图骨架 */}
+              <div className="aspect-video bg-muted" />
+              {/* 内容骨架 */}
+              <div className="p-3 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-3 bg-muted rounded w-full" />
+                <div className="h-3 bg-muted rounded w-1/2" />
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {sameCategoryGames.map((categoryGame) => (
-                <GameCard
-                  key={categoryGame.slug}
-                  slug={categoryGame.slug}
-                  thumbnail={categoryGame.thumbnail}
-                  title={categoryGame.title}
-                  description={categoryGame.description}
-                  categoryName={categoryGame.categoryName}
-                  categorySlug={categoryGame.categorySlug}
-                  tags={categoryGame.tags}
-                  locale={locale}
-                />
-              ))}
-            </div>
-          </section>
+          ))}
         </div>
-      )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 底部推荐游戏加载骨架屏
+ */
+function SameCategoryGamesSkeleton() {
+  return (
+    <div className="mt-12 space-y-8">
+      <section>
+        {/* 标题骨架 */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-8 bg-muted rounded w-64 animate-pulse" />
+          <div className="h-6 bg-muted rounded w-24 animate-pulse" />
+        </div>
+        {/* 游戏卡片骨架 */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="bg-card rounded-lg overflow-hidden border animate-pulse"
+            >
+              <div className="aspect-video bg-muted" />
+              <div className="p-3 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-3 bg-muted rounded w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
