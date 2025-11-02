@@ -39,8 +39,8 @@ async function fetchTotalGamesCount() {
  * 获取游戏总数（已发布的游戏）
  *
  * 缓存策略：
- * - 时间：10分钟重新验证
- * - 原因：游戏数量变化不频繁，但比分类/标签更新频繁
+ * - 时间：30分钟重新验证
+ * - 原因：统计数据，用户要求30分钟缓存
  * - 标签：当游戏数据变化时自动失效
  *
  * @returns 已发布游戏的总数
@@ -53,7 +53,7 @@ export const getTotalGamesCount = unstable_cache(
   async () => fetchTotalGamesCount(),
   ["total-games-count"],
   {
-    revalidate: REVALIDATE_TIME.MEDIUM, // 10分钟
+    revalidate: REVALIDATE_TIME.STATS_SHORT, // 30分钟 - 统计数据
     tags: [CACHE_TAGS.GAMES],
   }
 )
@@ -161,3 +161,49 @@ export const getGamesTagStats = unstable_cache(
     tags: [CACHE_TAGS.GAMES, CACHE_TAGS.TAGS],
   }
 )
+
+/**
+ * ============================================
+ * 单个游戏的实时统计数据
+ * ============================================
+ * 专门用于查询频繁变化的统计数据
+ * 不使用缓存，保证数据实时性
+ */
+
+/**
+ * 获取单个游戏的统计数据（不缓存，始终实时）
+ * @param gameId - 游戏 ID
+ * @returns 统计数据（likes, dislikes, playCount, viewCount）
+ */
+export async function getGameRealtimeStats(gameId: string) {
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: {
+        likes: true,
+        dislikes: true,
+        playCount: true,
+        viewCount: true,
+      },
+    })
+
+    if (!game) {
+      return {
+        likes: 0,
+        dislikes: 0,
+        playCount: 0,
+        viewCount: 0,
+      }
+    }
+
+    return game
+  } catch (error) {
+    console.error("获取游戏统计数据失败:", error)
+    return {
+      likes: 0,
+      dislikes: 0,
+      playCount: 0,
+      viewCount: 0,
+    }
+  }
+}

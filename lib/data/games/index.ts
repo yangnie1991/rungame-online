@@ -31,7 +31,7 @@ export { searchGames } from "./search"
 export { getGameBySlug, getRecommendedGames, getPublishedGames } from "./detail"
 
 // 游戏统计（缓存版本）
-export { getTotalGamesCount, getGamesCategoryStats, getGamesTagStats } from "./stats"
+export { getTotalGamesCount, getGamesCategoryStats, getGamesTagStats, getGameRealtimeStats } from "./stats"
 
 // 工具函数
 export { incrementPlayCount } from "./utils"

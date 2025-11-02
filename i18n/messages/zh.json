@@ -17,6 +17,7 @@
     "tags": "标签",
     "allGames": "所有游戏",
     "allCategories": "所有分类",
+    "allTags": "所有标签",
     "subCategories": "子分类",
     "browseCategoriesDescription": "探索不同分类的游戏，找到你的最爱",
     "noGamesFound": "暂无游戏",
@@ -35,7 +36,16 @@
     "sortBy": "排序",
     "sortByPopular": "最热门",
     "sortByNewest": "最新",
-    "sortByName": "名称"
+    "sortByName": "名称",
+    "gameTypes": "游戏类型",
+    "gameTags": "游戏标签",
+    "noSubcategories": "暂无子分类",
+    "browseTagsDescription": "浏览所有游戏标签，按游戏特点查找你喜欢的游戏",
+    "search": "搜索",
+    "searchCategoriesPlaceholder": "搜索分类...",
+    "searchTagsPlaceholder": "搜索标签...",
+    "noResults": "未找到结果",
+    "clearSearch": "清除搜索"
   },
   "home": {
     "hero": "免费在线小游戏",

@@ -1,6 +1,9 @@
 "use server"
 
-import { getAllTagsFullData } from "./cache"
+import { getAllTagsFullData, getTagsBaseData, getTagsStats } from "./cache"
+
+// 重新导出缓存函数
+export { getAllTagsFullData, getTagsBaseData, getTagsStats }
 
 /**
  * ============================================

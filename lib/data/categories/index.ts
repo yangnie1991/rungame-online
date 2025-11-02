@@ -1,9 +1,9 @@
 "use server"
 
-import { getAllCategoriesFullData } from "./cache"
+import { getAllCategoriesFullData, getCategoriesBaseData, getCategoriesStats, getSubCategoriesCount } from "./cache"
 
 // 重新导出缓存函数
-export { getAllCategoriesFullData }
+export { getAllCategoriesFullData, getCategoriesBaseData, getCategoriesStats, getSubCategoriesCount }
 
 /**
  * ============================================

@@ -173,6 +173,8 @@ model Game {
   // ========== 统计数据 ==========
   playCount Int @default(0) @map("play_count")
   viewCount Int @default(0) @map("view_count")
+  likes     Int @default(0) // 赞的数量
+  dislikes  Int @default(0) // 踩的数量
 
   // ========== 评分系统 ==========
   rating       Float  @default(0) // 用户评分（1-5）
@@ -201,12 +203,15 @@ model Game {
   gameCategories GameCategory[]
   tags           GameTag[]
   translations   GameTranslation[]
+  votes          GameVote[] // 用户投票记录
 
   @@index([slug])
   @@index([status])
   @@index([isFeatured])
   @@index([playCount])
   @@index([viewCount])
+  @@index([likes])
+  @@index([dislikes])
   @@index([releaseDate])
   @@index([importedAt])
   @@index([sourcePlatform])
@@ -581,5 +586,26 @@ model SiteConfigTranslation {
   @@unique([siteConfigId, locale])
   @@index([locale])
   @@map("site_config_translations")
+}
+
+// ========================================
+// 游戏投票记录表（防重复投票）
+// ========================================
+model GameVote {
+  id        String   @id @default(cuid())
+  gameId    String   @map("game_id")
+  userIp    String   @map("user_ip") // 用户IP地址
+  isLike    Boolean  @map("is_like") // true=赞, false=踩
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userIp]) // 每个IP对每个游戏只能投一票
+  @@index([gameId])
+  @@index([userIp])
+  @@index([createdAt])
+  @@map("game_votes")
 }
 

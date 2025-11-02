@@ -17,6 +17,7 @@
     "tags": "Tags",
     "allGames": "All Games",
     "allCategories": "All Categories",
+    "allTags": "All Tags",
     "subCategories": "Subcategories",
     "browseCategoriesDescription": "Explore games by category and find your favorites",
     "noGamesFound": "No games found",
@@ -35,7 +36,16 @@
     "sortBy": "Sort by",
     "sortByPopular": "Most Popular",
     "sortByNewest": "Newest",
-    "sortByName": "Name"
+    "sortByName": "Name",
+    "gameTypes": "Game Types",
+    "gameTags": "Game Tags",
+    "noSubcategories": "No subcategories available",
+    "browseTagsDescription": "Browse all game tags and find games by their features",
+    "search": "Search",
+    "searchCategoriesPlaceholder": "Search categories...",
+    "searchTagsPlaceholder": "Search tags...",
+    "noResults": "No results found",
+    "clearSearch": "Clear search"
   },
   "home": {
     "hero": "Play Free Online Games",

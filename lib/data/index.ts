@@ -18,6 +18,9 @@ export {
   getAllCategoryInfoMap,
   getAllCategoriesDataMap,
   getAllCategoriesFullData,
+  getCategoriesBaseData,
+  getCategoriesStats,
+  getSubCategoriesCount,
   getMainCategories,
   getSubCategories,
   getSubCategoriesByParentId,
@@ -30,6 +33,8 @@ export {
   getAllTagTranslationsMap,
   getAllTagsDataMap,
   getAllTagsInfoMap,
+  getTagsBaseData,
+  getTagsStats,
 } from "./tags"
 
 // 游戏相关（从模块化目录导入）
@@ -55,6 +60,7 @@ export {
   getTotalGamesCount,
   getGamesCategoryStats,
   getGamesTagStats,
+  getGameRealtimeStats,
   // 工具函数
   incrementPlayCount,
 } from "./games"

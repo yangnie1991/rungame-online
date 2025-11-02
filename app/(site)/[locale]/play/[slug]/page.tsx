@@ -1,4 +1,5 @@
-import { getGameBySlug, incrementPlayCount } from "@/lib/data"
+import { getGameBySlug, incrementPlayCount, getGameRealtimeStats } from "@/lib/data"
+import { getUserVote } from "@/app/(site)/actions/game-vote"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { Link } from "@/i18n/routing"
@@ -121,6 +122,13 @@ export default async function GamePage({ params }: GamePageProps) {
   // 增加播放次数（异步，不阻塞渲染）
   incrementPlayCount(game.id).catch(() => { })
 
+  // 获取实时统计数据（不缓存，始终最新）
+  const stats = await getGameRealtimeStats(game.id)
+
+  // 获取用户的投票状态
+  const userVoteResult = await getUserVote(game.id)
+  const initialUserVote = userVoteResult.success ? userVoteResult.vote : null
+
   // 准备推荐引擎需要的当前游戏数据（传递给异步组件）
   const currentGameData = {
     id: game.id,
@@ -222,14 +230,19 @@ export default async function GamePage({ params }: GamePageProps) {
       </div>
 
       {/* 游戏播放器 - 全宽 */}
-      <div className="bg-black rounded-lg overflow-hidden">
-        <GameEmbed
-          embedUrl={game.embedUrl}
-          title={game.title}
-          width={game.dimensions.width}
-          height={game.dimensions.height}
-        />
-      </div>
+      <GameEmbed
+        embedUrl={game.embedUrl}
+        title={game.title}
+        width={game.dimensions.width}
+        height={game.dimensions.height}
+        playCount={stats.playCount}
+        gameId={game.id}
+        gameSlug={game.slug}
+        locale={locale}
+        initialLikes={stats.likes}
+        initialDislikes={stats.dislikes}
+        initialUserVote={initialUserVote}
+      />
 
       {/* 下方内容区 - 3/4 和 1/4 分栏 */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

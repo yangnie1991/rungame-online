@@ -125,6 +125,8 @@ export async function getGameBySlug(slug: string, locale: string) {
         releaseDate: game.releaseDate,
         playCount: game.playCount,
         viewCount: game.viewCount,
+        likes: game.likes,
+        dislikes: game.dislikes,
         rating: game.rating,
         ratingCount: game.ratingCount,
         qualityScore: game.qualityScore,
