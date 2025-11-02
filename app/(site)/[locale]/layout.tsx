@@ -119,9 +119,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                   }))}
                 />
 
-                {/* Main Content - 填充剩余空间，支持滚动 */}
-                <main className="flex-1 bg-background overflow-y-auto">
-                  <div className="p-4 md:p-6">{children}</div>
+                {/* Main Content - 填充剩余空间，支持滚动，页脚固定在底部 */}
+                <main className="flex-1 bg-background overflow-y-auto flex flex-col">
+                  <div className="flex-1 p-4 md:p-6">{children}</div>
                   <SiteFooter locale={locale} />
                 </main>
               </div>
