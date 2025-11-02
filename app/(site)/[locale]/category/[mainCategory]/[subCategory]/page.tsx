@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
-import { getAllCategoriesFullData, getEnabledLanguages } from "@/lib/data"
+import { getAllCategoriesFullData } from "@/lib/data"
 import { getGamesByCategory } from "@/lib/data"
 import { GameCard } from "@/components/site/GameCard"
 import { Link } from "@/i18n/routing"
@@ -23,43 +23,9 @@ interface PageProps {
   searchParams: Promise<{ page?: string; sort?: string }>
 }
 
-// 允许动态渲染未预生成的路径
-export const dynamicParams = true
-
-export async function generateStaticParams() {
-  try {
-    // 获取所有启用的语言
-    const languages = await getEnabledLanguages()
-
-    // 为每个语言生成所有分类组合的静态参数
-    const allParams = []
-    for (const lang of languages) {
-      const allCategories = await getAllCategoriesFullData(lang.code)
-
-      // 获取所有主分类
-      const mainCategories = allCategories.filter((cat) => cat.parentId === null)
-
-      // 为每个主分类生成其子分类的参数
-      for (const mainCat of mainCategories) {
-        const subCategories = allCategories.filter((cat) => cat.parentId === mainCat.id)
-        for (const subCat of subCategories) {
-          allParams.push({
-            locale: lang.code,
-            mainCategory: mainCat.slug,
-            subCategory: subCat.slug,
-          })
-        }
-      }
-    }
-
-    console.log(`✅ Generated ${allParams.length} static params for sub categories`)
-    return allParams
-  } catch (error) {
-    console.error('❌ Error generating static params for sub categories:', error)
-    // 返回空数组，让所有路径在请求时动态渲染
-    return []
-  }
-}
+// 强制所有路径动态渲染（修复404问题）
+export const dynamic = 'force-dynamic'
+export const revalidate = 60 // 缓存60秒
 
 export async function generateMetadata({ params, searchParams }: PageProps) {
   const { locale, mainCategory, subCategory } = await params
