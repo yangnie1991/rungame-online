@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics"
 import { GoogleAdsense } from "@/components/analytics/GoogleAdsense"
+import { Analytics } from "@vercel/analytics/next"
 import { getEnabledLanguages, getMainCategories, getAllTags, getAllPageTypes, getTotalGamesCount, getSubCategoriesCount } from "@/lib/data"
 import { routing } from "@/i18n/routing"
 import { generateOrganizationSchema, renderJsonLd } from "@/lib/schema-generators"
@@ -137,6 +138,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             <Toaster />
           </NextIntlClientProvider>
         </ThemeProvider>
+
+        {/* Vercel Analytics - 页面访问追踪 */}
+        <Analytics />
       </body>
     </html>
   )
