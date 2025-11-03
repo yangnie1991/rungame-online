@@ -77,8 +77,16 @@ export async function GET(request: NextRequest) {
   const mode = (searchParams.get('mode') as SyncMode) || 'full'
   const orderBy = (searchParams.get('orderBy') as 'quality' | 'published') || 'quality'
 
+  // 🎯 新增：分批同步参数
+  const startPage = parseInt(searchParams.get('startPage') || '1', 10)
+  const maxPages = parseInt(searchParams.get('maxPages') || '0', 10) // 0 表示不限制
+
   if (!siteId) {
     return new Response('Missing siteId parameter', { status: 400 })
+  }
+
+  if (startPage < 1) {
+    return new Response('startPage must be >= 1', { status: 400 })
   }
 
   // 创建 SSE 响应
@@ -116,30 +124,11 @@ export async function GET(request: NextRequest) {
         // 根据模式决定同步页数
         if (mode === 'full') {
           actualTotalPages = Math.ceil(estimatedTotal / 96)
-          sendProgress({
-            currentPage: 0,
-            totalPages: actualTotalPages,
-            processedGames: 0,
-            newGames: 0,
-            updatedGames: 0,
-            currentStep: `检测到 ${estimatedTotal} 个游戏,共 ${actualTotalPages} 页,准备全量同步...`,
-            estimatedTotal,
-          })
         } else {
           // 增量同步
           const cacheTotal = await prismaCache.gamePixGameCache.count()
           incrementalNewGamesCount = Math.max(0, estimatedTotal - cacheTotal)
           actualTotalPages = Math.ceil(incrementalNewGamesCount / 96)
-
-          sendProgress({
-            currentPage: 0,
-            totalPages: actualTotalPages,
-            processedGames: 0,
-            newGames: 0,
-            updatedGames: 0,
-            currentStep: `检测到约 ${incrementalNewGamesCount} 个新游戏,需同步 ${actualTotalPages} 页...`,
-            estimatedTotal,
-          })
 
           if (incrementalNewGamesCount === 0) {
             sendProgress({
@@ -171,15 +160,39 @@ export async function GET(request: NextRequest) {
           }
         }
 
+        // 🎯 计算本次实际同步的页数范围
+        const syncStartPage = startPage
+        const syncEndPage = maxPages > 0
+          ? Math.min(startPage + maxPages - 1, actualTotalPages)
+          : actualTotalPages
+        const batchTotalPages = syncEndPage - syncStartPage + 1
+
+        console.log(`[SSE同步] 分批模式: 从第 ${syncStartPage} 页开始，本次同步 ${batchTotalPages} 页（共 ${actualTotalPages} 页）`)
+
+        sendProgress({
+          currentPage: 0,
+          totalPages: batchTotalPages,
+          processedGames: 0,
+          newGames: 0,
+          updatedGames: 0,
+          currentStep: maxPages > 0
+            ? `分批同步: 第 ${syncStartPage}-${syncEndPage} 页 (共 ${actualTotalPages} 页)`
+            : `检测到 ${estimatedTotal} 个游戏,共 ${actualTotalPages} 页,准备同步...`,
+          estimatedTotal,
+        })
+
         // 分页同步
-        for (let page = 1; page <= actualTotalPages; page++) {
+        for (let page = syncStartPage; page <= syncEndPage; page++) {
+          const batchCurrentPage = page - syncStartPage + 1
           sendProgress({
-            currentPage: page,
-            totalPages: actualTotalPages,
+            currentPage: batchCurrentPage,
+            totalPages: batchTotalPages,
             processedGames: totalSynced,
             newGames,
             updatedGames,
-            currentStep: `正在获取第 ${page}/${actualTotalPages} 页数据...`,
+            currentStep: maxPages > 0
+              ? `批次进度: ${batchCurrentPage}/${batchTotalPages} | 总进度: 第 ${page}/${actualTotalPages} 页`
+              : `正在获取第 ${page}/${actualTotalPages} 页数据...`,
             estimatedTotal,
           })
 
@@ -208,8 +221,8 @@ export async function GET(request: NextRequest) {
             if (neededGames < games.length && neededGames > 0) {
               games = games.slice(0, neededGames)
               sendProgress({
-                currentPage: page,
-                totalPages: actualTotalPages,
+                currentPage: batchCurrentPage,
+                totalPages: batchTotalPages,
                 processedGames: totalSynced,
                 newGames,
                 updatedGames,
@@ -220,12 +233,14 @@ export async function GET(request: NextRequest) {
           }
 
           sendProgress({
-            currentPage: page,
-            totalPages: actualTotalPages,
+            currentPage: batchCurrentPage,
+            totalPages: batchTotalPages,
             processedGames: totalSynced,
             newGames,
             updatedGames,
-            currentStep: `第 ${page} 页: 正在保存 ${games.length} 个游戏...`,
+            currentStep: maxPages > 0
+              ? `批次 ${batchCurrentPage}/${batchTotalPages}: 正在保存 ${games.length} 个游戏...`
+              : `第 ${page} 页: 正在保存 ${games.length} 个游戏...`,
             estimatedTotal,
           })
 
@@ -338,7 +353,11 @@ export async function GET(request: NextRequest) {
               select: { sourcePlatformId: true },
             })
 
-            const importedIds = new Set(importedGames.map(g => g.sourcePlatformId).filter(Boolean))
+            const importedIds = new Set(
+              importedGames
+                .map(g => g.sourcePlatformId)
+                .filter((id): id is string => id !== null)
+            )
 
             if (importedIds.size > 0) {
               // 批量更新 isImported 状态
@@ -362,12 +381,14 @@ export async function GET(request: NextRequest) {
           totalSynced += games.length
 
           sendProgress({
-            currentPage: page,
-            totalPages: actualTotalPages,
+            currentPage: batchCurrentPage,
+            totalPages: batchTotalPages,
             processedGames: totalSynced,
             newGames,
             updatedGames,
-            currentStep: `第 ${page} 页完成 (${games.length} 个游戏)`,
+            currentStep: maxPages > 0
+              ? `批次 ${batchCurrentPage}/${batchTotalPages} 完成 (${games.length} 个游戏)`
+              : `第 ${page} 页完成 (${games.length} 个游戏)`,
             estimatedTotal,
           })
 
@@ -378,6 +399,10 @@ export async function GET(request: NextRequest) {
 
         const syncDuration = Date.now() - startTime
 
+        // 计算剩余页数
+        const remainingPages = actualTotalPages - syncEndPage
+        const hasMorePages = remainingPages > 0
+
         // 记录同步日志
         await prismaCache.syncLog.create({
           data: {
@@ -386,17 +411,28 @@ export async function GET(request: NextRequest) {
             updatedGames,
             status: 'success',
             syncDuration,
-            apiParams: { siteId, mode, orderBy, perPage: 96 },
+            apiParams: {
+              siteId,
+              mode,
+              orderBy,
+              perPage: 96,
+              startPage,
+              maxPages,
+              syncEndPage,
+              remainingPages,
+            },
           },
         })
 
         sendProgress({
-          currentPage: actualTotalPages,
-          totalPages: actualTotalPages,
+          currentPage: batchTotalPages,
+          totalPages: batchTotalPages,
           processedGames: totalSynced,
           newGames,
           updatedGames,
-          currentStep: `同步完成! 共处理 ${totalSynced} 个游戏 (API总数: ${estimatedTotal})`,
+          currentStep: hasMorePages
+            ? `批次完成! 已同步第 ${syncStartPage}-${syncEndPage} 页，还剩 ${remainingPages} 页`
+            : `同步完成! 共处理 ${totalSynced} 个游戏 (API总数: ${estimatedTotal})`,
           estimatedTotal,
         })
 
@@ -410,6 +446,11 @@ export async function GET(request: NextRequest) {
                 newGames,
                 updatedGames,
                 syncDuration,
+                // 🎯 添加分批信息，告诉前端是否还有更多页
+                nextStartPage: hasMorePages ? syncEndPage + 1 : null,
+                remainingPages,
+                hasMorePages,
+                actualTotalPages,
               },
             })
           )

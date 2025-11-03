@@ -69,8 +69,22 @@ export function SyncProgressDialog({
   // 总页数
   const [totalPages, setTotalPages] = useState<number>(0)
 
+  // 🎯 分批同步状态
+  const [batchInfo, setBatchInfo] = useState({
+    currentBatch: 0,
+    totalBatches: 0,
+    nextStartPage: 1,
+    totalPagesInApi: 0,
+    accumulatedSynced: 0,
+    accumulatedNew: 0,
+    accumulatedUpdated: 0,
+  })
+
   // EventSource ref
   const eventSourceRef = useRef<EventSource | null>(null)
+
+  // 是否自动继续下一批
+  const [autoContinue, setAutoContinue] = useState(true)
 
   // 重置状态
   useEffect(() => {
@@ -84,6 +98,16 @@ export function SyncProgressDialog({
       setEstimatedTotal(0)
       setTotalPages(0)
       setSyncMode('incremental')
+      setBatchInfo({
+        currentBatch: 0,
+        totalBatches: 0,
+        nextStartPage: 1,
+        totalPagesInApi: 0,
+        accumulatedSynced: 0,
+        accumulatedNew: 0,
+        accumulatedUpdated: 0,
+      })
+      setAutoContinue(true)
     } else {
       // 关闭弹窗时清理 EventSource
       if (eventSourceRef.current) {
@@ -106,13 +130,9 @@ export function SyncProgressDialog({
     }
   }, [status, startTime])
 
-  // 开始同步 - 使用 SSE
-  const handleStartSync = async () => {
-    setStatus('syncing')
-    setProgress(0)
-    setStartTime(Date.now())
-    setCurrentStep('正在准备同步...')
-    setResult({})
+  // 🎯 执行单批同步
+  const executeBatch = async (startPage: number) => {
+    const maxPages = 5 // 每批同步 5 页
 
     try {
       // 创建 EventSource 连接到 SSE 端点
@@ -120,6 +140,8 @@ export function SyncProgressDialog({
       url.searchParams.set('siteId', config.siteId)
       url.searchParams.set('mode', syncMode)
       url.searchParams.set('orderBy', config.orderBy || 'quality')
+      url.searchParams.set('startPage', startPage.toString())
+      url.searchParams.set('maxPages', maxPages.toString())
 
       const eventSource = new EventSource(url.toString())
       eventSourceRef.current = eventSource
@@ -130,18 +152,48 @@ export function SyncProgressDialog({
 
           // 检查事件类型
           if (data.type === 'complete') {
-            // 同步完成
-            setStatus('success')
-            setResult({
-              totalSynced: data.data.totalSynced,
-              newGames: data.data.newGames,
-              updatedGames: data.data.updatedGames,
-              syncDuration: data.data.syncDuration,
-            })
-            setProgress(100)
+            // 批次完成
             eventSource.close()
             eventSourceRef.current = null
-            onComplete?.()
+
+            const {
+              totalSynced,
+              newGames,
+              updatedGames,
+              syncDuration,
+              nextStartPage,
+              hasMorePages,
+              actualTotalPages,
+            } = data.data
+
+            // 更新累计统计
+            setBatchInfo(prev => ({
+              ...prev,
+              accumulatedSynced: prev.accumulatedSynced + totalSynced,
+              accumulatedNew: prev.accumulatedNew + newGames,
+              accumulatedUpdated: prev.accumulatedUpdated + updatedGames,
+              totalPagesInApi: actualTotalPages || prev.totalPagesInApi,
+              currentBatch: prev.currentBatch + 1,
+            }))
+
+            setResult(prev => ({
+              totalSynced: (prev.totalSynced || 0) + totalSynced,
+              newGames: (prev.newGames || 0) + newGames,
+              updatedGames: (prev.updatedGames || 0) + updatedGames,
+              syncDuration: (prev.syncDuration || 0) + syncDuration,
+            }))
+
+            // 🎯 检查是否还有更多页需要同步
+            if (hasMorePages && nextStartPage && autoContinue) {
+              // 自动开始下一批
+              console.log(`[分批同步] 开始下一批: 第 ${nextStartPage} 页`)
+              setTimeout(() => executeBatch(nextStartPage), 1000) // 延迟 1 秒，避免请求过快
+            } else {
+              // 全部完成
+              setStatus('success')
+              setProgress(100)
+              onComplete?.()
+            }
           } else if (data.type === 'error') {
             // 同步失败
             setStatus('failed')
@@ -191,12 +243,34 @@ export function SyncProgressDialog({
     }
   }
 
+  // 🎯 启动同步（从第 1 页开始）
+  const handleStartSync = async () => {
+    setStatus('syncing')
+    setProgress(0)
+    setStartTime(Date.now())
+    setCurrentStep('正在准备分批同步...')
+    setResult({})
+    setBatchInfo({
+      currentBatch: 0,
+      totalBatches: 0,
+      nextStartPage: 1,
+      totalPagesInApi: 0,
+      accumulatedSynced: 0,
+      accumulatedNew: 0,
+      accumulatedUpdated: 0,
+    })
+
+    // 从第 1 页开始
+    executeBatch(1)
+  }
+
   // 取消同步
   const handleCancelSync = () => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
       eventSourceRef.current = null
     }
+    setAutoContinue(false) // 停止自动继续
     setStatus('failed')
     setResult({ error: '用户取消同步' })
   }
@@ -304,13 +378,22 @@ export function SyncProgressDialog({
               {/* 统计信息 */}
               {status === 'syncing' && (
                 <div className="bg-muted/30 p-3 rounded-lg text-sm space-y-1">
+                  {batchInfo.totalPagesInApi > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">总页数:</span>
+                      <span className="font-medium">{batchInfo.totalPagesInApi} 页</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">同步页数:</span>
-                    <span className="font-medium">{totalPages} 页</span>
+                    <span className="text-muted-foreground">当前批次:</span>
+                    <span className="font-medium">
+                      {batchInfo.currentBatch > 0 ? `第 ${batchInfo.currentBatch} 批` : '准备中...'}
+                      {totalPages > 0 && ` (每批 ${totalPages} 页)`}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">每页数量:</span>
-                    <span className="font-medium">96 个（最大值）</span>
+                    <span className="font-medium">96 个</span>
                   </div>
                   {estimatedTotal > 0 && (
                     <div className="flex justify-between">
