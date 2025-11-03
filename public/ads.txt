@@ -2,7 +2,7 @@
 # Google AdSense
 google.com, pub-1239281249435423, DIRECT, f08c47fec0942fa0
 # GamePix
-#gpx-property-7U603
+#gpx-property-1885A
 #gpx-last-updated-2024-11-21
 #gpx-reviq
 rev.iq, Kf077RYmx6XvWT8mhSbYq7LIQTU, DIRECT
