@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -367,7 +367,7 @@ export function GameImportConfirmDialog({
   }
 
   // 🎯 统一的标签分类函数（所有数据源都使用此函数）
-  const classifyTags = (tagNames: string[], source: string = 'unknown'): {
+  const classifyTags = useCallback((tagNames: string[], source: string = 'unknown'): {
     existingIds: string[]
     newNames: string[]
   } => {
@@ -400,7 +400,7 @@ export function GameImportConfirmDialog({
     console.log(`✅ [标签分类-${source}] 完成: ${existingIds.length} 个已存在, ${newNames.length} 个待创建`)
 
     return { existingIds, newNames }
-  }
+  }, [tags])
 
   // 🎯 当弹窗关闭时，清理所有状态和表单数据
   useEffect(() => {
@@ -591,7 +591,8 @@ export function GameImportConfirmDialog({
       form.setValue('existingTagIds', existingIds)
       form.setValue('newTagNames', newNames)
     }
-  }, [tags, form, classifyTags])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tags, classifyTags])
 
   // 当打开 AI 配置对话框时，自动填充关键词
   useEffect(() => {
