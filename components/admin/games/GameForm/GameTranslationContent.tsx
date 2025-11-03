@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { RichTextEditor } from "@/components/admin/RichTextEditor"
-import { BatchGenerateDialog } from "../BatchGenerateDialog"
+import { AiGenerateDialog } from "../AiGenerateDialog"
 import { KeywordsTagInput } from "@/components/admin/KeywordsTagInput"
 import { Sparkles, Loader2 } from "lucide-react"
 import type { CategoryOption } from "./CategoryCascader"
@@ -300,12 +300,13 @@ export function GameTranslationContent({
       </CardContent>
 
       {/* AI 生成游戏信息对话框 */}
-      <BatchGenerateDialog
+      <AiGenerateDialog
         open={batchDialogOpen}
         onOpenChange={setBatchDialogOpen}
         gameTitle={watch(`translations.${currentLocaleIndex}.title`) || '未命名游戏'}
         locale={languages[currentLocaleIndex]?.code || 'en'}
-        keywords={watch(`translations.${currentLocaleIndex}.keywords`) || ''}
+        initialKeywords={watch(`translations.${currentLocaleIndex}.keywords`) || ''}
+        originalDescription={watch(`translations.${currentLocaleIndex}.description`) || ''}
         category={selectedCategory?.name}
         categoryId={categoryId}
         onGenerated={handleBatchGenerated}

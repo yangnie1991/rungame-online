@@ -79,6 +79,7 @@ import {
 import { RichTextEditor } from '@/components/admin/RichTextEditor'
 import { SeoTextInput } from '@/components/admin/SeoTextInput'
 import { KeywordsTagInput } from '@/components/admin/KeywordsTagInput'
+import { AiGenerateDialog } from './AiGenerateDialog'
 
 // ContentSection 验证 schema
 const contentSectionSchema = z.object({
@@ -280,7 +281,6 @@ export function GameImportConfirmDialog({
   const [loadingConfigs, setLoadingConfigs] = useState(false)
   const [configError, setConfigError] = useState<string | null>(null)
   const [showAiConfigDialog, setShowAiConfigDialog] = useState(false)
-  const [aiConfigMode, setAiConfigMode] = useState<'fast' | 'quality'>('fast')
 
   // AI 生成配置
   const [aiConfig, setAiConfig] = useState({
@@ -343,6 +343,10 @@ export function GameImportConfirmDialog({
     control: form.control,
     name: 'translations' as any,
   })
+
+  // 获取当前选择的分类信息
+  const categoryId = form.watch('categoryId')
+  const selectedCategory = categories.find(c => c.id === categoryId)
 
   // ========== 辅助函数 ==========
 
@@ -420,7 +424,6 @@ export function GameImportConfirmDialog({
         setLoadingConfigs(false)
         setConfigError(null)
         setShowAiConfigDialog(false)
-        setAiConfigMode('fast')
         setAiConfig({
           mainKeyword: '',
           subKeywords: [],
@@ -2365,64 +2368,34 @@ export function GameImportConfirmDialog({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-base font-semibold">游戏内容管理</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setBatchGenerateLocale(activeLocale)
-                    setAiConfigMode('fast')
-                    setShowAiConfigDialog(true)
-                  }}
-                  disabled={
-                    isGenerating ||
-                    !extraDetails?.markdownContent ||
-                    !extraDetails?.tags ||
-                    extraDetails.tags.length === 0
-                  }
-                  title={
-                    !extraDetails?.markdownContent || !extraDetails?.tags || extraDetails.tags.length === 0
-                      ? '需要先提取游戏信息（标签和内容）'
-                      : ''
-                  }
-                >
-                  {isGenerating ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mr-2" />
-                  )}
-                  快速生成 (~15s)
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="default"
-                  onClick={() => {
-                    setBatchGenerateLocale(activeLocale)
-                    setAiConfigMode('quality')
-                    setShowAiConfigDialog(true)
-                  }}
-                  disabled={
-                    isGenerating ||
-                    !extraDetails?.markdownContent ||
-                    !extraDetails?.tags ||
-                    extraDetails.tags.length === 0
-                  }
-                  title={
-                    !extraDetails?.markdownContent || !extraDetails?.tags || extraDetails.tags.length === 0
-                      ? '需要先提取游戏信息（标签和内容）'
-                      : ''
-                  }
-                >
-                  {isGenerating ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mr-2" />
-                  )}
-                  质量生成 (~35s)
-                </Button>
-              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setBatchGenerateLocale(activeLocale)
+                  setShowAiConfigDialog(true)
+                }}
+                disabled={
+                  isGenerating ||
+                  !extraDetails?.markdownContent ||
+                  !extraDetails?.tags ||
+                  extraDetails.tags.length === 0
+                }
+                title={
+                  !extraDetails?.markdownContent || !extraDetails?.tags || extraDetails.tags.length === 0
+                    ? '需要先提取游戏信息（标签和内容）'
+                    : ''
+                }
+                className="text-purple-600 border-purple-200 hover:bg-purple-50"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                AI 生成游戏内容
+              </Button>
             </div>
 
             {/* 生成进度提示 */}
@@ -2823,189 +2796,27 @@ export function GameImportConfirmDialog({
 
       </DialogContent>
 
-      {/* AI 生成配置对话框 */}
-      <Dialog open={showAiConfigDialog} onOpenChange={setShowAiConfigDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>AI 生成配置</DialogTitle>
-            <DialogDescription>
-              配置 AI 生成参数（{aiConfigMode === 'fast' ? '快速模式' : '质量模式'}）
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* 主关键词 */}
-            <div className="space-y-2">
-              <Label htmlFor="mainKeyword">
-                主关键词 <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="mainKeyword"
-                value={aiConfig.mainKeyword}
-                onChange={(e) => setAiConfig({ ...aiConfig, mainKeyword: e.target.value })}
-                placeholder="例如：puzzle game, action game"
-              />
-              <p className="text-xs text-muted-foreground">
-                主关键词将作为内容生成的核心主题
-              </p>
-            </div>
-
-            {/* 副关键词 */}
-            <div className="space-y-2">
-              <Label htmlFor="subKeywords">副关键词（可选）</Label>
-              <div className="space-y-2">
-                {/* 已添加的标签 */}
-                {aiConfig.subKeywords.length > 0 && (
-                  <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-muted/30">
-                    {aiConfig.subKeywords.map((keyword, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="px-3 py-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                        onClick={() => {
-                          const newKeywords = aiConfig.subKeywords.filter((_, i) => i !== index)
-                          setAiConfig({ ...aiConfig, subKeywords: newKeywords })
-                        }}
-                      >
-                        {keyword}
-                        <span className="ml-1 opacity-60">×</span>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                {/* 输入框 */}
-                <Input
-                  id="subKeywords"
-                  placeholder="输入关键词后按回车添加"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const value = e.currentTarget.value.trim()
-                      if (value && !aiConfig.subKeywords.includes(value)) {
-                        setAiConfig({
-                          ...aiConfig,
-                          subKeywords: [...aiConfig.subKeywords, value]
-                        })
-                        e.currentTarget.value = ''
-                      }
-                    }
-                  }}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                输入关键词后按 <kbd className="px-1 py-0.5 text-xs border rounded">Enter</kbd> 添加，点击标签可删除
-              </p>
-            </div>
-
-            {/* AI 配置和模型选择 */}
-            <div className="space-y-4 border rounded-lg p-4 bg-purple-50/30">
-              <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-purple-600" />
-                <h4 className="text-sm font-medium text-gray-900">AI 配置</h4>
-                <span className="text-red-500">*</span>
-              </div>
-
-              {loadingConfigs ? (
-                <div className="flex items-center gap-2 text-sm text-gray-500 p-3 border rounded-lg bg-white">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  正在加载配置列表...
-                </div>
-              ) : configError ? (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm text-red-900">{configError}</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={loadAiConfigsAndModels}
-                      className="mt-2 h-7 text-xs"
-                    >
-                      重试
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* 供应商选择 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="config-select">AI 供应商</Label>
-                    <Select value={selectedAiConfigId} onValueChange={handleAiConfigChange}>
-                      <SelectTrigger id="config-select" className="bg-white">
-                        <SelectValue placeholder="选择 AI 供应商" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableAiConfigs.map((config) => (
-                          <SelectItem key={config.id} value={config.id}>
-                            <div className="flex items-center gap-2">
-                              {config.name}
-                              {config.isActive && (
-                                <Badge variant="secondary" className="text-xs">激活</Badge>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      选择 AI 服务供应商（如 OpenRouter、OpenAI 等）
-                    </p>
-                  </div>
-
-                  {/* 模型选择 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="model-select" className="flex items-center gap-2">
-                      <Cpu className="w-4 h-4 text-purple-600" />
-                      AI 模型
-                    </Label>
-                    <Select value={selectedModelId} onValueChange={setSelectedModelId}>
-                      <SelectTrigger id="model-select" className="bg-white">
-                        <SelectValue placeholder="选择 AI 模型" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableModels.map((model) => (
-                          <SelectItem key={model.id} value={model.id}>
-                            <div className="flex items-center gap-2">
-                              {model.name}
-                              {model.isDefault && (
-                                <Badge variant="secondary" className="text-xs">默认</Badge>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      {aiConfigMode === 'fast' ? '快速模式建议使用轻量级模型' : '质量模式建议使用高级模型'}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowAiConfigDialog(false)}
-            >
-              取消
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                setShowAiConfigDialog(false)
-                handleGamePixAIGenerate()
-              }}
-              disabled={!aiConfig.mainKeyword || !selectedAiConfigId || !selectedModelId || loadingConfigs}
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              开始生成
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* AI 生成统一对话框 */}
+      <AiGenerateDialog
+        open={showAiConfigDialog}
+        onOpenChange={setShowAiConfigDialog}
+        gameTitle={form.watch('title') || game.title}
+        locale={batchGenerateLocale}
+        initialKeywords={(() => {
+          if (batchGenerateLocale === 'en') {
+            return form.watch('keywords') || ''
+          }
+          const translationIndex = form.watch('translations')?.findIndex(t => t.locale === batchGenerateLocale)
+          return translationIndex !== undefined && translationIndex >= 0
+            ? form.watch(`translations.${translationIndex}.keywords`) || ''
+            : ''
+        })()}
+        originalDescription={game.description}
+        markdownContent={extraDetails?.markdownContent}
+        category={selectedCategory?.name}
+        categoryId={form.watch('categoryId')}
+        onGenerated={handleBatchGenerated}
+      />
 
       {/* AI 配置加载失败提示对话框 */}
       <AlertDialog open={!!configError} onOpenChange={(open) => !open && setConfigError(null)}>
