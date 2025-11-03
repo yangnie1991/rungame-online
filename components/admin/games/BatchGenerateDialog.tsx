@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,8 @@ import {
   RefreshCw,
   Database,
   Cpu,
+  Search,
+  FileText,
 } from "lucide-react"
 import {
   AlertDialog,
@@ -164,6 +166,16 @@ const GENERATION_FIELDS: GenerationField[] = [
 
 type GenerationPhase = 'config' | 'generating' | 'preview'
 
+// 生成进度数据
+interface GenerationProgress {
+  phase: 'searching' | 'parsing' | 'generating'
+  step: string
+  progress: number
+  current?: number
+  total?: number
+  details?: string
+}
+
 export function BatchGenerateDialog({
   open,
   onOpenChange,
@@ -198,10 +210,20 @@ export function BatchGenerateDialog({
   // Preview state
   const [activePreviewTab, setActivePreviewTab] = useState<string>('')
 
+  // SSE 进度状态
+  const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null)
+  const eventSourceRef = useRef<EventSource | null>(null)
+
   // 加载可用配置和模型
   useEffect(() => {
     if (open) {
       loadAiConfigsAndModels()
+    } else {
+      // 关闭对话框时清理 EventSource
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
     }
   }, [open])
 
@@ -263,9 +285,16 @@ export function BatchGenerateDialog({
     setGeneratedResults({})
     setEditedResults({})
     setCitations([])
+    setGenerationProgress(null)
+
+    // 清理 EventSource
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
+    }
   }
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     // 验证主关键词必填
     if (!mainKeyword.trim()) {
       setError('主关键词为必填项，请输入游戏的主要关键词')
@@ -279,55 +308,103 @@ export function BatchGenerateDialog({
 
     setPhase('generating')
     setError(null)
+    setGenerationProgress(null)
 
     try {
-      // 组合完整的关键词
-      const fullKeywords = subKeywords.trim()
-        ? `${mainKeyword.trim()}, ${subKeywords.trim()}`
-        : mainKeyword.trim()
-
-      // 只使用 SEO API
-      const apiUrl = '/api/ai/batch-generate-seo'
-      const requestBody: any = {
-        gameTitle,
-        locale,
-        keywords: fullKeywords,
-        category,
-        categoryId,
-        fields: GENERATION_FIELDS.map(f => f.id), // 生成所有 9 个字段
-        configId: selectedConfigId, // 传递选择的配置 ID
-        modelId: selectedModelId, // 传递选择的模型 ID
-        mode: seoMode,  // fast 或 quality
-        subKeywords: subKeywords.trim() ? subKeywords.split(',').map(k => k.trim()) : [],
-        extractedContent: extractedData?.markdownContent // 传递提取的 Markdown 内容
+      // 清理旧的 EventSource
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
       }
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      })
+      // 准备参数
+      const subKeywordsList = subKeywords.trim()
+        ? subKeywords.split(',').map(k => k.trim())
+        : []
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || '生成失败')
+      // 构建 SSE 端点 URL (GET 请求，参数通过 query string)
+      const url = new URL('/api/ai/generate-seo-stream', window.location.origin)
+      url.searchParams.set('gameTitle', gameTitle)
+      url.searchParams.set('locale', locale)
+      url.searchParams.set('keywords', mainKeyword.trim())
+      if (subKeywordsList.length > 0) {
+        url.searchParams.set('subKeywords', JSON.stringify(subKeywordsList))
+      }
+      if (category) {
+        url.searchParams.set('category', category)
+      }
+      if (categoryId) {
+        url.searchParams.set('categoryId', categoryId)
+      }
+      url.searchParams.set('configId', selectedConfigId)
+      url.searchParams.set('modelId', selectedModelId)
+      url.searchParams.set('fields', JSON.stringify(GENERATION_FIELDS.map(f => f.id)))
+      url.searchParams.set('mode', seoMode)
+      if (extractedData?.markdownContent) {
+        url.searchParams.set('extractedContent', extractedData.markdownContent)
       }
 
-      const data = await response.json()
+      // 创建 EventSource 连接
+      const eventSource = new EventSource(url.toString())
+      eventSourceRef.current = eventSource
 
-      setGeneratedResults(data.results)
-      setEditedResults(data.results) // Initialize editable version
-      if (data.citations) {
-        setCitations(data.citations)
+      // 处理消息
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+
+          if (data.type === 'progress') {
+            // 更新进度
+            setGenerationProgress(data.data)
+          } else if (data.type === 'complete') {
+            // 生成完成
+            console.log('✅ AI 生成完成', data.data)
+
+            setGeneratedResults(data.data.results)
+            setEditedResults(data.data.results)
+
+            if (data.data.citations) {
+              setCitations(data.data.citations)
+            }
+
+            // Set first field as active tab
+            setActivePreviewTab(GENERATION_FIELDS[0].id)
+
+            setPhase('preview')
+            setGenerationProgress(null)
+
+            // 关闭连接
+            eventSource.close()
+            eventSourceRef.current = null
+          } else if (data.type === 'error') {
+            // 生成失败
+            console.error('❌ AI 生成失败:', data.error)
+            setError(data.error || '生成失败，请重试')
+            setPhase('config')
+            setGenerationProgress(null)
+
+            // 关闭连接
+            eventSource.close()
+            eventSourceRef.current = null
+          }
+        } catch (err) {
+          console.error('解析 SSE 消息失败:', err)
+        }
       }
 
-      // Set first field as active tab
-      setActivePreviewTab(GENERATION_FIELDS[0].id)
+      // 处理错误
+      eventSource.onerror = (err) => {
+        console.error('SSE 连接错误:', err)
+        setError('连接失败，请检查网络后重试')
+        setPhase('config')
+        setGenerationProgress(null)
 
-      setPhase('preview')
+        eventSource.close()
+        eventSourceRef.current = null
+      }
     } catch (err: any) {
-      console.error('批量生成失败:', err)
-      setError(err.message || '生成失败，请重试')
+      console.error('启动生成失败:', err)
+      setError(err.message || '启动失败，请重试')
       setPhase('config')
     }
   }
@@ -656,7 +733,7 @@ export function BatchGenerateDialog({
             <div className="space-y-4 py-8">
               <div className="flex flex-col items-center justify-center gap-4">
                 <Loader2 className="w-12 h-12 animate-spin text-purple-600" />
-                <div className="text-center">
+                <div className="text-center w-full max-w-lg">
                   <p className="text-lg font-medium">正在生成内容...</p>
                   <p className="text-sm text-gray-500 mt-1">
                     AI 正在分析游戏信息并生成 {GENERATION_FIELDS.length} 个字段的内容
@@ -673,6 +750,56 @@ export function BatchGenerateDialog({
                       SEO {seoMode === 'fast' ? '快速' : '质量'}模式
                     </Badge>
                   </div>
+
+                  {/* 实时进度显示 */}
+                  {generationProgress && (
+                    <div className="mt-6 space-y-3 text-left">
+                      {/* 阶段指示器 */}
+                      <div className="flex items-center justify-center gap-4">
+                        <div className={`flex items-center gap-2 ${generationProgress.phase === 'searching' ? 'text-blue-600' : 'text-gray-400'}`}>
+                          <Search className="w-4 h-4" />
+                          <span className="text-xs font-medium">搜索竞品</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${generationProgress.phase === 'parsing' ? 'text-orange-600' : 'text-gray-400'}`}>
+                          <FileText className="w-4 h-4" />
+                          <span className="text-xs font-medium">解析网页</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${generationProgress.phase === 'generating' ? 'text-purple-600' : 'text-gray-400'}`}>
+                          <Sparkles className="w-4 h-4" />
+                          <span className="text-xs font-medium">生成内容</span>
+                        </div>
+                      </div>
+
+                      {/* 进度条 */}
+                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            generationProgress.phase === 'searching' ? 'bg-blue-600' :
+                            generationProgress.phase === 'parsing' ? 'bg-orange-600' :
+                            'bg-purple-600'
+                          }`}
+                          style={{ width: `${generationProgress.progress}%` }}
+                        />
+                      </div>
+
+                      {/* 当前步骤信息 */}
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        <p className="text-sm font-medium text-gray-900">
+                          {generationProgress.step}
+                        </p>
+                        {generationProgress.current !== undefined && generationProgress.total !== undefined && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            进度: {generationProgress.current}/{generationProgress.total}
+                          </p>
+                        )}
+                        {generationProgress.details && (
+                          <p className="text-xs text-gray-500 mt-1 break-all">
+                            {generationProgress.details}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -931,3 +931,214 @@ ${strategy.contentSections.faq}
 ${strategy.contentSections.extras}
 `.trim()
 }
+
+// ============================================================
+// 统一游戏内容生成提示词模板
+// ============================================================
+
+/**
+ * 游戏内容生成的变量接口
+ */
+export interface GameContentPromptVariables {
+  gameTitle: string
+  locale: string
+  languageName: string
+  mainKeyword: string
+  subKeywords: string[]
+  originalDescription?: string
+  markdownContent?: string  // 可选：从网页抓取的游戏信息
+  competitorContent?: string  // 竞品网站内容
+}
+
+/**
+ * 获取游戏内容生成的系统提示词（快速模式）
+ */
+export function getGameContentSystemPrompt(vars: GameContentPromptVariables): string {
+  return `You are a professional game content creator. Generate high-quality game content based on the provided game information and competitor analysis.
+
+**IMPORTANT: All generated content MUST be in ${vars.languageName} (locale: ${vars.locale}).**
+
+**Strict Requirements:**
+1. description: MUST be **plain text** (no HTML tags), 1 paragraph, 150-200 words, describing core gameplay
+2. metaTitle: Within 60 characters, include main keyword "${vars.mainKeyword}"
+3. metaDescription: Within 155 characters, include main and sub keywords
+4. keywords: **CRITICAL - Generate 5-10 keywords total:**
+   - MUST include main keyword "${vars.mainKeyword}" (required)
+   - MUST include all sub keywords ${JSON.stringify(vars.subKeywords)} (required)
+   - MUST add 3-5 additional relevant keywords based on game content (e.g., game genre, gameplay mechanics, target audience)
+   - Format: comma-separated list
+   - Example: "${vars.mainKeyword}, ${vars.subKeywords[0] || 'action'}, ${vars.subKeywords[1] || 'puzzle'}, online game, free to play, browser game, casual gaming"
+5. controls: HTML rich text, game controls instructions
+6. howToPlay: HTML rich text, gameplay rules and tips
+7. gameDetails: HTML rich text, game features, levels, rewards
+8. faq: HTML rich text, frequently asked questions
+9. extras: HTML rich text, changelog, acknowledgments, etc. (**CAN use h2 headings, ABSOLUTELY FORBIDDEN to use h1 headings**)
+
+**Content Restrictions (CRITICAL):**
+❌ DO NOT include developer/publisher information UNLESS it is explicitly provided in the original game information
+❌ DO NOT recommend other games or external websites
+❌ DO NOT add video links, YouTube embeds, or any external media
+❌ DO NOT mention "Gameplay Footage", "Watch Video", "Video Tutorial" or similar video-related content (we have a separate video module)
+❌ DO NOT include information from competitor websites that is not relevant to this specific game
+✅ ONLY use information from: original game description, markdown content, and relevant gameplay details
+
+**HTML Tag Specifications:**
+- Rich text fields (controls, howToPlay, gameDetails, faq, extras) MUST use HTML format
+- Allowed tags: <p>, <ul>, <li>, <strong>, <em>, <br>, <h2>, <h3>
+- extras field: **CAN use <h2>, <h3>, but ABSOLUTELY FORBIDDEN to use <h1>**
+- Other fields should not use heading tags
+
+**CRITICAL - Content Length Requirements:**
+
+**⚠️ SEO Fields - STRICTLY ENFORCE (MUST NOT EXCEED):**
+
+**CRITICAL: Google uses pixel width, not character count!**
+- Chinese characters ≈ 2× wider than English (18px vs 10px)
+- Limits based on: metaTitle 600px, metaDescription 920px (desktop)
+
+**For English (en):**
+- description: **20-30 words** (plain text, no HTML, concise summary)
+- metaTitle: **50-60 characters** ⭐ (600px ÷ 10px/char = 60 chars max)
+- metaDescription: **140-160 characters** ⭐ (920px ÷ 10px/char = 160 chars max, desktop)
+- keywords: **5-10 keywords** (comma-separated, include main + sub keywords)
+
+**For Chinese (zh):**
+- description: **10-15 词** (纯文本，简短摘要)
+- metaTitle: **25-30 汉字** ⭐ (600px ÷ 18px/char = 30 汉字 max，因为中文字符更宽)
+- metaDescription: **70-80 汉字** ⭐ (920px ÷ 18px/char = 80 汉字 max，桌面端)
+- keywords: **5-10 个关键词**
+
+**Why these limits?**
+- Exceeding = Google truncates with "..." → Poor UX
+- Mobile limits even stricter (680px for description)
+
+**📝 Rich Text Fields - Flexible Guidelines (Recommended limits):**
+
+**For English (en):**
+- controls: **~120 words** (HTML format, can be flexible)
+- howToPlay: **~280 words** (HTML format, can be flexible)
+- gameDetails: **~350 words** (HTML format, can be flexible)
+- faq: **~200 words** (HTML format, 3-5 Q&A pairs)
+- extras: **~180 words** (HTML format, tips/strategies with h2/h3 headings)
+
+**For Chinese (zh):**
+- controls: **~60 词** (HTML 格式，可灵活调整)
+- howToPlay: **~140 词** (HTML 格式，可灵活调整)
+- gameDetails: **~175 词** (HTML 格式，可灵活调整)
+- faq: **~100 词** (HTML 格式)
+- extras: **~90 词** (HTML 格式)
+
+⚠️ **Important Notes:**
+- **SEO fields (metaTitle, metaDescription)**: MUST strictly follow character limits (Google truncates beyond these limits)
+- **Rich text fields**: Use as guidelines, can be slightly flexible based on content quality
+- Generate BEFORE: Plan content structure
+- Generate AFTER: Self-check SEO field character counts
+- Quality over quantity - be concise and informative
+
+Return JSON format:
+{
+  "description": "Plain text description (150-200 words) in ${vars.languageName}. Use '${vars.gameTitle}' as-is, do not translate game name!",
+  "metaTitle": "SEO title (within 60 chars) in ${vars.languageName}. Include '${vars.gameTitle}' without translation.",
+  "metaDescription": "SEO description (within 155 chars) in ${vars.languageName}. Use '${vars.gameTitle}' as original English name.",
+  "keywords": "${vars.mainKeyword}, ${vars.subKeywords.join(', ')}, additional keyword 1, additional keyword 2, additional keyword 3 (5-10 total keywords in ${vars.languageName})",
+  "controls": "<p>HTML formatted controls in ${vars.languageName}. Mention '${vars.gameTitle}' in original English if needed.</p>",
+  "howToPlay": "<p>HTML formatted how to play in ${vars.languageName}. Always use '${vars.gameTitle}' not translated.</p>",
+  "gameDetails": "<p>HTML formatted game details in ${vars.languageName}. Game name '${vars.gameTitle}' stays in English.</p>",
+  "faq": "<p>HTML formatted FAQ in ${vars.languageName}. When mentioning game, use '${vars.gameTitle}' unchanged.</p>",
+  "extras": "<h2>Changelog</h2><p>HTML formatted extras in ${vars.languageName} (can use h2/h3, forbidden h1). '${vars.gameTitle}' = English name only!</p>"
+}`
+}
+
+/**
+ * 获取游戏内容生成的用户提示词（快速模式）
+ */
+export function getGameContentUserPrompt(vars: GameContentPromptVariables): string {
+  const parts = [
+    `**Game Information:**`,
+    `- Game Title: ${vars.gameTitle}`,
+    `- Main Keyword: ${vars.mainKeyword}`,
+    `- Sub Keywords: ${vars.subKeywords.join(', ')}`,
+  ]
+
+  if (vars.originalDescription) {
+    parts.push(`- Original Description: ${vars.originalDescription}`)
+  }
+
+  parts.push(`- **Target Language: ${vars.languageName} (${vars.locale})**`)
+
+  // 添加 Markdown 内容（如果有）
+  if (vars.markdownContent) {
+    parts.push(`\n**Markdown Content (Complete):**\n${vars.markdownContent}`)
+  }
+
+  // 添加竞品内容（如果有）
+  if (vars.competitorContent) {
+    parts.push(`\n${vars.competitorContent}`)
+  }
+
+  // 添加生成要求
+  parts.push(`
+**Generation Requirements:**
+1. **ALL content MUST be written in ${vars.languageName}**
+2. **CRITICAL: Game title "${vars.gameTitle}" must NEVER be translated - always use the original English name**
+3. description must be plain text, no HTML tags, 150-200 words
+4. keywords: **MUST generate 5-10 keywords total** - include "${vars.mainKeyword}", ${JSON.stringify(vars.subKeywords)}, AND 3-5 additional relevant keywords
+5. extras can use h2/h3 headings, but **ABSOLUTELY FORBIDDEN to use h1**
+6. All rich text fields use HTML format
+
+Please generate all 9 fields with complete, detailed content in ${vars.languageName}.`)
+
+  return parts.join('\n')
+}
+
+/**
+ * 获取竞品分析提示词（质量模式 - 步骤1）
+ */
+export function getGameContentAnalysisPrompt(vars: GameContentPromptVariables): string {
+  return `You are an SEO analysis expert. Please deeply analyze the following game content and competitor data.
+
+**IMPORTANT: Target Language is ${vars.languageName} (${vars.locale})**
+
+**Game Information:**
+- Game Title: ${vars.gameTitle}
+- Main Keyword: ${vars.mainKeyword}
+- Sub Keywords: ${vars.subKeywords.join(', ')}
+${vars.originalDescription ? `- Original Description: ${vars.originalDescription}` : ''}
+
+${vars.markdownContent ? `**Markdown Content:**\n${vars.markdownContent}` : ''}
+
+${vars.competitorContent || ''}
+
+Please analyze:
+1. Strengths and weaknesses of competitor content
+2. Key information points and selling points
+3. SEO best practices
+4. Target audience and language style for ${vars.languageName}
+
+Return JSON format:
+{
+  "strengths": ["strength1", "strength2", ...],
+  "weaknesses": ["weakness1", "weakness2", ...],
+  "keyPoints": ["point1", "point2", ...],
+  "seoInsights": "SEO insights for ${vars.languageName} content",
+  "tone": "language style for ${vars.languageName} audience"
+}`
+}
+
+/**
+ * 格式化竞品网站内容
+ */
+export function formatCompetitorContent(
+  searchResults: Array<{ title: string; url: string; snippet?: string }>,
+  webContents: string[]
+): string {
+  if (searchResults.length === 0) return ''
+
+  return `**Competitor Game Website Content (Filtered, Complete):**
+${searchResults.map((r, i) => `
+--- Website ${i + 1}: ${r.title} ---
+URL: ${r.url}
+Content:
+${webContents[i] || r.snippet || '(No content available)'}
+`).join('\n')}`
+}

@@ -45,7 +45,7 @@ export async function readWebPage(url: string, truncate: boolean = true): Promis
     const headers: Record<string, string> = {
       'Accept': 'text/markdown',
       'X-Return-Format': 'markdown',
-      'X-Timeout': '10',  // 10秒超时
+      'X-Timeout': '8',  // 8秒超时（留 1-2 秒缓冲）
       'X-With-Generated-Alt': 'true',  // 为图片生成 alt 文本
       'X-With-Images-Summary': 'true',  // 将图片移到文档最后的 "Images:" 部分
       'X-With-Links-Summary': 'false'  // 不需要链接摘要
@@ -59,7 +59,7 @@ export async function readWebPage(url: string, truncate: boolean = true): Promis
     // 调用 Jina Reader API
     const response = await fetch(jinaUrl, {
       headers,
-      signal: AbortSignal.timeout(15000)  // 15秒超时
+      signal: AbortSignal.timeout(9000)  // 9秒超时（客户端稍长于服务端）
     })
 
     // 处理错误响应
@@ -152,6 +152,71 @@ export async function readWebPage(url: string, truncate: boolean = true): Promis
       wordCount: 0,
       error: error.message || '解析失败'
     }
+  }
+}
+
+/**
+ * 带重试机制的网页解析（指数退避策略）
+ *
+ * @param url - 要解析的网页 URL
+ * @param maxRetries - 最大重试次数（默认 3）
+ * @param onRetry - 重试回调函数（用于进度反馈）
+ * @returns 解析结果
+ *
+ * @example
+ * const result = await readWebPageWithRetry('https://example.com', 3, (attempt, error) => {
+ *   console.log(`重试第 ${attempt} 次: ${error}`)
+ * })
+ */
+export async function readWebPageWithRetry(
+  url: string,
+  maxRetries: number = 3,
+  onRetry?: (attempt: number, error: string) => void
+): Promise<JinaReaderResult> {
+  let lastError: string = ''
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // 第一次尝试，直接调用
+      if (attempt === 1) {
+        const result = await readWebPage(url, true)
+        if (!result.error) {
+          return result
+        }
+        lastError = result.error
+      } else {
+        // 重试前延迟（指数退避：2s, 4s, 8s）
+        const delay = Math.pow(2, attempt - 1) * 1000
+        console.log(`[Jina Reader] ⏳ ${url} - 等待 ${delay}ms 后重试...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+
+        // 通知重试
+        if (onRetry) {
+          onRetry(attempt, lastError)
+        }
+
+        // 重试
+        const result = await readWebPage(url, true)
+        if (!result.error) {
+          console.log(`[Jina Reader] ✓ ${url} - 重试成功 (第 ${attempt} 次尝试)`)
+          return result
+        }
+        lastError = result.error
+      }
+    } catch (error: any) {
+      lastError = error.message || '未知错误'
+      console.error(`[Jina Reader] ✗ ${url} - 第 ${attempt} 次尝试失败:`, lastError)
+    }
+  }
+
+  // 所有重试都失败
+  console.error(`[Jina Reader] ✗ ${url} - 重试 ${maxRetries} 次后仍失败`)
+  return {
+    url,
+    title: extractDomainFromUrl(url),
+    content: '',
+    wordCount: 0,
+    error: `重试 ${maxRetries} 次后失败: ${lastError}`
   }
 }
 
