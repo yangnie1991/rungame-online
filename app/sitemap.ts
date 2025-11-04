@@ -12,7 +12,7 @@ import { routing } from '@/i18n/routing'
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
-  const locales = routing.locales // ['en', 'zh', 'es', 'fr']
+  const locales = routing.locales // ['en', 'zh']
   const defaultLocale = routing.defaultLocale // 'en'
 
   const sitemap: MetadataRoute.Sitemap = []

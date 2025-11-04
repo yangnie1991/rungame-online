@@ -133,7 +133,7 @@ export function SiteHeader({ languages, currentLocale, mainNavItems, categories,
                       <Link
                         key={lang.code}
                         href={pathname}
-                        locale={lang.code as "en" | "zh" | "es" | "fr"}
+                        locale={lang.code as "en" | "zh"}
                         className={`block px-4 py-2 text-sm transition-colors ${
                           isActive
                             ? "bg-primary text-primary-foreground font-medium"
@@ -170,7 +170,7 @@ export function SiteHeader({ languages, currentLocale, mainNavItems, categories,
                         <Link
                           key={lang.code}
                           href={pathname}
-                          locale={lang.code as "en" | "zh" | "es" | "fr"}
+                          locale={lang.code as "en" | "zh"}
                           onClick={() => setMobileLanguageOpen(false)}
                           className={`flex items-center justify-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                             isActive

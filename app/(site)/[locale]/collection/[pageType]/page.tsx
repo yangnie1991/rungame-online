@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: PageTypePageProps): Promise<M
       description,
       url: pageUrl,
       siteName: 'RunGame',
-      locale: locale === 'zh' ? 'zh_CN' : locale === 'es' ? 'es_ES' : locale === 'fr' ? 'fr_FR' : 'en_US',
+      locale: locale === 'zh' ? 'zh_CN' : 'en_US',
       type: 'website',
       images: [
         {
@@ -93,8 +93,6 @@ export async function generateMetadata({ params }: PageTypePageProps): Promise<M
       languages: {
         'en': `${siteUrl}/en/collection/${pageType}`,
         'zh': `${siteUrl}/zh/collection/${pageType}`,
-        'es': `${siteUrl}/es/collection/${pageType}`,
-        'fr': `${siteUrl}/fr/collection/${pageType}`,
         'x-default': `${siteUrl}/collection/${pageType}`,
       },
     },

@@ -62,8 +62,6 @@ export async function generateMetadata({ params, searchParams }: GamesPageProps)
   const ogLocaleMap: Record<string, string> = {
     'zh': 'zh_CN',
     'en': 'en_US',
-    'es': 'es_ES',
-    'fr': 'fr_FR',
   }
 
   return {

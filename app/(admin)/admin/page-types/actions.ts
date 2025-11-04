@@ -36,7 +36,7 @@ const pageTypeSchema = z.object({
   // 翻译数据
   translations: z.array(
     z.object({
-      locale: z.enum(["en", "zh", "es", "fr"]),
+      locale: z.enum(["en", "zh"]),
       title: z.string().min(1, "标题不能为空"),
       description: z.string().optional(),
       metaTitle: z.string().optional(),

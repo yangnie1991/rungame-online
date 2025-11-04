@@ -36,7 +36,7 @@ export interface AiModelConfig {
 export interface SeoOptimizationInput {
   keywords: string // 关键词列表，逗号分隔（如："puzzle game, brain teaser, logic game"）
   content: string // 现有内容（游戏描述、详细说明等）
-  locale: string // 语言代码（如："en", "zh", "es"）
+  locale: string // 语言代码（如："en", "zh"）
   contentType: 'title' | 'description' | 'long-description' | 'meta-title' | 'meta-description' | 'full' // 要优化的内容类型
 }
 

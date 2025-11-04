@@ -299,7 +299,7 @@ export async function getGame(id: string) {
  * 按需加载某个语言的翻译数据
  *
  * @param gameId 游戏ID
- * @param locale 语言代码（如 'zh', 'es', 'fr'）
+ * @param locale 语言代码（如 'en', 'zh'）
  * @returns 该语言的翻译数据，如果不存在则返回空对象
  */
 export async function getGameTranslation(gameId: string, locale: string) {

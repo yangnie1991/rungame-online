@@ -36,7 +36,7 @@ const categorySchema = z.object({
   // 翻译数据（可以包含英文，用于覆盖主表）
   translations: z.array(
     z.object({
-      locale: z.enum(["en", "zh", "es", "fr"]),
+      locale: z.enum(["en", "zh"]),
       name: z.string().min(1, "名称不能为空"),
       description: z.string().optional(),
       metaTitle: z.string().optional(),

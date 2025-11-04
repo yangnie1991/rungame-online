@@ -374,7 +374,7 @@ ${seoMetadata ? `**SEO 洞察**:
 }
 \`\`\`
 
-**语言**: ${locale === 'zh' ? '中文' : locale === 'es' ? '西班牙语' : locale === 'fr' ? '法语' : '英语'}`
+**语言**: ${locale === 'zh' ? '中文' : '英语'}`
 
   // 构建用户消息
   let userMessage = `游戏标题：${gameTitle}\n`
@@ -591,7 +591,7 @@ ${JSON.stringify(analysis, null, 2)}
 
 返回 JSON 格式，字段名为：${fields.join(', ')}
 
-语言：${locale === 'zh' ? '中文' : locale === 'es' ? '西班牙语' : locale === 'fr' ? '法语' : '英语'}`
+语言：${locale === 'zh' ? '中文' : '英语'}`
 
   const generationResponse = await fetch(aiConfig.baseUrl, {
     method: 'POST',

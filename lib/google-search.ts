@@ -51,9 +51,7 @@ export async function searchGoogleTopPages(
   // 语言映射
   const langMap: Record<string, string> = {
     'en': 'lang_en',
-    'zh': 'lang_zh-CN',
-    'es': 'lang_es',
-    'fr': 'lang_fr'
+    'zh': 'lang_zh-CN'
   }
 
   // 构建查询参数
