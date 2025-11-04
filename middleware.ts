@@ -24,17 +24,28 @@ const KNOWN_ROUTES = [
 ]
 
 /**
+ * 支持的语言代码
+ */
+const LOCALES = ['en', 'zh']
+
+/**
  * 检查路径是否是旧的 PageType URL（需要重定向到 /collection/）
  */
 function isOldPageTypeUrl(pathname: string): boolean {
   // 移除语言前缀
-  const pathWithoutLocale = pathname.replace(/^\/(en|zh|es|fr)\//, '/')
+  const pathWithoutLocale = pathname.replace(/^\/(en|zh)\//, '/')
 
   // 如果路径只有一层（例如 /most-played），并且不是已知路由
   const segments = pathWithoutLocale.split('/').filter(Boolean)
 
   if (segments.length === 1) {
     const route = `/${segments[0]}`
+
+    // 排除语言路径（如 /zh, /en）
+    if (LOCALES.includes(segments[0])) {
+      return false
+    }
+
     return !KNOWN_ROUTES.includes(route)
   }
 
@@ -61,7 +72,7 @@ export async function middleware(request: NextRequest) {
   // 检查是否是旧的 PageType URL（需要重定向）
   if (isOldPageTypeUrl(pathname)) {
     // 检测语言前缀
-    const localeMatch = pathname.match(/^\/(en|zh|es|fr)\/(.+)$/)
+    const localeMatch = pathname.match(/^\/(en|zh)\/(.+)$/)
 
     let newPath: string
     if (localeMatch) {
