@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/routing"
 import type { Metadata } from "next"
 import { CategorySearch } from "@/components/site/CategorySearch"
+import { generateAlternateLanguages } from "@/lib/seo-helpers"
 
 interface CategoriesPageProps {
   params: Promise<{ locale: string }>
@@ -48,8 +49,12 @@ export async function generateMetadata({ params }: CategoriesPageProps): Promise
     openGraph: {
       title: `${t("allCategories")} - ${totalCategories}+ ${locale === 'zh' ? '游戏类型' : 'Game Types'}`,
       description: ogDescription,
-      url: `${siteUrl}/${locale === 'en' ? '' : locale + '/'}category`,
+      url: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category`,
       type: 'website',
+    },
+    alternates: {
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category`,
+      languages: generateAlternateLanguages('/category'),
     },
   }
 }

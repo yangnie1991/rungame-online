@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Link } from "@/i18n/routing"
 import { getTranslations } from "next-intl/server"
 import { TagSearch } from "@/components/site/TagSearch"
+import { generateAlternateLanguages } from "@/lib/seo-helpers"
 
 interface AllTagsPageProps {
   params: Promise<{ locale: string }>
@@ -41,8 +42,12 @@ export async function generateMetadata({ params }: AllTagsPageProps): Promise<Me
     openGraph: {
       title: `${t("allTags")} - ${tags.length}+ ${locale === 'zh' ? '游戏标签' : 'Game Tags'}`,
       description: ogDescription,
-      url: `${siteUrl}/${locale === 'en' ? '' : locale + '/'}tag`,
+      url: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/tag`,
       type: 'website',
+    },
+    alternates: {
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/tag`,
+      languages: generateAlternateLanguages('/tag'),
     },
   }
 }

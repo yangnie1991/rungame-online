@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: PageTypePageProps): Promise<M
 
   // 获取网站 URL（根据环境变量或默认值）
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
-  const pageUrl = `${siteUrl}/${locale}/collection/${pageType}`
+  const pageUrl = `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/collection/${pageType}`
 
   // 🎨 使用动态生成的 PageType OG 图片
   const ogImage = generatePageTypeOGImageUrl({
@@ -91,8 +91,8 @@ export async function generateMetadata({ params }: PageTypePageProps): Promise<M
     alternates: {
       canonical: pageUrl,
       languages: {
-        'en': `${siteUrl}/en/collection/${pageType}`,
-        'zh': `${siteUrl}/zh/collection/${pageType}`,
+        'en-US': `${siteUrl}/collection/${pageType}`,
+        'zh-CN': `${siteUrl}/zh/collection/${pageType}`,
         'x-default': `${siteUrl}/collection/${pageType}`,
       },
     },
