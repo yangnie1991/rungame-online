@@ -40,17 +40,18 @@ export function generateOrganizationSchema() {
  */
 export function generateWebSiteSchema(locale: string = 'en') {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
+  const localePrefix = locale === 'en' ? '' : `/${locale}`
 
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'RunGame',
-    url: `${siteUrl}/${locale}`,
+    url: `${siteUrl}${localePrefix}`,
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${siteUrl}/${locale}/search?q={search_term_string}`,
+        urlTemplate: `${siteUrl}${localePrefix}/search?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
