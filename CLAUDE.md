@@ -68,12 +68,12 @@ app/
 **配置文件**:
 - [i18n/routing.ts](i18n/routing.ts) - 定义语言、默认语言，并导出类型安全的导航 API
 - [i18n/config.ts](i18n/config.ts) - 请求配置，加载翻译消息
-- [i18n/messages/](i18n/messages/) - JSON 翻译文件 (en.json, zh.json, es.json, fr.json)
+- [i18n/messages/](i18n/messages/) - JSON 翻译文件 (en.json, zh.json)
 - [middleware.ts](middleware.ts) - 处理语言路由和管理员身份验证
 
-**支持的语言**: en (默认), zh, es, fr
+**支持的语言**: en (默认), zh
 - 默认语言 (en) 无 URL 前缀: `/games`
-- 其他语言有前缀: `/zh/games`, `/es/games`
+- 其他语言有前缀: `/zh/games`
 
 **导航规则**:
 - 始终从 `@/i18n/routing` 导入: `import { Link, useRouter, usePathname } from "@/i18n/routing"`
@@ -360,6 +360,7 @@ DATABASE_URL="postgresql://game:password@host:6432/game?schema=public&pgbouncer=
 - 对于UI组件的使用，必须遵循官方的最实践，UI组件的官方文档利用shadcn MCP服务进行获取
 - 对于涉及的框架、css框架、框架插件的使用和代码书写必须遵循官方的最佳实践指导，相关的官方技术文档使用Context7mcp工具进行获取
 - 对于页面功能的调试、测试必须优先使用browsermcp进行，如果该工具未连接，提示用户进行mcp工具连接后，再进行功能调试、测试工作
+- 在修改完功能且测试通过之后提交到git，但是不进行远程推送，只有当用户明确说明推送到远程的时候才进行推送操作
 
 **最后更新**: 2025-01-30
 **项目版本**: v1.0
