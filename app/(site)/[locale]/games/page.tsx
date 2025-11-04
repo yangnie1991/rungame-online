@@ -125,7 +125,7 @@ export default async function GamesPage({ params, searchParams }: GamesPageProps
 
   // 生成面包屑Schema
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: tCommon("home"), url: `/${locale}` },
+    { name: tCommon("home"), url: locale === 'en' ? '/' : `/${locale}/` },
     { name: tCommon("allGames"), url: '' },
   ])
 
@@ -133,7 +133,9 @@ export default async function GamesPage({ params, searchParams }: GamesPageProps
   const collectionSchema = generateCollectionPageSchema({
     name: currentPage > 1 ? `${t("title")} - ${tCommon("page")} ${currentPage}` : t("title"),
     description: t("description"),
-    url: currentPage > 1 ? `/${locale}/games?page=${currentPage}` : `/${locale}/games`,
+    url: currentPage > 1
+      ? `${locale === 'en' ? '' : `/${locale}`}/games?page=${currentPage}`
+      : `${locale === 'en' ? '' : `/${locale}`}/games`,
     numberOfItems: games.length, // 当前页的游戏数量
   })
 

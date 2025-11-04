@@ -183,7 +183,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
 
   // 面包屑 Schema
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: t.home, url: `/${locale}` },
+    { name: t.home, url: locale === 'en' ? '/' : `/${locale}/` },
     { name: data.tag.name, url: '' },
   ])
 
@@ -194,8 +194,8 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
       : `${data.tag.name} Games`,
     description: `Play the best ${data.tag.name} games online for free`,
     url: page > 1
-      ? `/${locale}/tag/${tag}?page=${page}`
-      : `/${locale}/tag/${tag}`,
+      ? `${locale === 'en' ? '' : `/${locale}`}/tag/${tag}?page=${page}`
+      : `${locale === 'en' ? '' : `/${locale}`}/tag/${tag}`,
     numberOfItems: data.games.length, // 当前页面的游戏数量，而不是总数
   })
 

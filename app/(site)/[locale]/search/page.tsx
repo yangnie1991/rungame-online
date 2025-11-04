@@ -109,7 +109,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
 
   // 生成面包屑Schema
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: tCommon("home"), url: `/${locale}` },
+    { name: tCommon("home"), url: locale === 'en' ? '/' : `/${locale}/` },
     { name: t("search"), url: '' },
   ])
 
@@ -117,7 +117,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
   const collectionSchema = pagination.totalGames > 0 ? generateCollectionPageSchema({
     name: `${t("searchResults")}: ${query}`,
     description: `${pagination.totalGames} ${t("gamesFound")}`,
-    url: `/${locale}/search?q=${encodeURIComponent(query)}`,
+    url: `${locale === 'en' ? '' : `/${locale}`}/search?q=${encodeURIComponent(query)}`,
     numberOfItems: pagination.totalGames,
   }) : null
 

@@ -151,13 +151,13 @@ export default async function HomePage({ params }: HomePageProps) {
   const gameListSchema = generateGameListSchema(
     featuredGames.slice(0, 10).map(game => ({
       name: game.title,
-      url: `/${locale}/play/${game.slug}`,
+      url: `${locale === 'en' ? '' : `/${locale}`}/play/${game.slug}`,
       image: game.thumbnail,
       playCount: (game as any).playCount || 0,
       rating: (game as any).rating || 0,
     })),
     locale === 'zh' ? '精选游戏' : 'Featured Games',
-    `/${locale}`
+    locale === 'en' ? '/' : `/${locale}/`
   )
 
   return (

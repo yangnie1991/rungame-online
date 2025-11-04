@@ -169,9 +169,9 @@ export default async function GamePage({ params }: GamePageProps) {
 
   // 生成面包屑 Schema
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: t.home, url: `/${locale}` },
-    { name: t.games, url: `/${locale}/games` },
-    { name: game.category.name, url: `/${locale}/category/${game.category.slug}` },
+    { name: t.home, url: locale === 'en' ? '/' : `/${locale}/` },
+    { name: t.games, url: locale === 'en' ? '/games' : `/${locale}/games` },
+    { name: game.category.name, url: locale === 'en' ? `/category/${game.category.slug}` : `/${locale}/category/${game.category.slug}` },
     { name: game.title, url: '' }, // 当前页面不需要 URL
   ])
 
@@ -184,7 +184,7 @@ export default async function GamePage({ params }: GamePageProps) {
     playCount: stats.playCount, // 使用实时播放次数
     rating: game.rating || undefined,
     ratingCount: game.ratingCount || undefined, // 使用实际评分数量
-    url: `/${locale}/play/${slug}`,
+    url: `${locale === 'en' ? '' : `/${locale}`}/play/${slug}`,
   })
 
   return (
