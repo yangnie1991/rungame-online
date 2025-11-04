@@ -82,8 +82,6 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
       {
         "@type": "ListItem",
         "position": mainIndex * 100 + 1,
-        "name": main.name,
-        "url": `${siteUrl}/${locale}/category/${main.slug}`,
         "item": {
           "@type": "Thing",
           "name": main.name,
@@ -93,8 +91,6 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
       ...main.subCategories.map((sub, subIndex) => ({
         "@type": "ListItem",
         "position": mainIndex * 100 + subIndex + 2,
-        "name": `${main.name} - ${sub.name}`,
-        "url": `${siteUrl}/${locale}/category/${sub.slug}`,
         "item": {
           "@type": "Thing",
           "name": sub.name,

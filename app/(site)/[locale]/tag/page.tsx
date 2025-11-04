@@ -63,8 +63,6 @@ export default async function AllTagsPage({ params }: AllTagsPageProps) {
     "itemListElement": tags.map((tag, index) => ({
       "@type": "ListItem",
       "position": index + 1,
-      "name": tag.name,
-      "url": `${siteUrl}/${locale}/tag/${tag.slug}`,
       "item": {
         "@type": "Thing",
         "name": tag.name,

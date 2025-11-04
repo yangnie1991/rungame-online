@@ -88,7 +88,7 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
       site: '@rungame',
     },
     alternates: {
-      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}`,
+      canonical: `${siteUrl}${locale === 'en' ? '/' : `/${locale}/`}`,
       languages: generateAlternateLanguages('/'),
     },
   }
@@ -147,14 +147,14 @@ export default async function HomePage({ params }: HomePageProps) {
   // WebSite Schema
   const websiteSchema = generateWebSiteSchema(locale)
 
-  // 游戏列表 Schema (精选游戏)
+  // 游戏列表 Schema (精选游戏) - 使用原始数据，不经过 formatGames 转换
   const gameListSchema = generateGameListSchema(
     featuredGames.slice(0, 10).map(game => ({
       name: game.title,
       url: `/${locale}/play/${game.slug}`,
       image: game.thumbnail,
-      playCount: game.playCount,
-      rating: game.rating,
+      playCount: (game as any).playCount || 0,
+      rating: (game as any).rating || 0,
     })),
     locale === 'zh' ? '精选游戏' : 'Featured Games',
     `/${locale}`
@@ -215,7 +215,7 @@ export default async function HomePage({ params }: HomePageProps) {
         subtitleDetailed={locale === 'zh' ? '编辑精心挑选，确保每款都值得一玩' : 'Handpicked by our editors, ensuring every game is worth playing'}
         icon="⭐"
         games={formatGames(featuredGames)}
-        viewAllLink="/featured"
+        viewAllLink="/collection/featured"
         locale={locale}
         enableCategoryLink={false}
         enableTagLinks={false}
@@ -228,7 +228,7 @@ export default async function HomePage({ params }: HomePageProps) {
         subtitleDetailed={locale === 'zh' ? '千万玩家的共同选择' : 'The choice of millions of players'}
         icon="🔥"
         games={formatGames(mostPlayedGames)}
-        viewAllLink="/most-played"
+        viewAllLink="/collection/most-played"
         locale={locale}
         enableCategoryLink={false}
         enableTagLinks={false}
@@ -241,7 +241,7 @@ export default async function HomePage({ params }: HomePageProps) {
         subtitleDetailed={locale === 'zh' ? '抢先体验新鲜玩法' : 'Be the first to try new gameplay'}
         icon="🆕"
         games={formatGames(newestGames)}
-        viewAllLink="/newest"
+        viewAllLink="/collection/newest"
         locale={locale}
         enableCategoryLink={false}
         enableTagLinks={false}
@@ -254,7 +254,7 @@ export default async function HomePage({ params }: HomePageProps) {
         subtitleDetailed={locale === 'zh' ? '人气飙升正在火热' : 'Rising popularity, hot right now'}
         icon="📈"
         games={formatGames(trendingGames)}
-        viewAllLink="/trending"
+        viewAllLink="/collection/trending"
         locale={locale}
         enableCategoryLink={false}
         enableTagLinks={false}
