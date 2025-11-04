@@ -55,8 +55,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       languages: {
         'en': `/games/play/${slug}`,
         'zh': `/zh/games/play/${slug}`,
-        'es': `/es/games/play/${slug}`,
-        'fr': `/fr/games/play/${slug}`,
       },
     },
   }
@@ -88,8 +86,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       languages: {
         'en': `/games/category/${category}`,
         'zh': `/zh/games/category/${category}`,
-        'es': `/es/games/category/${category}`,
-        'fr': `/fr/games/category/${category}`,
       },
     },
   }
@@ -168,8 +164,6 @@ export function generateGameSEOMetadata(params: {
       languages: {
         'en': `/games/play/${slug}`,
         'zh': `/zh/games/play/${slug}`,
-        'es': `/es/games/play/${slug}`,
-        'fr': `/fr/games/play/${slug}`,
       },
     },
   }
@@ -276,8 +270,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       languages: {
         'en': englishUrl,
         'zh': chineseUrl,
-        'es': spanishUrl,
-        'fr': frenchUrl,
         'x-default': englishUrl,  // 默认语言
       },
     },
@@ -290,8 +282,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 <link rel="canonical" href="https://rungame.online/games" />
 <link rel="alternate" hreflang="en" href="https://rungame.online/games" />
 <link rel="alternate" hreflang="zh" href="https://rungame.online/zh/games" />
-<link rel="alternate" hreflang="es" href="https://rungame.online/es/games" />
-<link rel="alternate" hreflang="fr" href="https://rungame.online/fr/games" />
 <link rel="alternate" hreflang="x-default" href="https://rungame.online/games" />
 ```
 

@@ -407,11 +407,6 @@ await prisma.game.create({
           title: '我的游戏',
           description: '一个有趣的游戏',
         },
-        {
-          locale: 'es',
-          title: 'Mi Juego',
-          description: 'Un juego divertido',
-        },
       ],
     },
   },
@@ -438,7 +433,6 @@ await prisma.$transaction(async (tx) => {
       translations: {
         create: [
           { locale: 'zh', title: '更新的标题' },
-          { locale: 'es', title: 'Título actualizado' },
         ],
       },
     },

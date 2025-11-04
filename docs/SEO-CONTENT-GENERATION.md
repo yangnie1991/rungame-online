@@ -168,7 +168,7 @@ POST /api/ai/batch-generate-seo
   // 游戏信息
   gameId?: string,
   gameTitle: string,
-  locale: 'en' | 'zh' | 'es' | 'fr',
+  locale: 'en' | 'zh',
 
   // SEO 关键词
   mainKeyword: string,        // 主关键词 (必需)

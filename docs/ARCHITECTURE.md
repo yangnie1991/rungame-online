@@ -547,7 +547,7 @@ NEXT_PUBLIC_GA_ID="G-XXXXXXXXXX"
 
 1. 添加到 `i18n/routing.ts`:
 ```typescript
-export const locales = ['en', 'zh', 'es', 'fr', 'de'] as const
+export const locales = ['en', 'zh'] as const
 ```
 
 2. 创建翻译文件:
