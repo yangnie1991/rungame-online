@@ -237,13 +237,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     orderBy: { sortOrder: 'asc' },
   })
 
-  // 为每个 PageType 生成多语言 URL
+  // 为每个 PageType 生成多语言 URL（带 /collection/ 前缀）
   pageTypes.forEach((pageType) => {
     locales.forEach((locale) => {
       const url =
         locale === defaultLocale
-          ? `${baseUrl}/${pageType.slug}`
-          : `${baseUrl}/${locale}/${pageType.slug}`
+          ? `${baseUrl}/collection/${pageType.slug}`
+          : `${baseUrl}/${locale}/collection/${pageType.slug}`
 
       sitemap.push({
         url,
@@ -255,8 +255,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             locales.map((l) => [
               l,
               l === defaultLocale
-                ? `${baseUrl}/${pageType.slug}`
-                : `${baseUrl}/${l}/${pageType.slug}`,
+                ? `${baseUrl}/collection/${pageType.slug}`
+                : `${baseUrl}/${l}/collection/${pageType.slug}`,
             ])
           ),
         },

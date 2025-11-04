@@ -114,7 +114,7 @@ export function MobileSidebar({ mainNavItems, categories, pageTypes }: MobileSid
               <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4 opacity-50"></div>
               <div className="space-y-1">
                 {pageTypes.map((pageType) => {
-                  const pageTypeHref = `/${pageType.slug}`
+                  const pageTypeHref = `/collection/${pageType.slug}`
                   const isActive = isCurrentPage(pageTypeHref)
                   return (
                     <Link

@@ -52,7 +52,13 @@ export function generateCategoryTitle(
 ): string {
   if (locale === 'zh') {
     const zhName = category.zhName || category.name
-    return `${zhName}游戏 - 免费在线畅玩网页游戏`
+    if (category.isMainCategory) {
+      // 主分类：网页{名称}游戏 - 免费在线畅玩
+      return `网页${zhName}游戏 - 免费在线畅玩`
+    } else {
+      // 子分类：{名称}游戏 - 免费在线畅玩网页游戏
+      return `${zhName}游戏 - 免费在线畅玩网页游戏`
+    }
   }
 
   // 英文
@@ -208,11 +214,12 @@ export function generateTagTitle(
 ): string {
   if (locale === 'zh') {
     const zhName = tag.zhName || tag.name
-    return `${zhName}游戏 - 免费在线畅玩网页游戏`
+    // 标签：{名称}游戏 - 网页游戏免费畅玩
+    return `${zhName}游戏 - 网页游戏免费畅玩`
   }
 
   // 英文
-  return `${tag.name} Games - Play Free in Browser`
+  return `${tag.name} Online Games - Play Free in Browser`
 }
 
 /**
