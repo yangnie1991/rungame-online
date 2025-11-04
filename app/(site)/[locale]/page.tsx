@@ -153,6 +153,8 @@ export default async function HomePage({ params }: HomePageProps) {
       name: game.title,
       url: `/${locale}/play/${game.slug}`,
       image: game.thumbnail,
+      playCount: game.playCount,
+      rating: game.rating,
     })),
     locale === 'zh' ? '精选游戏' : 'Featured Games',
     `/${locale}`

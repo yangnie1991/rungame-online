@@ -21,14 +21,34 @@ export async function generateMetadata({ params }: CategoriesPageProps): Promise
   const totalCategories = mainCategories.length + totalSubCategories
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
 
+  // 根据语言生成描述和关键词
+  const descriptions = {
+    zh: `浏览 RunGame 的所有游戏分类，包含 ${mainCategories.length} 大主分类和 ${totalSubCategories}+ 细分类别。找到你喜欢的游戏类型，免费在线玩。`,
+    en: `Browse all game categories on RunGame, featuring ${mainCategories.length} main categories and ${totalSubCategories}+ subcategories. Find your favorite game types and play for free online.`,
+  }
+
+  const keywords = {
+    zh: "游戏分类,游戏类型,在线游戏,免费游戏,动作游戏,益智游戏,跑酷游戏",
+    en: "game categories, game types, online games, free games, action games, puzzle games, racing games",
+  }
+
+  const ogDescriptions = {
+    zh: `探索 ${mainCategories.length} 大主分类和 ${totalSubCategories}+ 子分类`,
+    en: `Explore ${mainCategories.length} main categories and ${totalSubCategories}+ subcategories`,
+  }
+
+  const description = descriptions[locale as 'zh' | 'en'] || descriptions.en
+  const keyword = keywords[locale as 'zh' | 'en'] || keywords.en
+  const ogDescription = ogDescriptions[locale as 'zh' | 'en'] || ogDescriptions.en
+
   return {
     title: `${t("allCategories")} - ${totalCategories}+ ${t("gameTypes")} - ${t("siteName")}`,
-    description: `浏览 RunGame 的所有游戏分类，包含 ${mainCategories.length} 大主分类和 ${totalSubCategories}+ 细分类别。找到你喜欢的游戏类型，免费在线玩。`,
-    keywords: "游戏分类,游戏类型,在线游戏,免费游戏,动作游戏,益智游戏,跑酷游戏",
+    description,
+    keywords: keyword,
     openGraph: {
-      title: `${t("allCategories")} - ${totalCategories}+ 游戏类型`,
-      description: `探索 ${mainCategories.length} 大主分类和 ${totalSubCategories}+ 子分类`,
-      url: `${siteUrl}/${locale}/category`,
+      title: `${t("allCategories")} - ${totalCategories}+ ${locale === 'zh' ? '游戏类型' : 'Game Types'}`,
+      description: ogDescription,
+      url: `${siteUrl}/${locale === 'en' ? '' : locale + '/'}category`,
       type: 'website',
     },
   }

@@ -14,14 +14,34 @@ export async function generateMetadata({ params }: AllTagsPageProps): Promise<Me
   const tags = await getAllTags(locale)
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rungame.online'
 
+  // 根据语言生成描述和关键词
+  const descriptions = {
+    zh: `浏览 RunGame 的所有游戏标签，包含 ${tags.length} 个特色标签。按游戏特点查找你喜欢的游戏，免费在线玩。`,
+    en: `Browse all game tags on RunGame, featuring ${tags.length} distinct tags. Find games by characteristics and features, play for free online.`,
+  }
+
+  const keywords = {
+    zh: "游戏标签,游戏特点,在线游戏,免费游戏,多人游戏,单人游戏,3D游戏",
+    en: "game tags, game features, online games, free games, multiplayer games, single player games, 3D games",
+  }
+
+  const ogDescriptions = {
+    zh: `探索 ${tags.length} 个游戏标签，按特点查找游戏`,
+    en: `Explore ${tags.length} game tags, find games by features`,
+  }
+
+  const description = descriptions[locale as 'zh' | 'en'] || descriptions.en
+  const keyword = keywords[locale as 'zh' | 'en'] || keywords.en
+  const ogDescription = ogDescriptions[locale as 'zh' | 'en'] || ogDescriptions.en
+
   return {
     title: `${t("allTags")} - ${tags.length}+ ${t("gameTags")} - ${t("siteName")}`,
-    description: `浏览 RunGame 的所有游戏标签，包含 ${tags.length} 个特色标签。按游戏特点查找你喜欢的游戏，免费在线玩。`,
-    keywords: "游戏标签,游戏特点,在线游戏,免费游戏,多人游戏,单人游戏,3D游戏",
+    description,
+    keywords: keyword,
     openGraph: {
-      title: `${t("allTags")} - ${tags.length}+ 游戏标签`,
-      description: `探索 ${tags.length} 个游戏标签，按特点查找游戏`,
-      url: `${siteUrl}/${locale}/tag`,
+      title: `${t("allTags")} - ${tags.length}+ ${locale === 'zh' ? '游戏标签' : 'Game Tags'}`,
+      description: ogDescription,
+      url: `${siteUrl}/${locale === 'en' ? '' : locale + '/'}tag`,
       type: 'website',
     },
   }

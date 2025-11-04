@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth"
 import { AdminSidebar } from "@/components/admin/Sidebar"
 import { AdminHeader } from "@/components/admin/Header"
 
+// 强制动态渲染，避免在构建时执行数据库查询
+export const dynamic = 'force-dynamic'
+
 export default async function AdminLayout({
   children,
 }: {

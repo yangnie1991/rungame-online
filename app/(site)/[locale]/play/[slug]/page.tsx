@@ -181,9 +181,9 @@ export default async function GamePage({ params }: GamePageProps) {
     description: game.description || `Play ${game.title} for free on RunGame`,
     image: game.thumbnail,
     genre: game.category.name,
-    playCount: game.playCount,
+    playCount: stats.playCount, // 使用实时播放次数
     rating: game.rating || undefined,
-    ratingCount: game.rating ? 100 : undefined, // 如果有评分，假设有 100 个评分
+    ratingCount: game.ratingCount || undefined, // 使用实际评分数量
     url: `/${locale}/play/${slug}`,
   })
 

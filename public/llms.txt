@@ -1,0 +1,71 @@
+# RunGame - Free Online Games Platform
+
+> RunGame is a multilingual online gaming platform offering thousands of free browser games in multiple languages. Play instantly without downloads - from action and adventure to puzzles and racing games.
+
+RunGame provides a curated collection of high-quality HTML5 games that work seamlessly on desktop and mobile devices. Our platform supports multiple languages including English and Chinese, making gaming accessible to players worldwide.
+
+## About RunGame
+
+- [Home](https://rungame.online/): Discover featured games and new releases
+- [About Us](https://rungame.online/about): Learn about our mission and team
+- [How to Play](https://rungame.online/about#how-to-play): Get started with our gaming platform
+
+## Game Categories
+
+- [All Games](https://rungame.online/games): Browse our complete game collection
+- [Action Games](https://rungame.online/category/action-games): Fast-paced action and combat games
+- [Adventure Games](https://rungame.online/category/adventure-games): Explore immersive adventure worlds
+- [Puzzle Games](https://rungame.online/category/puzzle-games): Challenge your mind with brain teasers
+- [Racing Games](https://rungame.online/category/racing-games): High-speed racing and driving games
+- [Sports Games](https://rungame.online/category/sports-games): Play virtual sports and athletics
+- [Strategy Games](https://rungame.online/category/strategy-games): Plan and conquer in strategic gameplay
+- [All Categories](https://rungame.online/category): View all game categories
+
+## Popular Collections
+
+- [Most Played Games](https://rungame.online/most-played): Top games by player count
+- [New Games](https://rungame.online/new-games): Latest additions to our platform
+- [Hot Games](https://rungame.online/hot-games): Trending games right now
+- [Featured Games](https://rungame.online/): Handpicked quality games
+
+## Browse by Tags
+
+- [All Tags](https://rungame.online/tag): Explore games by features and characteristics
+- [Multiplayer Games](https://rungame.online/tag/multiplayer): Play with friends online
+- [Single Player Games](https://rungame.online/tag/single-player): Solo gaming experiences
+- [3D Games](https://rungame.online/tag/3d): Immersive 3D graphics
+- [Mobile Games](https://rungame.online/tag/mobile): Optimized for mobile devices
+
+## Languages & Accessibility
+
+- [English Version](https://rungame.online/): Full site in English
+- [中文版本](https://rungame.online/zh): 完整的中文版本
+- [Language Settings](https://rungame.online/): Switch languages anytime
+
+## Important Pages
+
+- [Privacy Policy](https://rungame.online/privacy): How we protect your privacy
+- [Terms of Service](https://rungame.online/terms): Usage terms and conditions
+- [Contact Us](https://rungame.online/contact): Get in touch with our team
+
+## Site Features
+
+- **Free to Play**: All games are completely free, no downloads required
+- **Instant Access**: Play directly in your browser on any device
+- **Multilingual**: Full support for multiple languages
+- **Mobile Friendly**: Optimized for both desktop and mobile gaming
+- **Regular Updates**: New games added frequently
+- **Safe & Secure**: Family-friendly content, safe browsing
+
+## Technical Information
+
+- [Sitemap](https://rungame.online/sitemap.xml): Complete site structure for search engines
+- [Robots.txt](https://rungame.online/robots.txt): Search engine crawling guidelines
+- [RSS Feed](https://rungame.online/rss): Subscribe to new game updates
+
+## Optional
+
+- [Game Developers](https://rungame.online/contact): Submit your games to RunGame
+- [Advertising](https://rungame.online/contact): Advertise on our platform
+- [Partnership](https://rungame.online/contact): Partner with RunGame
+- [API Access](https://rungame.online/contact): Integration and API information

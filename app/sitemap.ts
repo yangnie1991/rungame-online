@@ -111,11 +111,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   })
 
-  // 4. 获取所有启用的分类
+  // 4. 获取所有启用的分类（包含父分类信息）
   const categories = await prisma.category.findMany({
     where: { isEnabled: true },
     select: {
       slug: true,
+      parentId: true,
+      parent: {
+        select: {
+          slug: true,
+        },
+      },
       _count: {
         select: {
           gameSubCategories: {
@@ -130,32 +136,55 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   })
 
   // 为每个分类生成多语言 URL
+  // 主分类：/category/{mainCategorySlug} (如 /category/action-games)
+  // 子分类：/category/{mainCategorySlug}/{subCategorySlug} (如 /category/action-games/action)
+  // 注意：生成所有启用的分类，不管是否有游戏
   categories.forEach((category) => {
-    if (category._count.gameSubCategories > 0) {
-      locales.forEach((locale) => {
-        const url =
-          locale === defaultLocale
-            ? `${baseUrl}/category/${category.slug}`
-            : `${baseUrl}/${locale}/category/${category.slug}`
+    // 判断是主分类还是子分类
+    const isMainCategory = !category.parentId
 
-        sitemap.push({
-          url,
-          lastModified: new Date(),
-          changeFrequency: 'daily',
-          priority: 0.7,
-          alternates: {
-            languages: Object.fromEntries(
-              locales.map((l) => [
-                l,
-                l === defaultLocale
-                  ? `${baseUrl}/category/${category.slug}`
-                  : `${baseUrl}/${l}/category/${category.slug}`,
-              ])
-            ),
-          },
-        })
+    locales.forEach((locale) => {
+      // 构建分类路径
+      let categoryPath: string
+      if (isMainCategory) {
+        // 主分类：/category/{slug}
+        categoryPath = `/category/${category.slug}`
+      } else {
+        // 子分类：/category/{parentSlug}/{slug}
+        if (!category.parent) {
+          console.warn(`子分类 ${category.slug} 缺少父分类信息`)
+          return
+        }
+        categoryPath = `/category/${category.parent.slug}/${category.slug}`
+      }
+
+      const url =
+        locale === defaultLocale
+          ? `${baseUrl}${categoryPath}`
+          : `${baseUrl}/${locale}${categoryPath}`
+
+      // 根据游戏数量调整优先级和更新频率
+      const hasGames = category._count.gameSubCategories > 0
+      const priority = isMainCategory ? 0.7 : 0.6
+      const changeFrequency = hasGames ? 'daily' : 'weekly'
+
+      sitemap.push({
+        url,
+        lastModified: new Date(),
+        changeFrequency: changeFrequency as 'daily' | 'weekly',
+        priority,
+        alternates: {
+          languages: Object.fromEntries(
+            locales.map((l) => [
+              l,
+              l === defaultLocale
+                ? `${baseUrl}${categoryPath}`
+                : `${baseUrl}/${l}${categoryPath}`,
+            ])
+          ),
+        },
       })
-    }
+    })
   })
 
   // 5. 获取所有启用的标签

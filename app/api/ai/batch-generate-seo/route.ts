@@ -274,7 +274,7 @@ export async function POST(request: NextRequest) {
 /**
  * 快速模式：单步生成所有字段
  */
-async function generateFastMode(params: {
+export async function generateFastMode(params: {
   gameTitle: string
   locale: string
   mainKeyword: string
@@ -453,7 +453,7 @@ ${seoMetadata ? `**SEO 洞察**:
 /**
  * 质量模式：两步生成（分析 + 生成）
  */
-async function generateQualityMode(params: {
+export async function generateQualityMode(params: {
   gameTitle: string
   locale: string
   mainKeyword: string

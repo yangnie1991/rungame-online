@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
           const generateStart = Date.now()
 
           // 动态导入生成函数（避免循环依赖）
-          const { generateFastMode, generateQualityMode } = await import('../batch-generate-seo/generate-helpers')
+          const { generateFastMode, generateQualityMode } = await import('../batch-generate-seo/route')
 
           // 获取 AI 配置
           const aiConfig = await getDecryptedAiConfig()
