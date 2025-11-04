@@ -1345,14 +1345,19 @@ export function GameImportConfirmDialog({
       // ========== 更新指定语言的翻译 ==========
       const translationIndex = form.getValues('translations')?.findIndex(t => t.locale === batchGenerateLocale)
       if (translationIndex !== undefined && translationIndex >= 0) {
-        const currentTranslation = form.getValues(`translations.${translationIndex}`)
-
-        const updatedTranslation: any = { ...currentTranslation }
-
-        if (results.description) updatedTranslation.description = results.description
-        if (results.keywords) updatedTranslation.keywords = results.keywords
-        if (results.metaTitle) updatedTranslation.metaTitle = results.metaTitle
-        if (results.metaDescription) updatedTranslation.metaDescription = results.metaDescription
+        // 使用 form.setValue 逐个更新字段以确保触发重新渲染
+        if (results.description) {
+          form.setValue(`translations.${translationIndex}.description`, results.description)
+        }
+        if (results.keywords) {
+          form.setValue(`translations.${translationIndex}.keywords`, results.keywords)
+        }
+        if (results.metaTitle) {
+          form.setValue(`translations.${translationIndex}.metaTitle`, results.metaTitle)
+        }
+        if (results.metaDescription) {
+          form.setValue(`translations.${translationIndex}.metaDescription`, results.metaDescription)
+        }
 
         // 更新 ContentSections
         const contentSections: any = {}
@@ -1386,9 +1391,7 @@ export function GameImportConfirmDialog({
             order: 5
           }
         }
-        updatedTranslation.contentSections = contentSections
-
-        updateTranslation(translationIndex, updatedTranslation)
+        form.setValue(`translations.${translationIndex}.contentSections`, contentSections)
       }
     }
 
