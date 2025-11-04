@@ -36,6 +36,7 @@ export const ROOT_STATIC_FILES = [
   /^\/robots\.txt$/,           // 搜索引擎爬虫规则
   /^\/sitemap\.xml$/,          // 网站地图
   /^\/ads\.txt$/,              // Google AdSense 验证
+  /^\/llms\.txt$/,             // LLM 爬虫规则（Claude、ChatGPT 等）
 
   // ============================================
   // PWA 必需文件
