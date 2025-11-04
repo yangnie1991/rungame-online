@@ -25,7 +25,6 @@ scripts/
 | **分类管理** |||
 | `query-categories.ts` | 查询分类信息和统计 | `npx tsx scripts/utils/query-categories.ts` |
 | `check-categories.ts` | 检查分类状态和完整性 | `npx tsx scripts/utils/check-categories.ts` |
-| `check-missing-categories.ts` | 检查缺失的分类 | `npx tsx scripts/utils/check-missing-categories.ts` |
 | `show-category-stats.ts` | 显示分类统计信息 | `npx tsx scripts/utils/show-category-stats.ts` |
 | **翻译和数据** |||
 | `check-translations.ts` | 检查翻译完整性 | `npx tsx scripts/utils/check-translations.ts` |
@@ -52,6 +51,10 @@ scripts/
 | `verify-seo-data.ts` | 验证 SEO 元数据 | `npx tsx scripts/validation/verify-seo-data.ts` |
 | `test-seo-metadata.ts` | 测试 SEO 元数据生成 | `npx tsx scripts/validation/test-seo-metadata.ts` |
 | `direct-seo-verification.ts` | 直接验证 SEO 配置 | `npx tsx scripts/validation/direct-seo-verification.ts` |
+| `verify-llms-txt.ts` | 验证 llms.txt 文件格式 | `npx tsx scripts/validation/verify-llms-txt.ts` |
+| `verify-metadata-i18n.ts` | 验证元数据国际化 | `npx tsx scripts/validation/verify-metadata-i18n.ts` |
+| `verify-robots-txt.ts` | 验证 robots.txt 配置 | `npx tsx scripts/validation/verify-robots-txt.ts` |
+| `verify-sitemap-categories.ts` | 验证 sitemap 分类 | `npx tsx scripts/validation/verify-sitemap-categories.ts` |
 
 ---
 
@@ -198,6 +201,16 @@ if __name__ == '__main__':
 
 ## 📝 更新日志
 
+### 2025-11-05
+- 🧹 清理临时脚本：删除 9 个测试和临时更新脚本
+  - 根目录：6 个临时 .js 脚本（compare, manual-update, verify-tag-seo-fix）
+  - scripts/：3 个临时 .ts 脚本（check-all-schema-issues, test-hreflang, verify-schema-fixes）
+- 📦 整理验证脚本：移动 5 个脚本到正确位置
+  - check-categories.ts → utils/
+  - verify-llms-txt.ts, verify-metadata-i18n.ts, verify-robots-txt.ts, verify-sitemap-categories.ts → validation/
+- 📚 更新 README：删除不存在的 check-missing-categories.ts 引用
+- 📊 最终统计：27 个有用的脚本
+
 ### 2025-01-30
 - 🧹 清理临时脚本：删除 12 个测试和分析脚本
 - 📦 整理脚本：移动 4 个检查脚本到 utils/ 目录
@@ -211,4 +224,4 @@ if __name__ == '__main__':
 
 ---
 
-**最后更新**: 2025-01-30
+**最后更新**: 2025-11-05
