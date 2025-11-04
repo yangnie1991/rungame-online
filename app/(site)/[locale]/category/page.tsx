@@ -85,7 +85,7 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
         "item": {
           "@type": "Thing",
           "name": main.name,
-          "url": `${siteUrl}/${locale}/category/${main.slug}`,
+          "url": `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category/${main.slug}`,
         }
       },
       ...main.subCategories.map((sub, subIndex) => ({
@@ -94,7 +94,7 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
         "item": {
           "@type": "Thing",
           "name": sub.name,
-          "url": `${siteUrl}/${locale}/category/${sub.slug}`,
+          "url": `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/category/${main.slug}/${sub.slug}`,
         }
       }))
     ])

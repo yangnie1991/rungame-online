@@ -66,7 +66,7 @@ export default async function AllTagsPage({ params }: AllTagsPageProps) {
       "item": {
         "@type": "Thing",
         "name": tag.name,
-        "url": `${siteUrl}/${locale}/tag/${tag.slug}`,
+        "url": `${siteUrl}${locale === 'en' ? '' : `/${locale}`}/tag/${tag.slug}`,
       }
     }))
   }

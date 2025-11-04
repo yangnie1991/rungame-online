@@ -187,8 +187,8 @@ export default async function MainCategoryPage({ params, searchParams }: PagePro
 
   // 面包屑 Schema
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: t("home"), url: `/${locale}` },
-    { name: t("categories"), url: `/${locale}/category` },
+    { name: t("home"), url: locale === 'en' ? '/' : `/${locale}/` },
+    { name: t("categories"), url: locale === 'en' ? '/category' : `/${locale}/category` },
     { name: categoryData.name, url: '' },
   ])
 
@@ -199,8 +199,8 @@ export default async function MainCategoryPage({ params, searchParams }: PagePro
       : `${categoryData.name} Games`,
     description: categoryData.description || `Play ${categoryData.name} games online for free`,
     url: currentPage > 1
-      ? `/${locale}/category/${mainCategory}?page=${currentPage}`
-      : `/${locale}/category/${mainCategory}`,
+      ? `${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}?page=${currentPage}`
+      : `${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}`,
     numberOfItems: games.length, // 当前页面的游戏数量，而不是总数
   })
 

@@ -251,7 +251,7 @@ export default async function PageTypePage({ params }: PageTypePageProps) {
 
   // 面包屑 Schema
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: tCommon("home"), url: `/${locale}` },
+    { name: tCommon("home"), url: locale === 'en' ? '/' : `/${locale}/` },
     { name: data.pageType.title, url: '' },
   ])
 
@@ -259,7 +259,7 @@ export default async function PageTypePage({ params }: PageTypePageProps) {
   const collectionSchema = generateCollectionPageSchema({
     name: data.pageType.title,
     description: data.pageType.description || `Play ${data.pageType.title} games online for free`,
-    url: `/${locale}/collection/${pageType}`,
+    url: `${locale === 'en' ? '' : `/${locale}`}/collection/${pageType}`,
     numberOfItems: data.games.length,
   })
 

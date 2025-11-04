@@ -213,9 +213,9 @@ export default async function SubCategoryPage({ params, searchParams }: PageProp
 
   // 面包屑 Schema
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: t("home"), url: `/${locale}` },
-    { name: t("categories"), url: `/${locale}/category` },
-    { name: mainCategoryData.name, url: `/${locale}/category/${mainCategory}` },
+    { name: t("home"), url: locale === 'en' ? '/' : `/${locale}/` },
+    { name: t("categories"), url: locale === 'en' ? '/category' : `/${locale}/category` },
+    { name: mainCategoryData.name, url: locale === 'en' ? `/category/${mainCategory}` : `/${locale}/category/${mainCategory}` },
     { name: subCategoryData.name, url: '' },
   ])
 
@@ -226,8 +226,8 @@ export default async function SubCategoryPage({ params, searchParams }: PageProp
       : `${subCategoryData.name} Games`,
     description: subCategoryData.description || `Play ${subCategoryData.name} games online for free`,
     url: currentPage > 1
-      ? `/${locale}/category/${mainCategory}/${subCategory}?page=${currentPage}`
-      : `/${locale}/category/${mainCategory}/${subCategory}`,
+      ? `${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}/${subCategory}?page=${currentPage}`
+      : `${locale === 'en' ? '' : `/${locale}`}/category/${mainCategory}/${subCategory}`,
     numberOfItems: games.length, // 当前页面的游戏数量，而不是总数
   })
 
