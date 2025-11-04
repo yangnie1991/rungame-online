@@ -154,10 +154,10 @@ GamePix 游戏导入完整指南，包括：
 - [Metadata](./SEO.md#动态-metadata)
 - [结构化数据](./SEO.md#结构化数据-json-ld)
 - [Google 服务](./SEO.md#google-services-集成)
+- [Google 重新收录指南](./GOOGLE-REINDEX-GUIDE.md) - Google 收录诊断与修复完整指南
 - [SEO 内容生成](./SEO-CONTENT-GENERATION.md) - AI 驱动的 SEO 内容生成系统
 - [Google SEO 字符限制](./GOOGLE-SEO-META-LENGTH.md) - Google 搜索结果元标签显示长度
 - [Google API 配置](./GOOGLE-SEARCH-API-SETUP.md) - Google Custom Search API 申请教程
-- [元数据问题分析](./METADATA-ISSUES-ANALYSIS.md) - HTML head 标签元数据问题诊断与修复
 
 #### 🤖 AI 功能
 - [AI 功能概览](./AI-FEATURES.md)
