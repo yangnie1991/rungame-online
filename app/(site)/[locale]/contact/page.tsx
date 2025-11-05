@@ -62,7 +62,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
     <div className="max-w-4xl mx-auto space-y-8">
       {/* 面包屑导航 */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href={`/${locale}`} className="hover:text-foreground transition-colors">
+        <Link href="/" className="hover:text-foreground transition-colors">
           {common("home")}
         </Link>
         <span>/</span>
