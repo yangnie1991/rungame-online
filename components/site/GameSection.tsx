@@ -15,7 +15,7 @@ interface Game {
   mainCategory?: {
     slug: string
   }
-  tags?: Array<{ name: string }>
+  tags?: Array<{ name: string; slug?: string }>
 }
 
 interface GameSectionProps {
@@ -92,7 +92,7 @@ export function GameSection({
               categoryName={game.category?.name}
               categorySlug={game.category?.slug}
               mainCategorySlug={game.mainCategory?.slug}
-              tags={game.tags?.map((tag) => tag.name)}
+              tags={game.tags}
               locale={locale}
               enableCategoryLink={enableCategoryLink}
               enableTagLinks={enableTagLinks}
