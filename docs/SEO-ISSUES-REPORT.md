@@ -98,11 +98,43 @@ if (!tagSlug || !enableTagLinks) {
 
 **影响文件**:
 - [components/site/GameCard.tsx](../components/site/GameCard.tsx#L106-L141)
+- [components/site/GameSection.tsx](../components/site/GameSection.tsx#L95) - 修改为传递完整对象
+- [lib/data/games/detail.ts](../lib/data/games/detail.ts#L263-L265) - 修复 getRecommendedGames 函数
 
 **技术说明**:
 - 数据库中Tag.slug字段是正确的英文
 - 问题出在某些地方传递给GameCard的是翻译后的中文字符串
-- 修复后，字符串类型的tag将只显示文本，不生成链接
+- 修复分为两步：
+  1. **GameCard组件**：拒绝为字符串类型的tag生成链接
+  2. **数据源函数**：确保所有数据源返回对象数组（含slug）而非字符串数组
+
+**数据源修复**:
+```typescript
+// lib/data/games/detail.ts - getRecommendedGames()
+// 修复前（返回字符串数组）
+const [categoryTranslations, tagTranslations] = await Promise.all([
+  getAllCategoryTranslationsMap(locale),
+  getAllTagTranslationsMap(locale),  // ❌ 只返回翻译后的名称
+])
+tags: game.tags.map((t) => tagTranslations[t.tagId] || "").filter(Boolean)
+
+// 修复后（返回对象数组）
+const [categoryTranslations, tagsDataMap] = await Promise.all([
+  getAllCategoryTranslationsMap(locale),
+  getAllTagsDataMap(locale),  // ✅ 返回 { slug, name }
+])
+tags: game.tags
+  .map((t) => tagsDataMap[t.tagId])
+  .filter((tag): tag is { slug: string; name: string } => tag !== undefined)
+```
+
+**影响范围分析**:
+- ✅ [GameSection.tsx](../components/site/GameSection.tsx) - 已修复
+- ✅ [RecommendedGames.tsx](../components/site/RecommendedGames.tsx) - SameCategoryGames 使用 getMixedRecommendedGames (已正确)
+- ✅ [RecommendedGames.tsx](../components/site/RecommendedGames.tsx) - RecommendedGamesSidebar 使用 getRecommendedGames (已修复)
+- ✅ [search/page.tsx](../app/(site)/[locale]/search/page.tsx) - 不传递 tags，无影响
+- ✅ [games/page.tsx](../app/(site)/[locale]/games/page.tsx) - 不传递 tags，无影响
+- ✅ [category 页面](../app/(site)/[locale]/category) - 不传递 tags，无影响
 
 ---
 

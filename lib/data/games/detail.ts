@@ -4,7 +4,7 @@ import { unstable_cache } from "next/cache"
 import { prisma } from "@/lib/db"
 import { buildLocaleCondition } from "@/lib/i18n-helpers"
 import { getAllCategoryTranslationsMap } from "../categories"
-import { getAllTagTranslationsMap, getAllTagsDataMap } from "../tags"
+import { getAllTagsDataMap } from "../tags"
 import { CACHE_TAGS, REVALIDATE_TIME } from "@/lib/cache-helpers"
 import { getGameTranslatedContent } from "@/lib/helpers/game-content"
 import { GameInfo } from "@/lib/types/game-info"
@@ -77,7 +77,10 @@ export async function getGameBySlug(slug: string, locale: string) {
           metaDescription: game.metaDescription,
           gameInfo: game.gameInfo as GameInfo | null,
         },
-        game.translations || []
+        (game.translations || []).map(t => ({
+          ...t,
+          translationInfo: t.translationInfo as GameInfo | null,
+        }))
       )
 
       // 获取分类信息（主分类和子分类）
@@ -168,9 +171,9 @@ export async function getRecommendedGames(
   limit = 6
 ) {
   // 并行获取翻译数据
-  const [categoryTranslations, tagTranslations] = await Promise.all([
+  const [categoryTranslations, tagsDataMap] = await Promise.all([
     getAllCategoryTranslationsMap(locale),
-    getAllTagTranslationsMap(locale),
+    getAllTagsDataMap(locale),
   ])
 
   // 查询候选游戏 - 只查询推荐引擎需要的字段
@@ -260,7 +263,9 @@ export async function getRecommendedGames(
       title: title,
       description: description || "",
       category: categoryTranslations[game.gameCategories[0]?.mainCategoryId || ""] || "",
-      tags: game.tags.map((t) => tagTranslations[t.tagId] || "").filter(Boolean),
+      tags: game.tags
+        .map((t) => tagsDataMap[t.tagId])
+        .filter((tag): tag is { slug: string; name: string } => tag !== undefined),
     }
   })
 }
