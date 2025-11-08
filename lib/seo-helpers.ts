@@ -76,7 +76,9 @@ export function generateAlternateLanguages(path: string): Record<string, string>
       languages[hreflangCode] = `${siteUrl}${cleanPath}`
     } else {
       // 其他语言带前缀
-      languages[hreflangCode] = `${siteUrl}/${locale}${cleanPath}`
+      // 特殊处理：非默认语言的首页不需要尾部斜杠（/zh 而不是 /zh/）
+      const localizedPath = cleanPath === '/' ? '' : cleanPath
+      languages[hreflangCode] = `${siteUrl}/${locale}${localizedPath}`
     }
   }
 

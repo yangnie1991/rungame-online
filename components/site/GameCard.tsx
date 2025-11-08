@@ -106,26 +106,14 @@ export function GameCard({
           {tags && tags.length > 0 && (
             <div className="flex flex-wrap gap-1 pointer-events-auto">
               {tags.slice(0, 2).map((tag, index) => {
+                //  处理两种tag格式：字符串或对象
                 const tagName = typeof tag === 'string' ? tag : tag.name
                 const tagSlug = typeof tag === 'string'
-                  ? tagName.toLowerCase().replace(/\s+/g, '-')
-                  : tag.slug || tagName.toLowerCase().replace(/\s+/g, '-')
+                  ? null // 字符串类型的tag不生成链接（避免中文slug问题）
+                  : tag.slug
 
-                if (enableTagLinks) {
-                  // 启用链接：可点击的标签
-                  return (
-                    <Link
-                      key={`${tagName}-${index}`}
-                      href={`/tag/${tagSlug}`}
-                      className="inline-flex items-center px-2 py-1 rounded text-xs bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`View ${tagName} games`}
-                    >
-                      #{tagName}
-                    </Link>
-                  )
-                } else {
-                  // 禁用链接：仅展示的标签
+                // 如果没有有效的slug（字符串类型或对象缺少slug），则只显示标签文本
+                if (!tagSlug || !enableTagLinks) {
                   return (
                     <span
                       key={`${tagName}-${index}`}
@@ -135,6 +123,19 @@ export function GameCard({
                     </span>
                   )
                 }
+
+                // 有有效slug时才渲染链接
+                return (
+                  <Link
+                    key={`${tagName}-${index}`}
+                    href={`/tag/${tagSlug}`}
+                    className="inline-flex items-center px-2 py-1 rounded text-xs bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`View ${tagName} games`}
+                  >
+                    #{tagName}
+                  </Link>
+                )
               })}
             </div>
           )}
