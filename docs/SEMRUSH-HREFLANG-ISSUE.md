@@ -92,6 +92,53 @@ SEMrush 报告显示两个问题：
 
 ---
 
+## 🔍 根本原因：查询参数处理（2025-11-09 更新）
+
+### 实际发现 ⚠️
+
+用户识别出了 SEMrush 报错的真正原因：
+
+**问题场景**：
+```
+分类页面和标签页面有排序功能：
+- 默认：/category/action-games
+- 按名称：/category/action-games?sort=name
+- 按最新：/category/action-games?sort=newest
+```
+
+**用户担心**：当访问带 `?sort=name` 的 URL 时，页面的 canonical 和 hreflang 指向的是不带参数的干净 URL，导致"不一致"。
+
+### ✅ 这是正确的实现！
+
+**重要说明**：这种"不一致"实际上是**符合 Google SEO 最佳实践的正确做法**！
+
+**原因**：
+1. **查询参数（如排序、筛选）不应该包含在 canonical 和 hreflang 中**
+2. 这些参数只是改变**显示方式**，而不是创建**不同的内容**
+3. Canonical 告诉搜索引擎"这些 URL 实际上是同一个页面"
+4. 如果包含参数，会导致**重复内容问题**，分散 SEO 权重
+
+**Google 官方指导**：
+> "如果您有多个包含相同内容的网址，请选择一个网址作为规范网址"
+>
+> "hreflang 注释应使用规范 URL"
+
+**示例**：
+```
+用户访问：/category/action-games?sort=name
+↓
+页面 metadata（正确✅）：
+- canonical: /category/action-games（规范版本）
+- hreflang en: /category/action-games（规范版本）
+- hreflang zh: /zh/category/action-games（规范版本）
+
+这样所有排序变体都被视为同一个页面，SEO 权重集中！
+```
+
+**详细说明**：请查看 [查询参数与 SEO 最佳实践文档](./QUERY-PARAMETERS-AND-SEO.md)
+
+---
+
 ## 🤔 为什么 SEMrush 仍然报错？
 
 ### 原因 1: 爬虫缓存延迟 ⏰ （最可能）
