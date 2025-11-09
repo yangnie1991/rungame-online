@@ -242,7 +242,7 @@ export default async function HomePage({ params }: HomePageProps) {
         subtitleDetailed={locale === 'zh' ? '抢先体验新鲜玩法' : 'Be the first to try new gameplay'}
         icon="🆕"
         games={formatGames(newestGames)}
-        viewAllLink="/collection/newest"
+        viewAllLink="/collection/new-games"
         locale={locale}
         enableCategoryLink={false}
         enableTagLinks={false}
