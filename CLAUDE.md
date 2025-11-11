@@ -197,21 +197,86 @@ if (session.user.role !== "SUPER_ADMIN") return Response.json({ error: "Forbidde
 
 ## 重要模式
 
-### Server Actions
+### Server Actions 与数据验证
 
-管理后台变更使用 Server Actions 并进行重新验证：
+**重要规范：所有涉及数据库的增、改操作都必须使用 zod 进行数据验证**
+
+管理后台变更使用 Server Actions，并遵循以下模式：
 
 ```typescript
 "use server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
+import { z } from "zod"
 
-export async function updateCategory(id: string, data: CategoryData) {
-  await prisma.category.update({ where: { id }, data })
-  revalidatePath("/admin/categories")
-  revalidatePath("/[locale]", "layout") // 重新验证用户端页面
+// 1. 定义 zod 验证 Schema
+const categorySchema = z.object({
+  slug: z.string().min(1, "标识符不能为空").regex(/^[a-z0-9-]+$/, "标识符只能包含小写字母、数字和连字符"),
+  name: z.string().min(1, "名称不能为空"),
+  description: z.string().optional(),
+  sortOrder: z.number().int().min(0, "排序值不能为负数").default(0),
+  translations: z.array(
+    z.object({
+      locale: z.enum(["en", "zh"]),
+      name: z.string().min(1, "名称不能为空"),
+      description: z.string().optional(),
+    })
+  ).default([])
+})
+
+// 2. 导出类型
+export type CategoryFormData = z.infer<typeof categorySchema>
+
+// 3. Server Action 中进行验证
+export async function createCategory(data: CategoryFormData) {
+  try {
+    // 验证数据（如果数据不符合 schema 会抛出错误）
+    const validated = categorySchema.parse(data)
+
+    // 执行数据库操作
+    const category = await prisma.category.create({
+      data: {
+        slug: validated.slug,
+        name: validated.name,
+        description: validated.description || null,
+        sortOrder: validated.sortOrder,
+        translations: {
+          create: validated.translations
+        }
+      }
+    })
+
+    // 重新验证缓存
+    revalidatePath("/admin/categories")
+    revalidatePath("/[locale]", "layout")
+
+    return { success: true, data: category }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      // 返回验证错误
+      return {
+        success: false,
+        error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+      }
+    }
+    return { success: false, error: "操作失败" }
+  }
 }
 ```
+
+**验证规范**:
+- ✅ 必须为所有增、改操作定义 zod schema
+- ✅ 使用 `schema.parse()` 在数据库操作前验证数据
+- ✅ 处理 `ZodError` 并返回清晰的错误消息
+- ✅ 字符串字段使用 `.trim()` 清理空白字符
+- ✅ 可选字段使用 `.optional()` 标记
+- ✅ 数字字段使用 `.int()`, `.min()`, `.max()` 等约束
+- ✅ 使用 `z.infer<typeof schema>` 导出类型供前端使用
+
+**参考示例**:
+- [app/(admin)/admin/categories/actions.ts](app/(admin)/admin/categories/actions.ts) - 分类管理
+- [app/(admin)/admin/games/actions.ts](app/(admin)/admin/games/actions.ts) - 游戏管理
+- [app/(admin)/admin/tags/actions.ts](app/(admin)/admin/tags/actions.ts) - 标签管理
 
 ### 翻译查询
 

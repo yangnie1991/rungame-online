@@ -6,6 +6,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
 import { checkGoogleIndexWithAPI } from '@/lib/seo-submissions/google-index-check'
 import { checkBingIndexWithAPI } from '@/lib/seo-submissions/bing-index-check'
 
@@ -14,19 +15,72 @@ export interface UpdateConfigResult {
   message: string
 }
 
+// Google 配置验证 Schema
+const googleConfigSchema = z.object({
+  isEnabled: z.boolean(),
+  accessToken: z.string().trim().optional(),
+  refreshToken: z.string().trim().optional(),
+  siteUrl: z.string().trim().url('Site URL 必须是有效的 URL').optional(),
+  clientId: z.string().trim().optional(),
+  clientSecret: z.string().trim().optional(),
+}).refine(
+  (data) => {
+    // 如果启用配置，必须提供所有 OAuth 字段
+    if (data.isEnabled) {
+      return !!(data.siteUrl && data.accessToken && data.refreshToken && data.clientId && data.clientSecret)
+    }
+    return true
+  },
+  {
+    message: '启用配置时必须提供完整的配置信息（Site URL、Access Token、Refresh Token、Client ID 和 Client Secret）',
+  }
+)
+
+export type GoogleConfigData = z.infer<typeof googleConfigSchema>
+
+// Bing 配置验证 Schema
+const bingConfigSchema = z.object({
+  isEnabled: z.boolean(),
+  apiKey: z.string().trim().optional(),
+  siteUrl: z.string().trim().url('Site URL 必须是有效的 URL').optional(),
+}).refine(
+  (data) => {
+    // 如果启用配置，必须提供 API Key 和 Site URL
+    if (data.isEnabled) {
+      return !!(data.apiKey && data.siteUrl)
+    }
+    return true
+  },
+  {
+    message: '启用配置时必须提供 API Key 和 Site URL',
+  }
+)
+
+export type BingConfigData = z.infer<typeof bingConfigSchema>
+
+// Google API 测试验证 Schema
+const googleApiTestSchema = z.object({
+  accessToken: z.string().trim().min(1, 'Access Token 不能为空'),
+  siteUrl: z.string().trim().url('Site URL 必须是有效的 URL'),
+  testUrl: z.string().trim().url('Test URL 必须是有效的 URL').optional(),
+})
+
+// Bing API 测试验证 Schema
+const bingApiTestSchema = z.object({
+  apiKey: z.string().trim().min(1, 'API Key 不能为空'),
+  siteUrl: z.string().trim().url('Site URL 必须是有效的 URL'),
+  testUrl: z.string().trim().url('Test URL 必须是有效的 URL').optional(),
+})
+
 /**
  * 更新 Google Search Console API 配置
  */
-export async function updateGoogleConfig(data: {
-  isEnabled: boolean
-  accessToken?: string
-  refreshToken?: string
-  siteUrl?: string
-  clientId?: string
-  clientSecret?: string
-}): Promise<UpdateConfigResult> {
+export async function updateGoogleConfig(data: GoogleConfigData): Promise<UpdateConfigResult> {
   try {
-    // 查找或创建 Google 配置
+    // 1. 验证输入数据
+    const validated = googleConfigSchema.parse(data)
+
+    // 2. 查找现有配置
     const config = await prisma.searchEngineConfig.findFirst({
       where: { type: 'google' },
     })
@@ -38,7 +92,7 @@ export async function updateGoogleConfig(data: {
       }
     }
 
-    // 获取现有的 extraConfig
+    // 3. 获取现有的 extraConfig
     const existingExtraConfig = (config.extraConfig && typeof config.extraConfig === 'object'
       ? config.extraConfig
       : {}) as any
@@ -49,66 +103,40 @@ export async function updateGoogleConfig(data: {
       当前siteUrl: config.siteUrl,
       当前accessToken: existingExtraConfig.accessToken ? '已配置' : '未配置',
       当前refreshToken: existingExtraConfig.refreshToken ? '已配置' : '未配置',
+      当前clientId: existingExtraConfig.clientId ? '已配置' : '未配置',
+      当前clientSecret: existingExtraConfig.clientSecret ? '已配置' : '未配置',
     })
 
     console.log('[更新 Google 配置] 提交的数据:', {
-      isEnabled: data.isEnabled,
-      siteUrl: data.siteUrl || '未提供',
-      accessToken: data.accessToken ? `已提供 (${data.accessToken.length} 字符)` : '未提供',
-      refreshToken: data.refreshToken ? '已提供' : '未提供',
-      clientId: data.clientId ? '已提供' : '未提供',
-      clientSecret: data.clientSecret ? '已提供' : '未提供',
+      isEnabled: validated.isEnabled,
+      siteUrl: validated.siteUrl || '未提供',
+      accessToken: validated.accessToken ? `已提供 (${validated.accessToken.length} 字符)` : '未提供',
+      refreshToken: validated.refreshToken ? '已提供' : '未提供',
+      clientId: validated.clientId ? '已提供' : '未提供',
+      clientSecret: validated.clientSecret ? '已提供' : '未提供',
     })
 
-    // 数据验证：如果启用配置，必须提供必需的字段
-    if (data.isEnabled) {
-      // 检查 siteUrl
-      const finalSiteUrl = data.siteUrl || config.siteUrl
-      if (!finalSiteUrl) {
-        return {
-          success: false,
-          message: '启用配置时必须提供 Site URL',
-        }
-      }
-
-      // 检查 OAuth 凭据：如果没有提供新的，检查是否有已保存的
-      const finalAccessToken = data.accessToken || existingExtraConfig.accessToken
-      const finalRefreshToken = data.refreshToken || existingExtraConfig.refreshToken
-      const finalClientId = data.clientId || existingExtraConfig.clientId
-      const finalClientSecret = data.clientSecret || existingExtraConfig.clientSecret
-
-      if (!finalAccessToken || !finalRefreshToken) {
-        return {
-          success: false,
-          message: '启用配置时必须提供完整的 OAuth 认证信息（Access Token 和 Refresh Token）',
-        }
-      }
-
-      if (!finalClientId || !finalClientSecret) {
-        return {
-          success: false,
-          message: '启用配置时必须提供完整的 OAuth 客户端信息（Client ID 和 Client Secret）',
-        }
-      }
-    }
-
-    // 构建 extraConfig，只更新提供的字段，保留未提供的字段
+    // 4. 构建 extraConfig，合并提供的字段和已有字段
     const extraConfig: any = {
       ...existingExtraConfig,
     }
 
-    // 只有当提供了新值时才更新（不为 undefined 且不为空字符串）
-    if (data.accessToken) {
-      extraConfig.accessToken = data.accessToken
+    // 只有当提供了新值时才更新
+    if (validated.accessToken) {
+      extraConfig.accessToken = validated.accessToken
+      console.log('[更新 Google 配置] 更新 accessToken')
     }
-    if (data.refreshToken) {
-      extraConfig.refreshToken = data.refreshToken
+    if (validated.refreshToken) {
+      extraConfig.refreshToken = validated.refreshToken
+      console.log('[更新 Google 配置] 更新 refreshToken')
     }
-    if (data.clientId) {
-      extraConfig.clientId = data.clientId
+    if (validated.clientId) {
+      extraConfig.clientId = validated.clientId
+      console.log('[更新 Google 配置] 更新 clientId')
     }
-    if (data.clientSecret) {
-      extraConfig.clientSecret = data.clientSecret
+    if (validated.clientSecret) {
+      extraConfig.clientSecret = validated.clientSecret
+      console.log('[更新 Google 配置] 更新 clientSecret')
     }
 
     // 记录更新时间
@@ -122,18 +150,19 @@ export async function updateGoogleConfig(data: {
       tokenUpdatedAt: extraConfig.tokenUpdatedAt,
     })
 
-    // 更新配置
+    // 5. 更新数据库
     await prisma.searchEngineConfig.update({
       where: { id: config.id },
       data: {
-        isEnabled: data.isEnabled,
-        siteUrl: data.siteUrl || config.siteUrl, // 保留原有值
+        isEnabled: validated.isEnabled,
+        siteUrl: validated.siteUrl || config.siteUrl,
         extraConfig,
       },
     })
 
     console.log('[更新 Google 配置] ✅ 配置已成功更新')
 
+    // 6. 重新验证缓存
     revalidatePath('/admin/seo-submissions')
     revalidatePath('/admin/seo-submissions/config')
     revalidatePath('/admin/seo-submissions/google')
@@ -144,6 +173,16 @@ export async function updateGoogleConfig(data: {
     }
   } catch (error) {
     console.error('[更新 Google 配置] 错误:', error)
+
+    // 处理 zod 验证错误
+    if (error instanceof z.ZodError) {
+      const errorMessages = error.errors.map(e => e.message).join('; ')
+      return {
+        success: false,
+        message: `数据验证失败: ${errorMessages}`,
+      }
+    }
+
     return {
       success: false,
       message: error instanceof Error ? error.message : '更新配置时发生错误',
@@ -154,13 +193,12 @@ export async function updateGoogleConfig(data: {
 /**
  * 更新 Bing 配置
  */
-export async function updateBingConfig(data: {
-  isEnabled: boolean
-  apiKey?: string
-  siteUrl?: string
-}): Promise<UpdateConfigResult> {
+export async function updateBingConfig(data: BingConfigData): Promise<UpdateConfigResult> {
   try {
-    // 查找 Bing 配置
+    // 1. 验证输入数据
+    const validated = bingConfigSchema.parse(data)
+
+    // 2. 查找现有配置
     const config = await prisma.searchEngineConfig.findFirst({
       where: { type: 'indexnow' },
     })
@@ -180,43 +218,24 @@ export async function updateBingConfig(data: {
     })
 
     console.log('[更新 Bing 配置] 提交的数据:', {
-      isEnabled: data.isEnabled,
-      apiKey: data.apiKey ? '已提供' : '未提供',
-      siteUrl: data.siteUrl || '未提供',
+      isEnabled: validated.isEnabled,
+      apiKey: validated.apiKey ? '已提供' : '未提供',
+      siteUrl: validated.siteUrl || '未提供',
     })
 
-    // 数据验证：如果启用配置，必须提供必需的字段
-    if (data.isEnabled) {
-      const finalApiKey = data.apiKey || config.apiKey
-      const finalSiteUrl = data.siteUrl || config.siteUrl
-
-      if (!finalApiKey) {
-        return {
-          success: false,
-          message: '启用配置时必须提供 Bing Webmaster API Key',
-        }
-      }
-
-      if (!finalSiteUrl) {
-        return {
-          success: false,
-          message: '启用配置时必须提供 Site URL',
-        }
-      }
-    }
-
-    // 更新配置：只更新提供的字段，保留未提供的字段
+    // 3. 更新数据库
     await prisma.searchEngineConfig.update({
       where: { id: config.id },
       data: {
-        isEnabled: data.isEnabled,
-        apiKey: data.apiKey || config.apiKey, // 保留原有值
-        siteUrl: data.siteUrl || config.siteUrl, // 保留原有值
+        isEnabled: validated.isEnabled,
+        apiKey: validated.apiKey || config.apiKey,
+        siteUrl: validated.siteUrl || config.siteUrl,
       },
     })
 
     console.log('[更新 Bing 配置] ✅ 配置已成功更新')
 
+    // 4. 重新验证缓存
     revalidatePath('/admin/seo-submissions')
     revalidatePath('/admin/seo-submissions/config')
     revalidatePath('/admin/seo-submissions/bing')
@@ -227,6 +246,16 @@ export async function updateBingConfig(data: {
     }
   } catch (error) {
     console.error('[更新 Bing 配置] 错误:', error)
+
+    // 处理 zod 验证错误
+    if (error instanceof z.ZodError) {
+      const errorMessages = error.errors.map(e => e.message).join('; ')
+      return {
+        success: false,
+        message: `数据验证失败: ${errorMessages}`,
+      }
+    }
+
     return {
       success: false,
       message: error instanceof Error ? error.message : '更新配置时发生错误',
@@ -243,10 +272,13 @@ export async function testGoogleApi(data: {
   testUrl?: string
 }): Promise<UpdateConfigResult> {
   try {
-    // 默认测试 URL 使用网站首页
-    const testUrl = data.testUrl || data.siteUrl
+    // 验证输入数据
+    const validated = googleApiTestSchema.parse(data)
 
-    const result = await checkGoogleIndexWithAPI(testUrl, data.accessToken, data.siteUrl)
+    // 默认测试 URL 使用网站首页
+    const testUrl = validated.testUrl || validated.siteUrl
+
+    const result = await checkGoogleIndexWithAPI(testUrl, validated.accessToken, validated.siteUrl)
 
     if (result.error) {
       return {
@@ -261,6 +293,16 @@ export async function testGoogleApi(data: {
     }
   } catch (error) {
     console.error('[测试 Google Search Console API] 错误:', error)
+
+    // 处理 zod 验证错误
+    if (error instanceof z.ZodError) {
+      const errorMessages = error.errors.map(e => e.message).join('; ')
+      return {
+        success: false,
+        message: `数据验证失败: ${errorMessages}`,
+      }
+    }
+
     return {
       success: false,
       message: error instanceof Error ? error.message : 'API 测试失败',
@@ -277,10 +319,13 @@ export async function testBingApi(data: {
   testUrl?: string
 }): Promise<UpdateConfigResult> {
   try {
-    // 默认测试 URL 使用网站首页
-    const testUrl = data.testUrl || data.siteUrl
+    // 验证输入数据
+    const validated = bingApiTestSchema.parse(data)
 
-    const result = await checkBingIndexWithAPI(testUrl, data.apiKey, data.siteUrl)
+    // 默认测试 URL 使用网站首页
+    const testUrl = validated.testUrl || validated.siteUrl
+
+    const result = await checkBingIndexWithAPI(testUrl, validated.apiKey, validated.siteUrl)
 
     if (result.error) {
       return {
@@ -295,6 +340,16 @@ export async function testBingApi(data: {
     }
   } catch (error) {
     console.error('[测试 Bing Webmaster API] 错误:', error)
+
+    // 处理 zod 验证错误
+    if (error instanceof z.ZodError) {
+      const errorMessages = error.errors.map(e => e.message).join('; ')
+      return {
+        success: false,
+        message: `数据验证失败: ${errorMessages}`,
+      }
+    }
+
     return {
       success: false,
       message: error instanceof Error ? error.message : 'API 测试失败',
