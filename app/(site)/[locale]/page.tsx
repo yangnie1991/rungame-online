@@ -88,8 +88,8 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
       site: '@rungame',
     },
     alternates: {
-      // 首页canonical: 英文是 /，其他语言是 /{locale} （不带尾部斜杠）
-      canonical: `${siteUrl}${locale === 'en' ? '/' : `/${locale}`}`,
+      // 首页canonical: 所有语言都不带尾部斜杠
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}`,
       languages: generateAlternateLanguages('/'),
     },
   }

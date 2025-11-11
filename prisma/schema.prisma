@@ -11,40 +11,58 @@ datasource db {
 
 // 页面类型枚举
 enum PageTypeEnum {
-  GAME_LIST      // 游戏卡片列表页
-  DISPLAY_PAGE   // 展示页面
-  OTHER_PAGE     // 其他页面
+  GAME_LIST // 游戏卡片列表页
+  DISPLAY_PAGE // 展示页面
+  OTHER_PAGE // 其他页面
 }
 
 // 文字方向枚举
 enum TextDirection {
-  LTR  // Left-to-right (左到右：英语、中文等)
-  RTL  // Right-to-left (右到左：阿拉伯语、希伯来语等)
+  LTR // Left-to-right (左到右：英语、中文等)
+  RTL // Right-to-left (右到左：阿拉伯语、希伯来语等)
 }
 
 // 游戏状态枚举
 enum GameStatus {
-  DRAFT       // 草稿
-  PUBLISHED   // 已发布
-  ARCHIVED    // 已归档
+  DRAFT // 草稿
+  PUBLISHED // 已发布
+  ARCHIVED // 已归档
   MAINTENANCE // 维护中
+}
+
+// URL提交状态枚举
+enum SubmissionStatus {
+  PENDING // 待提交
+  SUBMITTED // 已提交（等待响应）
+  SUCCESS // 成功
+  FAILED // 失败
+  RETRYING // 重试中
+}
+
+// 批量提交任务状态枚举
+enum BatchStatus {
+  PENDING // 待处理
+  PROCESSING // 处理中
+  COMPLETED // 已完成
+  FAILED // 失败
+  CANCELLED // 已取消
 }
 
 // ==================== 数据模型 ====================
 
 // 游戏分类（主表）
 model Category {
-  id        String   @id @default(cuid())
-  slug      String   @unique
+  id        String  @id @default(cuid())
+  slug      String  @unique
   icon      String? // 分类图标（emoji或图片URL）
-  sortOrder Int      @default(0) @map("sort_order")
-  isEnabled Boolean  @default(true) @map("is_enabled") // 是否启用
+  sortOrder Int     @default(0) @map("sort_order")
+  isEnabled Boolean @default(true) @map("is_enabled") // 是否启用
 
   // 层级关系：父分类ID（null表示主分类，有值表示子分类）
-  parentId  String?  @map("parent_id")
+  parentId String? @map("parent_id")
 
   // 英文基础信息（作为回退）
-  name        String  // 英文名称：Action, Puzzle, Sports
+  name        String // 英文名称：Action, Puzzle, Sports
   description String? // 英文描述
 
   // SEO 字段（英文，作为回退）
@@ -74,13 +92,13 @@ model Category {
 
 // 分类翻译表
 model CategoryTranslation {
-  id              String   @id @default(cuid())
-  categoryId      String   @map("category_id")
+  id              String  @id @default(cuid())
+  categoryId      String  @map("category_id")
   locale          String
   name            String
   description     String?
-  metaTitle       String?  @map("meta_title")
-  metaDescription String?  @map("meta_description")
+  metaTitle       String? @map("meta_title")
+  metaDescription String? @map("meta_description")
   keywords        String? // SEO 关键词
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -95,13 +113,13 @@ model CategoryTranslation {
 
 // 游戏标签（主表）
 model Tag {
-  id        String   @id @default(cuid())
-  slug      String   @unique
+  id        String  @id @default(cuid())
+  slug      String  @unique
   icon      String? // 标签图标（emoji或图片URL）
-  isEnabled Boolean  @default(true) @map("is_enabled") // 是否启用
+  isEnabled Boolean @default(true) @map("is_enabled") // 是否启用
 
   // 英文基础信息（作为回退）
-  name        String  // 英文名称：Multiplayer, Puzzle, Adventure
+  name        String // 英文名称：Multiplayer, Puzzle, Adventure
   description String? // 英文描述
 
   // SEO 字段（英文，作为回退）
@@ -122,13 +140,13 @@ model Tag {
 
 // 标签翻译表
 model TagTranslation {
-  id              String   @id @default(cuid())
-  tagId           String   @map("tag_id")
+  id              String  @id @default(cuid())
+  tagId           String  @map("tag_id")
   locale          String
   name            String
   description     String? // 标签描述
-  metaTitle       String?  @map("meta_title")
-  metaDescription String?  @map("meta_description")
+  metaTitle       String? @map("meta_title")
+  metaDescription String? @map("meta_description")
   keywords        String? // SEO 关键词
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -193,9 +211,9 @@ model Game {
   gameInfo Json? @map("game_info") // contentSections + faq + extras
 
   // ========== 时间管理 ==========
-  releaseDate     DateTime? @map("release_date")      // 游戏原始发布日期（来源平台）
+  releaseDate     DateTime? @map("release_date") // 游戏原始发布日期（来源平台）
   sourceUpdatedAt DateTime? @map("source_updated_at") // 来源平台最后更新时间
-  importedAt      DateTime? @map("imported_at")       // 导入到本站的时间
+  importedAt      DateTime? @map("imported_at") // 导入到本站的时间
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
@@ -267,15 +285,15 @@ model GameTag {
 
 // 游戏-分类关联表（多对多）
 model GameCategory {
-  id             String   @id @default(cuid())
-  gameId         String   @map("game_id")
-  categoryId     String   @map("category_id")      // 子分类ID
-  mainCategoryId String   @map("main_category_id") // 主分类ID（优化字段）
+  id             String @id @default(cuid())
+  gameId         String @map("game_id")
+  categoryId     String @map("category_id") // 子分类ID
+  mainCategoryId String @map("main_category_id") // 主分类ID（优化字段）
 
-  isPrimary  Boolean  @default(false) @map("is_primary") // 是否为主要分类
-  sortOrder  Int      @default(0) @map("sort_order")      // 排序
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  isPrimary Boolean  @default(false) @map("is_primary") // 是否为主要分类
+  sortOrder Int      @default(0) @map("sort_order") // 排序
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // 关联关系
   game         Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -292,18 +310,17 @@ model GameCategory {
   @@map("game_categories")
 }
 
-
 // 页面类型（主表）
 model PageType {
   id        String       @id @default(cuid())
-  slug      String       @unique              // 页面标识符：most-played, trending, new 等
+  slug      String       @unique // 页面标识符：most-played, trending, new 等
   type      PageTypeEnum @default(GAME_LIST) // 页面类型（枚举）
-  icon      String?                           // 页面图标（emoji或图片URL）
+  icon      String? // 页面图标（emoji或图片URL）
   isEnabled Boolean      @default(true) @map("is_enabled")
   sortOrder Int          @default(0) @map("sort_order")
 
   // 英文基础信息（作为回退）
-  title       String  // 英文标题
+  title       String // 英文标题
   description String? // 英文描述
 
   // SEO 字段（英文，作为回退）
@@ -335,7 +352,7 @@ model PageTypeTranslation {
   locale     String
 
   // 基础信息
-  title       String  // 页面标题（必填）
+  title       String // 页面标题（必填）
   description String? // 页面描述
 
   // SEO 元信息
@@ -361,12 +378,12 @@ model PageTypeTranslation {
 // 语言管理表（主表）
 model Language {
   id         String        @id @default(cuid())
-  code       String        @unique              // ISO 639-1 语言代码：en, zh, es
-  name       String                             // 英文名称（作为回退）：English, Chinese, Spanish
+  code       String        @unique // ISO 639-1 语言代码：en, zh, es
+  name       String // 英文名称（作为回退）：English, Chinese, Spanish
   nativeName String        @map("native_name") // 原生语言名称：English, 中文, Español
-  flag       String?                            // 旗帜emoji：🇬🇧, 🇨🇳, 🇪🇸
+  flag       String? // 旗帜emoji：🇬🇧, 🇨🇳, 🇪🇸
   localeCode String        @map("locale_code") // 完整区域代码：en-US, zh-CN, es-ES
-  direction  TextDirection @default(LTR)       // 文字方向（枚举）
+  direction  TextDirection @default(LTR) // 文字方向（枚举）
   isDefault  Boolean       @default(false) @map("is_default")
   isEnabled  Boolean       @default(true) @map("is_enabled")
   sortOrder  Int           @default(0) @map("sort_order")
@@ -391,7 +408,7 @@ model LanguageTranslation {
   locale     String
 
   // 翻译信息
-  name        String  // 翻译后的语言名称
+  name        String // 翻译后的语言名称
   description String? // 语言描述（可选）
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -572,7 +589,7 @@ model SiteConfigTranslation {
   locale       String
 
   // 翻译字段
-  siteName        String  // 网站名称翻译
+  siteName        String // 网站名称翻译
   siteDescription String? // 网站描述翻译
   keywords        String[] @default([]) // 该语言的 SEO 关键词
 
@@ -609,3 +626,147 @@ model GameVote {
   @@map("game_votes")
 }
 
+// ==================== SEO URL提交系统 ====================
+
+// 搜索引擎配置表
+model SearchEngineConfig {
+  id String @id @default(cuid())
+
+  // ========== 基本信息 ==========
+  name String // 搜索引擎名称：Bing, Baidu, Yandex, Google
+  slug String  @unique // 标识符：bing-indexnow, baidu, yandex, google
+  type String // 类型：indexnow, baidu, google, custom
+  icon String? // 图标URL或emoji (🔍, 🌐)
+
+  description String? // 描述信息
+
+  // ========== API配置 ==========
+  apiEndpoint String  @map("api_endpoint") // API端点URL
+  apiKey      String? @map("api_key") // API密钥（需加密存储）
+  apiToken    String? @map("api_token") // API令牌（百度使用）
+  siteUrl     String? @map("site_url") // 网站URL（百度需要）
+
+  // ========== 额外配置（JSON）==========
+  extraConfig Json? @default("{}") @map("extra_config")
+
+  // ========== 状态配置 ==========
+  isEnabled  Boolean @default(true) @map("is_enabled") // 是否启用
+  autoSubmit Boolean @default(false) @map("auto_submit") // 是否自动提交（内容发布时）
+  sortOrder  Int     @default(0) @map("sort_order") // 显示排序
+
+  // ========== 统计数据 ==========
+  totalSubmitted Int       @default(0) @map("total_submitted") // 总提交URL数
+  totalSuccess   Int       @default(0) @map("total_success") // 总成功数
+  totalFailed    Int       @default(0) @map("total_failed") // 总失败数
+  lastSubmitAt   DateTime? @map("last_submit_at") // 最后提交时间
+
+  // ========== 时间戳 ==========
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([slug])
+  @@index([type])
+  @@index([isEnabled])
+  @@index([autoSubmit])
+  @@index([sortOrder])
+  @@map("search_engine_configs")
+}
+
+// URL提交记录表
+model UrlSubmission {
+  id String @id @default(cuid())
+
+  // ========== 基本信息 ==========
+  url      String  // 完整URL，包含语言前缀：https://rungame.online/zh/play/puzzle-game
+  urlType  String  @map("url_type") // URL类型：game, category, tag, pagetype, sitemap, other
+  entityId String? @map("entity_id") // 关联实体ID（游戏ID、分类ID等），用于批量操作和数据清理
+  locale   String? // 语言代码：en, zh, es（仅作标记，用于前端筛选和统计）
+
+  // ========== Google 提交状态 ==========
+  googleSubmitStatus        SubmissionStatus? @map("google_submit_status")
+  googleSubmitStatusMessage String?           @map("google_submit_status_message")
+  googleSubmitHttpStatus    Int?              @map("google_submit_http_status")
+  googleSubmitResponseBody  String?           @map("google_submit_response_body")
+  googleSubmitResponseTime  Int?              @map("google_submit_response_time")
+  googleSubmittedAt         DateTime?         @map("google_submitted_at")
+
+  // ========== Bing 提交状态 ==========
+  bingSubmitStatus        SubmissionStatus? @map("bing_submit_status")
+  bingSubmitStatusMessage String?           @map("bing_submit_status_message")
+  bingSubmitHttpStatus    Int?              @map("bing_submit_http_status")
+  bingSubmitResponseBody  String?           @map("bing_submit_response_body")
+  bingSubmitResponseTime  Int?              @map("bing_submit_response_time")
+  bingSubmittedAt         DateTime?         @map("bing_submitted_at")
+
+  // ========== Google 收录状态 ==========
+  indexedByGoogle    Boolean?  @map("indexed_by_google")
+  googleIndexedAt    DateTime? @map("google_indexed_at")
+  googleLastCheckAt  DateTime? @map("google_last_check_at")
+  googleCheckStatus  String?   @map("google_check_status") // indexed, not_indexed, error
+  googleCheckMessage String?   @map("google_check_message")
+
+  // ========== Bing 收录状态 ==========
+  indexedByBing    Boolean?  @map("indexed_by_bing")
+  bingIndexedAt    DateTime? @map("bing_indexed_at")
+  bingLastCheckAt  DateTime? @map("bing_last_check_at")
+  bingCheckStatus  String?   @map("bing_check_status") // indexed, not_indexed, error
+  bingCheckMessage String?   @map("bing_check_message")
+
+  // ========== 时间戳 ==========
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // ========== 索引 ==========
+  @@unique([url], name: "unique_url") // URL 本身已包含语言前缀，保证全局唯一
+  @@index([url])
+  @@index([urlType])
+  @@index([entityId])
+  @@index([locale])
+  @@index([indexedByGoogle])
+  @@index([indexedByBing])
+  @@index([googleLastCheckAt])
+  @@index([bingLastCheckAt])
+  @@index([createdAt])
+  @@map("url_submissions")
+}
+
+// 批量提交任务表
+model SubmissionBatch {
+  id String @id @default(cuid())
+
+  // ========== 批次信息 ==========
+  name        String // 批次名称：如 "发布所有游戏到Bing"
+  description String? // 批次描述
+  status      BatchStatus @default(PENDING)
+
+  // ========== 统计信息 ==========
+  totalUrls     Int @default(0) @map("total_urls") // 总URL数
+  processedUrls Int @default(0) @map("processed_urls") // 已处理数
+  successUrls   Int @default(0) @map("success_urls") // 成功数
+  failedUrls    Int @default(0) @map("failed_urls") // 失败数
+  pendingUrls   Int @default(0) @map("pending_urls") // 待处理数
+
+  // ========== 配置信息 ==========
+  searchEngineConfigIds String[] @default([]) @map("search_engine_config_ids") // 目标搜索引擎ID列表
+
+  // URL筛选条件（JSON）
+  urlFilters Json? @default("{}") @map("url_filters")
+
+  // ========== 执行信息 ==========
+  startedAt   DateTime? @map("started_at") // 开始处理时间
+  completedAt DateTime? @map("completed_at") // 完成时间
+  cancelledAt DateTime? @map("cancelled_at") // 取消时间
+
+  errorMessage String? @map("error_message") // 错误信息（如果失败）
+
+  createdBy String @map("created_by") // 创建人（管理员ID或 "system"）
+
+  // ========== 时间戳 ==========
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([createdBy])
+  @@map("submission_batches")
+}

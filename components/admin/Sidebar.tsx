@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Bot,
   Settings,
+  Share2,
 } from "lucide-react"
 
 interface SubMenuItem {
@@ -45,6 +46,15 @@ const navigation: NavigationItem[] = [
   },
   { name: "语言管理", href: "/admin/languages", icon: Languages },
   { name: "页面类型", href: "/admin/page-types", icon: FileType },
+  {
+    name: "SEO 推送",
+    href: "/admin/seo-submissions",
+    icon: Share2,
+    children: [
+      { name: "Google", href: "/admin/seo-submissions/google" },
+      { name: "Bing (IndexNow)", href: "/admin/seo-submissions/bing" },
+    ]
+  },
   { name: "AI 配置", href: "/admin/ai-config", icon: Bot },
   { name: "网站配置", href: "/admin/site-config", icon: Settings },
 ]

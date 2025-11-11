@@ -80,7 +80,9 @@ export function generateAlternateLanguages(path: string): Record<string, string>
 
     if (locale === defaultLocale) {
       // 默认语言不带前缀
-      languages[hreflangCode] = `${siteUrl}${cleanPath}`
+      // 特殊处理：首页不需要尾部斜杠（统一不带斜杠）
+      const defaultPath = cleanPath === '/' ? '' : cleanPath
+      languages[hreflangCode] = `${siteUrl}${defaultPath}`
     } else {
       // 其他语言带前缀
       // 特殊处理：非默认语言的首页不需要尾部斜杠（/zh 而不是 /zh/）
@@ -90,7 +92,9 @@ export function generateAlternateLanguages(path: string): Record<string, string>
   }
 
   // x-default 指向默认语言（作为未匹配语言的后备）
-  languages['x-default'] = `${siteUrl}${cleanPath}`
+  // 首页统一不带尾部斜杠
+  const xDefaultPath = cleanPath === '/' ? '' : cleanPath
+  languages['x-default'] = `${siteUrl}${xDefaultPath}`
 
   return languages
 }

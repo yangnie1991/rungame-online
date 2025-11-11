@@ -54,7 +54,16 @@ app/
 │   └── [locale]/            # 所有用户路由在 /{locale}/ 下
 │       ├── layout.tsx       # 根 HTML，包含 next-intl provider
 │       ├── page.tsx         # 首页
-│       ├── games/           # 游戏列表和详情页
+│       ├── games/           # 游戏列表页 (/games)
+│       ├── play/[slug]/     # 游戏详情页 (/play/{slug})
+│       ├── category/        # 分类页面
+│       ├── tag/             # 标签页面
+│       ├── collection/      # 收藏页面
+│       ├── search/          # 搜索页面
+│       ├── about/           # 关于页面
+│       ├── contact/         # 联系页面
+│       ├── privacy/         # 隐私政策
+│       ├── terms/           # 服务条款
 │       └── [slug]/          # 动态 PageType 路由
 │
 ├── api/                     # API 路由（无国际化）
