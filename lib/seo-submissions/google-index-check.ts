@@ -213,20 +213,32 @@ export async function checkGoogleIndexWithAPI(
     })
 
     // 判断是否已被索引
-    // 根据 Google Search Console API 文档：
-    // 1. coverageState 包含 "indexed" 表示已索引
-    // 2. verdict 为 'PASS' 表示页面可以被索引（但不一定已经被索引）
-    // 3. indexingState 为 'INDEXING_ALLOWED' 表示允许索引（但不一定已经被索引）
+    // 根据 Google Search Console API 文档和实际测试结果：
     //
-    // 正确的判断：主要看 coverageState 是否包含 "indexed"
-    const coverageState = indexStatusResult.coverageState || ''
-    const isIndexed = coverageState.toLowerCase().includes('indexed')
+    // verdict 判定结果（最重要）：
+    // - PASS: 有效（已收录）
+    // - FAIL: 错误/无效（未收录）
+    // - NEUTRAL: 已排除（未收录）
+    //
+    // indexingState 只表示是否"允许"索引，不表示是否"已经"索引：
+    // - INDEXING_ALLOWED: 允许编入索引（但不一定已索引）
+    // - BLOCKED_BY_META_TAG: 被 noindex 阻止
+    //
+    // coverageState 覆盖状态：
+    // - "Submitted and indexed": 已提交并已索引
+    // - "Crawled - currently not indexed": 已抓取但未索引
+    //
+    // 正确的判断：使用 verdict === 'PASS' 来判断是否已收录
+    const verdict = indexStatusResult.verdict || ''
+    const isIndexed = verdict === 'PASS'
 
     console.log('[Google Search Console API] ⚡ 收录判断:', {
       url,
-      coverageState,
+      verdict,
+      coverageState: indexStatusResult.coverageState,
+      indexingState: indexStatusResult.indexingState,
       isIndexed,
-      判断逻辑: `coverageState 包含 "indexed": ${isIndexed}`,
+      判断逻辑: `verdict === 'PASS': ${isIndexed}`,
     })
 
     return {
