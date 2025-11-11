@@ -121,6 +121,46 @@ export function GoogleSubmissionsClient({ config, submissions: initialSubmission
     }
   }, [searchParams, router])
 
+  // 从 config prop 初始化配置表单值
+  useEffect(() => {
+    if (config) {
+      console.log('[Google 配置初始化] 从 config prop 加载配置:', {
+        配置ID: config.id,
+        isEnabled: config.isEnabled,
+        siteUrl: config.siteUrl || '未配置',
+        extraConfig存在: !!config.extraConfig,
+      })
+
+      // 设置基础配置
+      setGoogleEnabled(config.isEnabled)
+      setGoogleSiteUrl(config.siteUrl || '')
+
+      // 从 extraConfig 中提取 OAuth 凭据
+      if (config.extraConfig && typeof config.extraConfig === 'object') {
+        const extraConfig = config.extraConfig as any
+
+        if (extraConfig.accessToken) {
+          setGoogleAccessToken(extraConfig.accessToken)
+          console.log('[Google 配置初始化] ✅ Access Token 已加载')
+        }
+        if (extraConfig.refreshToken) {
+          setGoogleRefreshToken(extraConfig.refreshToken)
+          console.log('[Google 配置初始化] ✅ Refresh Token 已加载')
+        }
+        if (extraConfig.clientId) {
+          setGoogleClientId(extraConfig.clientId)
+          console.log('[Google 配置初始化] ✅ Client ID 已加载')
+        }
+        if (extraConfig.clientSecret) {
+          setGoogleClientSecret(extraConfig.clientSecret)
+          console.log('[Google 配置初始化] ✅ Client Secret 已加载')
+        }
+      }
+    } else {
+      console.log('[Google 配置初始化] ⚠️ config prop 为空')
+    }
+  }, [config])
+
   // 重新计算统计数据
   const recalculateStats = (currentSubmissions: Submission[]) => {
     const total = currentSubmissions.length

@@ -49,6 +49,7 @@ async function getBingConfig() {
       type: true,
       isEnabled: true,
       apiKey: true,
+      siteUrl: true, // Site URL
       apiEndpoint: true, // IndexNow API URL
     },
   })

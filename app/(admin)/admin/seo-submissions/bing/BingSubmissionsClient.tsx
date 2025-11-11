@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -36,6 +36,7 @@ interface BingConfig {
   type: string
   isEnabled: boolean
   apiKey: string | null
+  siteUrl: string | null // Site URL
   apiEndpoint: string // IndexNow API URL
 }
 
@@ -91,6 +92,27 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
   const [bingTestUrl, setBingTestUrl] = useState('')
   const [isBingSaving, setIsBingSaving] = useState(false)
   const [isBingTesting, setIsBingTesting] = useState(false)
+
+  // 从 config prop 初始化配置表单值
+  useEffect(() => {
+    if (config) {
+      console.log('[Bing 配置初始化] 从 config prop 加载配置:', {
+        配置ID: config.id,
+        isEnabled: config.isEnabled,
+        apiKey: config.apiKey ? '已配置' : '未配置',
+        siteUrl: config.siteUrl || '未配置',
+      })
+
+      // 设置基础配置
+      setBingEnabled(config.isEnabled)
+      setBingApiKey(config.apiKey || '')
+      setBingSiteUrl(config.siteUrl || '')
+
+      console.log('[Bing 配置初始化] ✅ 配置已加载')
+    } else {
+      console.log('[Bing 配置初始化] ⚠️ config prop 为空')
+    }
+  }, [config])
 
   // 重新计算统计数据
   const recalculateStats = (currentSubmissions: Submission[]) => {
