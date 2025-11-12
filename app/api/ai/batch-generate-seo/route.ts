@@ -10,6 +10,7 @@ import {
   getRelevantSubKeywords,
   generateSeoRecommendations
 } from '@/lib/seo-content-helpers'
+import { parseAIJsonResponse } from '@/lib/ai-json-parser'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60  // SEO 生成可能需要更长时间
@@ -432,7 +433,7 @@ ${seoMetadata ? `**SEO 洞察**:
   const content = data.choices[0]?.message?.content || '{}'
 
   // 解析 JSON
-  const parsedContent = JSON.parse(content)
+  const parsedContent = parseAIJsonResponse(content, 'batch-seo-generate')
 
   // 验证字段
   const results: Record<string, string> = {}
@@ -532,7 +533,7 @@ ${webContents.length > 0 ? `**页面内容**:\n${webContents.slice(0, 3).map((c,
   }
 
   const analysisData = await analysisResponse.json()
-  const analysis = JSON.parse(analysisData.choices[0]?.message?.content || '{}')
+  const analysis = parseAIJsonResponse(analysisData.choices[0]?.message?.content || '{}', 'batch-seo-analysis')
 
   console.log('[质量模式] ✓ 分析完成')
 
@@ -615,7 +616,7 @@ ${JSON.stringify(analysis, null, 2)}
 
   const generationData = await generationResponse.json()
   const content = generationData.choices[0]?.message?.content || '{}'
-  const parsedContent = JSON.parse(content)
+  const parsedContent = parseAIJsonResponse(content, 'batch-seo-quality')
 
   // 验证字段
   const results: Record<string, string> = {}
