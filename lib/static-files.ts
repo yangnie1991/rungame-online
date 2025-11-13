@@ -37,6 +37,7 @@ export const ROOT_STATIC_FILES = [
   /^\/sitemap\.xml$/,          // 网站地图
   /^\/ads\.txt$/,              // Google AdSense 验证
   /^\/llms\.txt$/,             // LLM 爬虫规则（Claude、ChatGPT 等）
+  /^\/[a-f0-9]{8,128}\.txt$/,  // IndexNow API Key 文件（8-128位十六进制）
 
   // ============================================
   // PWA 必需文件
@@ -69,10 +70,16 @@ export const EXCLUDED_PATH_PREFIXES = [
  *
  * @example
  * isStaticDirectory('/assets/icons/logo.png') // true
+ * isStaticDirectory('/test/page.html') // true
+ * isStaticDirectory('/test.txt') // false (文件，不是目录)
  * isStaticDirectory('/zh/games') // false
  */
 export function isStaticDirectory(pathname: string): boolean {
-  return STATIC_DIRECTORIES.some(dir => pathname.startsWith(dir))
+  return STATIC_DIRECTORIES.some(dir => {
+    // 确保路径以目录开头，且下一个字符是 '/' 或者路径完全匹配
+    if (pathname === dir) return true // 完全匹配目录本身
+    return pathname.startsWith(dir + '/') // 匹配目录下的文件
+  })
 }
 
 /**

@@ -23,9 +23,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Loader2, Plus, TestTube } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Loader2, TestTube, Info } from 'lucide-react'
 import { checkBingIndexStatus, checkBingIndexBatch } from '../index-check-actions'
-import { submitBingUrls } from '../submit-engine-actions'
+import { submitBingUrls, submitBingUrlsDirect } from '../submit-engine-actions'
 import { generateAllUrlsToDatabase } from '../url-management-actions'
 import { updateBingConfig, testBingApi } from '../config-actions'
 import { toast } from 'sonner'
@@ -45,10 +47,11 @@ interface Submission {
   url: string
   urlType: string
   locale: string | null
-  status: string
+  bingSubmitStatus: string | null
   indexedByBing: boolean | null
   bingIndexedAt: Date | null
-  lastIndexCheckAt: Date | null
+  bingLastCheckAt: Date | null
+  bingIndexStatusRaw: any | null // Bing API 原始响应数据 (JSON)
   createdAt: Date
 }
 
@@ -131,12 +134,23 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     })
   }
 
-  // Submit tab 状态
+  // Submit tab 状态（保留旧的用于快速推送）
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedGames, setSelectedGames] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedPageTypes, setSelectedPageTypes] = useState<string[]>([])
+
+  // URL 推送页面状态
+  const [pushSubmitFilter, setPushSubmitFilter] = useState<string>('not_submitted') // 提交状态筛选：not_submitted, submitted, all
+  const [pushIndexFilter, setPushIndexFilter] = useState<string>('all') // 收录状态筛选：not_indexed, indexed, all
+  const [pushLocaleFilter, setPushLocaleFilter] = useState<string>('all') // 语言筛选
+  const [pushTypeFilter, setPushTypeFilter] = useState<string>('all') // 类型筛选
+  const [pushSelectedIds, setPushSelectedIds] = useState<string[]>([]) // 推送页面选中的IDs
+  const [pushCurrentPage, setPushCurrentPage] = useState(1) // 当前页码
+  const [pushPageSize, setPushPageSize] = useState(50) // 每页数量
+  const [pushingSingleId, setPushingSingleId] = useState<string | null>(null) // 正在单独推送的 ID
+  const [pushingBatchIds, setPushingBatchIds] = useState<string[]>([]) // 正在批量推送的 IDs
 
   // 获取所有唯一的语言列表
   const availableLocales = Array.from(new Set(submissions.map(s => s.locale).filter(Boolean)))
@@ -250,48 +264,6 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     }
   }
 
-  // 提交到 Bing (IndexNow)
-  const handleSubmitBing = async () => {
-    const totalSelected =
-      selectedGames.length +
-      selectedCategories.length +
-      selectedTags.length +
-      selectedPageTypes.length
-
-    if (totalSelected === 0) {
-      toast.error('请至少选择一个内容')
-      return
-    }
-
-    try {
-      setIsSubmitting(true)
-      toast.info('正在推送到 Bing...')
-
-      const result = await submitBingUrls({
-        games: selectedGames,
-        categories: selectedCategories,
-        tags: selectedTags,
-        pageTypes: selectedPageTypes,
-      })
-
-      if (result.success) {
-        toast.success(result.message)
-        // 清空选择
-        setSelectedGames([])
-        setSelectedCategories([])
-        setSelectedTags([])
-        setSelectedPageTypes([])
-        // 刷新页面
-        setTimeout(() => window.location.reload(), 1000)
-      } else {
-        toast.error(result.message)
-      }
-    } catch (error) {
-      toast.error('推送失败，请稍后重试')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   // 生成所有 URL 列表
   const handleGenerateAllUrls = async () => {
@@ -329,40 +301,6 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     }
   }
 
-  // 批量更新已收录 URL 的收录状态
-  const handleBatchCheckIndexed = async () => {
-    const indexedSubmissions = submissions.filter((s) => s.indexedByBing === true)
-
-    if (indexedSubmissions.length === 0) {
-      toast.error('没有已收录的 URL 需要检查')
-      return
-    }
-
-    const toCheck = indexedSubmissions.slice(0, 20) // 限制一次最多检查 20 个
-    const confirmed = window.confirm(
-      `确定要重新检查 ${toCheck.length} 个已收录 URL 的收录状态吗？\n\n这将调用 Bing Webmaster API 进行批量检查。`
-    )
-
-    if (!confirmed) return
-
-    try {
-      setIsBatchChecking(true)
-      toast.info(`正在检查 ${toCheck.length} 个 URL...`)
-
-      const result = await checkBingIndexBatch(toCheck.map((s) => s.id))
-
-      if (result.success) {
-        toast.success(result.message)
-        setTimeout(() => window.location.reload(), 1000)
-      } else {
-        toast.error(result.message)
-      }
-    } catch (error) {
-      toast.error('批量检查失败，请稍后重试')
-    } finally {
-      setIsBatchChecking(false)
-    }
-  }
 
   // 保存 Bing Webmaster API 配置
   const handleSaveBingConfig = async () => {
@@ -419,6 +357,139 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     }
   }
 
+  // URL 推送页面：根据筛选条件过滤提交记录
+  const pushFilteredSubmissions = submissions.filter((s) => {
+    // 提交状态筛选
+    if (pushSubmitFilter === 'not_submitted' && s.bingSubmitStatus !== null) return false
+    if (pushSubmitFilter === 'submitted' && s.bingSubmitStatus === null) return false
+
+    // 收录状态筛选
+    if (pushIndexFilter === 'not_indexed' && s.indexedByBing !== false) return false
+    if (pushIndexFilter === 'indexed' && s.indexedByBing !== true) return false
+
+    // 语言筛选
+    if (pushLocaleFilter !== 'all' && s.locale !== pushLocaleFilter) return false
+
+    // 类型筛选
+    if (pushTypeFilter !== 'all' && s.urlType !== pushTypeFilter) return false
+
+    return true
+  })
+
+  // URL 推送页面：分页数据
+  const pushPaginatedSubmissions = pushFilteredSubmissions.slice(
+    (pushCurrentPage - 1) * pushPageSize,
+    pushCurrentPage * pushPageSize
+  )
+
+  // URL 推送页面：总页数
+  const pushTotalPages = Math.ceil(pushFilteredSubmissions.length / pushPageSize)
+
+  // URL 推送页面：处理全选/取消全选
+  const handlePushSelectAll = (checked: boolean) => {
+    if (checked) {
+      setPushSelectedIds(pushPaginatedSubmissions.map((s) => s.id))
+    } else {
+      setPushSelectedIds([])
+    }
+  }
+
+  // URL 推送页面：处理单个复选框
+  const handlePushSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setPushSelectedIds([...pushSelectedIds, id])
+    } else {
+      setPushSelectedIds(pushSelectedIds.filter((selectedId) => selectedId !== id))
+    }
+  }
+
+  // URL 推送页面：批量推送选中的 URL
+  const handlePushBatchSubmit = async () => {
+    if (pushSelectedIds.length === 0) {
+      toast.error('请选择要推送的 URL')
+      return
+    }
+
+    setIsSubmitting(true)
+    setPushingBatchIds(pushSelectedIds) // 标记正在批量推送的 IDs
+    try {
+      // 直接传递选中的 submission IDs
+      const result = await submitBingUrlsDirect(pushSelectedIds)
+
+      if (result.success) {
+        toast.success(result.message)
+        // 清空选中
+        setPushSelectedIds([])
+        setPushingBatchIds([])
+        // 刷新页面
+        window.location.reload()
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '推送失败')
+    } finally {
+      setIsSubmitting(false)
+      setPushingBatchIds([]) // 清空批量推送标记
+    }
+  }
+
+  // URL 推送页面：单独推送一个 URL
+  const handlePushSingleSubmit = async (submissionId: string) => {
+    setPushingSingleId(submissionId)
+    try {
+      const result = await submitBingUrlsDirect([submissionId])
+
+      if (result.success) {
+        toast.success(result.message)
+        // 刷新页面
+        window.location.reload()
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '推送失败')
+    } finally {
+      setPushingSingleId(null)
+    }
+  }
+
+  // URL 推送页面：批量检查选中的 URL 收录状态
+  const handlePushBatchCheck = async () => {
+    if (pushSelectedIds.length === 0) {
+      toast.error('请选择要检查的 URL')
+      return
+    }
+
+    // 限制一次最多检查 20 个
+    const toCheckIds = pushSelectedIds.slice(0, 20)
+    const confirmed = window.confirm(
+      `确定要检查 ${toCheckIds.length} 个 URL 的收录状态吗？\n\n这将调用 Bing Webmaster API 进行批量检查。`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setIsBatchChecking(true)
+      toast.info(`正在检查 ${toCheckIds.length} 个 URL...`)
+
+      const result = await checkBingIndexBatch(toCheckIds)
+
+      if (result.success) {
+        toast.success(result.message)
+        setPushSelectedIds([])
+        setTimeout(() => window.location.reload(), 1000)
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      toast.error('批量检查失败，请稍后重试')
+    } finally {
+      setIsBatchChecking(false)
+    }
+  }
+
+
   return (
     <>
       {/* 统计卡片 */}
@@ -432,27 +503,25 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
             <p className="text-xs text-muted-foreground mb-3">
               提交到 IndexNow
             </p>
-            {stats.total === 0 && (
-              <Button
-                onClick={handleGenerateAllUrls}
-                disabled={isGeneratingUrls}
-                size="sm"
-                variant="outline"
-                className="w-full"
-              >
-                {isGeneratingUrls ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                    生成中...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-3 w-3 mr-2" />
-                    生成 URL 列表
-                  </>
-                )}
-              </Button>
-            )}
+            <Button
+              onClick={handleGenerateAllUrls}
+              disabled={isGeneratingUrls}
+              size="sm"
+              variant="outline"
+              className="w-full"
+            >
+              {isGeneratingUrls ? (
+                <>
+                  <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                  更新中...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-3 w-3 mr-2" />
+                  {stats.total === 0 ? '生成 URL 列表' : '更新 URL 列表'}
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
@@ -463,30 +532,9 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.indexed}</div>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-xs text-muted-foreground">
               收录率: {stats.indexRate}%
             </p>
-            {stats.indexed > 0 && (
-              <Button
-                onClick={handleBatchCheckIndexed}
-                disabled={isBatchChecking}
-                size="sm"
-                variant="outline"
-                className="w-full"
-              >
-                {isBatchChecking ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                    检查中...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2" />
-                    批量更新收录
-                  </>
-                )}
-              </Button>
-            )}
           </CardContent>
         </Card>
 
@@ -627,6 +675,7 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                         <TableHead>类型</TableHead>
                         <TableHead>语言</TableHead>
                         <TableHead>收录状态</TableHead>
+                        <TableHead>详细状态</TableHead>
                         <TableHead>收录时间</TableHead>
                         <TableHead>最后检查</TableHead>
                         <TableHead>操作</TableHead>
@@ -681,14 +730,128 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                               </Badge>
                             )}
                           </TableCell>
+                          <TableCell className="text-xs">
+                            {/* 只在有 API 响应数据时显示详细状态 */}
+                            {submission.bingIndexStatusRaw ? (
+                              <Dialog>
+                                <TooltipProvider>
+                                  <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                      <DialogTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs"
+                                        >
+                                          <Info className="h-3 w-3 mr-1" />
+                                          详细
+                                        </Button>
+                                      </DialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs bg-white text-gray-900 border-gray-200 shadow-lg">
+                                      <div className="space-y-1 text-xs">
+                                        <div><span className="font-semibold">最后抓取:</span> {submission.bingIndexStatusRaw.LastCrawledDate ? new Date(submission.bingIndexStatusRaw.LastCrawledDate).toLocaleDateString('zh-CN') : '-'}</div>
+                                        <div><span className="font-semibold">发现日期:</span> {submission.bingIndexStatusRaw.DiscoveryDate ? new Date(submission.bingIndexStatusRaw.DiscoveryDate).toLocaleDateString('zh-CN') : '-'}</div>
+                                        <div><span className="font-semibold">HTTP状态:</span> {submission.bingIndexStatusRaw.HttpStatus || '-'}</div>
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>Bing 收录详细状态</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      {/* URL */}
+                                      <div>
+                                        <div className="font-semibold text-sm text-gray-900">URL</div>
+                                        <div className="text-sm text-gray-600 break-all">{submission.url}</div>
+                                      </div>
+
+                                      {/* 最后抓取时间 */}
+                                      {submission.bingIndexStatusRaw.LastCrawledDate && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">最后抓取时间 (Last Crawled Date)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {new Date(submission.bingIndexStatusRaw.LastCrawledDate).toLocaleString('zh-CN')}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 发现日期 */}
+                                      {submission.bingIndexStatusRaw.DiscoveryDate && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">发现日期 (Discovery Date)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {new Date(submission.bingIndexStatusRaw.DiscoveryDate).toLocaleString('zh-CN')}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* HTTP 状态码 */}
+                                      {submission.bingIndexStatusRaw.HttpStatus && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">HTTP 状态码 (HTTP Status)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {submission.bingIndexStatusRaw.HttpStatus}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 文档大小 */}
+                                      {submission.bingIndexStatusRaw.DocumentSize && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">文档大小 (Document Size)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {(submission.bingIndexStatusRaw.DocumentSize / 1024).toFixed(2)} KB
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 锚文本数量 */}
+                                      {submission.bingIndexStatusRaw.AnchorCount !== undefined && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">锚文本数量 (Anchor Count)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {submission.bingIndexStatusRaw.AnchorCount}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 子 URL 数量 */}
+                                      {submission.bingIndexStatusRaw.TotalChildUrlCount !== undefined && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">子 URL 数量 (Total Child URL Count)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {submission.bingIndexStatusRaw.TotalChildUrlCount}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 是否为页面 */}
+                                      {submission.bingIndexStatusRaw.IsPage !== undefined && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">是否为页面 (Is Page)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {submission.bingIndexStatusRaw.IsPage ? '是' : '否'}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                </DialogContent>
+                              </Dialog>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {submission.bingIndexedAt
                               ? new Date(submission.bingIndexedAt).toLocaleDateString('zh-CN')
                               : '-'}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {submission.lastIndexCheckAt
-                              ? new Date(submission.lastIndexCheckAt).toLocaleDateString('zh-CN')
+                            {submission.bingLastCheckAt
+                              ? new Date(submission.bingLastCheckAt).toLocaleDateString('zh-CN')
                               : '-'}
                           </TableCell>
                           <TableCell>
@@ -715,119 +878,301 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
 
       {/* URL 推送 Tab */}
       <TabsContent value="submit" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>URL 推送</CardTitle>
-            <CardDescription>
-              通过 IndexNow 协议主动推送 URL 到 Bing、Yandex 等搜索引擎
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* 选择内容 */}
-              <div>
-                <h3 className="text-sm font-medium mb-2">选择要推送的内容</h3>
-                <div className="grid grid-cols-4 gap-2">
+        {/* 批量操作栏 */}
+        {pushSelectedIds.length > 0 && (
+          <Card>
+            <CardContent className="py-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  已选择 {pushSelectedIds.length} 个 URL
+                </span>
+                <div className="flex gap-2">
                   <Button
-                    variant={selectedGames.length > 0 ? 'default' : 'outline'}
+                    onClick={handlePushBatchSubmit}
                     size="sm"
-                    onClick={() => {
-                      const ids = prompt('请输入游戏ID（用逗号分隔）:')
-                      if (ids) {
-                        setSelectedGames(ids.split(',').map((id) => id.trim()))
-                      }
-                    }}
+                    disabled={isSubmitting || isBatchChecking}
                   >
-                    游戏 {selectedGames.length > 0 && `(${selectedGames.length})`}
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        推送中...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        批量推送
+                      </>
+                    )}
                   </Button>
                   <Button
-                    variant={selectedCategories.length > 0 ? 'default' : 'outline'}
+                    onClick={handlePushBatchCheck}
                     size="sm"
-                    onClick={() => {
-                      const ids = prompt('请输入分类ID（用逗号分隔）:')
-                      if (ids) {
-                        setSelectedCategories(ids.split(',').map((id) => id.trim()))
-                      }
-                    }}
+                    variant="outline"
+                    disabled={isSubmitting || isBatchChecking}
                   >
-                    分类 {selectedCategories.length > 0 && `(${selectedCategories.length})`}
-                  </Button>
-                  <Button
-                    variant={selectedTags.length > 0 ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      const ids = prompt('请输入标签ID（用逗号分隔）:')
-                      if (ids) {
-                        setSelectedTags(ids.split(',').map((id) => id.trim()))
-                      }
-                    }}
-                  >
-                    标签 {selectedTags.length > 0 && `(${selectedTags.length})`}
-                  </Button>
-                  <Button
-                    variant={selectedPageTypes.length > 0 ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      const ids = prompt('请输入页面ID（用逗号分隔）:')
-                      if (ids) {
-                        setSelectedPageTypes(ids.split(',').map((id) => id.trim()))
-                      }
-                    }}
-                  >
-                    页面 {selectedPageTypes.length > 0 && `(${selectedPageTypes.length})`}
+                    {isBatchChecking ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        检查中...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        批量检查收录
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
 
-              {/* 推送按钮 */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-medium mb-2">推送到 Bing</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  系统将自动生成所有语言版本的 URL 并通过 IndexNow API 推送到 Bing、Yandex
-                  等搜索引擎。推送成功后，这些 URL 会出现在"收录检查"标签页中。
-                </p>
-                <Button
-                  onClick={handleSubmitBing}
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      推送中...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      开始推送
-                      {selectedGames.length +
-                        selectedCategories.length +
-                        selectedTags.length +
-                        selectedPageTypes.length >
-                        0 &&
-                        ` (${
-                          selectedGames.length +
-                          selectedCategories.length +
-                          selectedTags.length +
-                          selectedPageTypes.length
-                        } 项)`}
-                    </>
-                  )}
-                </Button>
+        {/* URL 列表 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>URL 推送列表</CardTitle>
+            <CardDescription>
+              选择 URL 并推送到 Bing（通过 IndexNow 协议）
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* 筛选器 */}
+            <div className="flex flex-wrap items-center gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">提交状态:</span>
+                <Select value={pushSubmitFilter} onValueChange={setPushSubmitFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_submitted">未提交</SelectItem>
+                    <SelectItem value="submitted">已提交</SelectItem>
+                    <SelectItem value="all">全部</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* 说明 */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h4 className="text-sm font-medium mb-2">关于 IndexNow</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• IndexNow 是一个开放协议，允许网站主动通知搜索引擎</li>
-                  <li>• 提交的 URL 会同步到多个搜索引擎：Bing、Yandex、Seznam、Naver</li>
-                  <li>• 推荐批量提交 100-500 个 URL，最多支持 10,000 个</li>
-                  <li>• 主动推送可以加快收录速度，但不保证一定会被收录</li>
-                  <li>• 推送后需要一段时间才能看到收录结果，请在"收录检查"中查看</li>
-                </ul>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">收录状态:</span>
+                <Select value={pushIndexFilter} onValueChange={setPushIndexFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_indexed">未收录</SelectItem>
+                    <SelectItem value="indexed">已收录</SelectItem>
+                    <SelectItem value="all">全部</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">语言:</span>
+                <Select value={pushLocaleFilter} onValueChange={setPushLocaleFilter}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部语言</SelectItem>
+                    {availableLocales.map((locale) => (
+                      <SelectItem key={locale} value={locale || ''}>
+                        {locale?.toUpperCase() || '未知'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">类型:</span>
+                <Select value={pushTypeFilter} onValueChange={setPushTypeFilter}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部类型</SelectItem>
+                    {availableTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {typeNames[type] || type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-sm font-medium">每页:</span>
+                <Select
+                  value={pushPageSize.toString()}
+                  onValueChange={(v) => {
+                    setPushPageSize(Number(v))
+                    setPushCurrentPage(1) // 重置到第一页
+                  }}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="20">20 条</SelectItem>
+                    <SelectItem value="50">50 条</SelectItem>
+                    <SelectItem value="100">100 条</SelectItem>
+                    <SelectItem value="200">200 条</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+
+            {/* 统计信息 */}
+            <div className="text-sm text-muted-foreground mb-4">
+              共 {pushFilteredSubmissions.length} 个 URL，显示第 {pushPaginatedSubmissions.length > 0 ? (pushCurrentPage - 1) * pushPageSize + 1 : 0} - {Math.min(pushCurrentPage * pushPageSize, pushFilteredSubmissions.length)} 条
+            </div>
+
+            {/* URL 表格 */}
+            {pushPaginatedSubmissions.length === 0 ? (
+              <div className="py-12 text-center text-muted-foreground">
+                <Send className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="mb-2">没有符合条件的 URL</p>
+                <p className="text-sm">尝试调整筛选条件</p>
+              </div>
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={pushSelectedIds.length === pushPaginatedSubmissions.length && pushPaginatedSubmissions.length > 0}
+                          onCheckedChange={handlePushSelectAll}
+                        />
+                      </TableHead>
+                      <TableHead>URL</TableHead>
+                      <TableHead>类型</TableHead>
+                      <TableHead>语言</TableHead>
+                      <TableHead>提交状态</TableHead>
+                      <TableHead>收录状态</TableHead>
+                      <TableHead>提交时间</TableHead>
+                      <TableHead className="w-24">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pushPaginatedSubmissions.map((submission) => (
+                      <TableRow key={submission.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={pushSelectedIds.includes(submission.id)}
+                            onCheckedChange={(checked) =>
+                              handlePushSelectOne(submission.id, checked as boolean)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="font-mono text-xs max-w-md truncate">
+                          <a
+                            href={submission.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline text-blue-600"
+                          >
+                            {submission.url}
+                          </a>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {typeNames[submission.urlType] || submission.urlType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {submission.locale?.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {submission.bingSubmitStatus ? (
+                            <Badge className="bg-green-100 text-green-700">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              已提交
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-gray-100 text-gray-700">
+                              <Clock className="h-3 w-3 mr-1" />
+                              未提交
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {submission.indexedByBing === true ? (
+                            <Badge className="bg-green-100 text-green-700 whitespace-nowrap">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              已收录
+                            </Badge>
+                          ) : submission.indexedByBing === false ? (
+                            <Badge className="bg-red-100 text-red-700 whitespace-nowrap">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              未收录
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-gray-100 text-gray-700 whitespace-nowrap">
+                              <Clock className="h-3 w-3 mr-1" />
+                              未检查
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {submission.bingSubmitStatus
+                            ? new Date(submission.createdAt).toLocaleDateString('zh-CN')
+                            : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePushSingleSubmit(submission.id)}
+                            disabled={pushingSingleId !== null || pushingBatchIds.length > 0}
+                            className="h-8"
+                          >
+                            {pushingSingleId === submission.id || pushingBatchIds.includes(submission.id) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <Send className="h-3 w-3 mr-1" />
+                                推送
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {/* 分页控制 */}
+                {pushTotalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-muted-foreground">
+                      第 {pushCurrentPage} 页，共 {pushTotalPages} 页
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPushCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={pushCurrentPage === 1}
+                      >
+                        上一页
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPushCurrentPage((p) => Math.min(pushTotalPages, p + 1))}
+                        disabled={pushCurrentPage === pushTotalPages}
+                      >
+                        下一页
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
       </TabsContent>

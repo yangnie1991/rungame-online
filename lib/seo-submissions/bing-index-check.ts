@@ -9,6 +9,7 @@ export interface BingIndexCheckResult {
   isIndexed: boolean
   checkedAt: Date
   method: 'search' | 'api'
+  statusRaw?: any // 完整的 API 响应数据
   error?: string
 }
 
@@ -198,6 +199,7 @@ export async function checkBingIndexWithAPI(
         isIndexed: false,
         checkedAt,
         method: 'api',
+        statusRaw: null,
       }
     }
 
@@ -217,6 +219,7 @@ export async function checkBingIndexWithAPI(
       isIndexed,
       checkedAt,
       method: 'api',
+      statusRaw: data.d, // 保存完整的 API 响应数据
     }
   } catch (error) {
     console.error('[Bing Webmaster API] 错误:', error)

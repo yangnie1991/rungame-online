@@ -31,17 +31,24 @@ export async function submitUrl(
   try {
     const endpoint = config.apiEndpoint || 'https://api.indexnow.org/indexnow'
 
+    // 构造请求体（keyLocation 是可选的）
+    const requestBody: any = {
+      host: config.host,
+      key: config.apiKey,
+      urlList: [url],
+    }
+
+    // 只有当 keyLocation 存在且不为空时才包含
+    if (config.keyLocation && config.keyLocation.trim() !== '') {
+      requestBody.keyLocation = config.keyLocation
+    }
+
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        host: config.host,
-        key: config.apiKey,
-        keyLocation: config.keyLocation,
-        urlList: [url],
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     const responseTime = Date.now() - startTime
@@ -129,17 +136,24 @@ export async function submitUrls(
     try {
       const endpoint = config.apiEndpoint || 'https://api.indexnow.org/indexnow'
 
+      // 构造请求体（keyLocation 是可选的）
+      const requestBody: any = {
+        host: config.host,
+        key: config.apiKey,
+        urlList: batch,
+      }
+
+      // 只有当 keyLocation 存在且不为空时才包含
+      if (config.keyLocation && config.keyLocation.trim() !== '') {
+        requestBody.keyLocation = config.keyLocation
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          host: config.host,
-          key: config.apiKey,
-          keyLocation: config.keyLocation,
-          urlList: batch,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const responseTime = Date.now() - startTime
