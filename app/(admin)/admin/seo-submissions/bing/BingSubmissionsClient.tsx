@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Loader2, Plus, TestTube, Info } from 'lucide-react'
 import { checkBingIndexStatus, checkBingIndexBatch } from '../index-check-actions'
-import { submitBingUrls } from '../submit-engine-actions'
+import { submitBingUrls, submitBingUrlsDirect } from '../submit-engine-actions'
 import { generateAllUrlsToDatabase } from '../url-management-actions'
 import { updateBingConfig, testBingApi } from '../config-actions'
 import { toast } from 'sonner'
@@ -486,6 +486,54 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
 
     setIsSubmitting(true)
     try {
+      // 直接传递选中的 submission IDs
+      const result = await submitBingUrlsDirect(pushSelectedIds)
+
+      if (result.success) {
+        toast.success(result.message)
+        // 清空选中
+        setPushSelectedIds([])
+        // 刷新页面
+        window.location.reload()
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '推送失败')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // URL 推送页面：单独推送一个 URL
+  const handlePushSingleSubmit = async (submissionId: string) => {
+    setIsSubmitting(true)
+    try {
+      const result = await submitBingUrlsDirect([submissionId])
+
+      if (result.success) {
+        toast.success(result.message)
+        // 刷新页面
+        window.location.reload()
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '推送失败')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // 旧的批量推送函数（保留用于选择内容推送）
+  const handlePushSelectedContent = async () => {
+    if (pushSelectedIds.length === 0) {
+      toast.error('请选择要推送的 URL')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
       const selectedSubmissions = submissions.filter(s => pushSelectedIds.includes(s.id))
 
       // 按类型分组
@@ -529,27 +577,25 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
             <p className="text-xs text-muted-foreground mb-3">
               提交到 IndexNow
             </p>
-            {stats.total === 0 && (
-              <Button
-                onClick={handleGenerateAllUrls}
-                disabled={isGeneratingUrls}
-                size="sm"
-                variant="outline"
-                className="w-full"
-              >
-                {isGeneratingUrls ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                    生成中...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-3 w-3 mr-2" />
-                    生成 URL 列表
-                  </>
-                )}
-              </Button>
-            )}
+            <Button
+              onClick={handleGenerateAllUrls}
+              disabled={isGeneratingUrls}
+              size="sm"
+              variant="outline"
+              className="w-full"
+            >
+              {isGeneratingUrls ? (
+                <>
+                  <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                  更新中...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-3 w-3 mr-2" />
+                  {stats.total === 0 ? '生成 URL 列表' : '更新 URL 列表'}
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
@@ -1083,6 +1129,7 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                       <TableHead>提交状态</TableHead>
                       <TableHead>收录状态</TableHead>
                       <TableHead>提交时间</TableHead>
+                      <TableHead className="w-24">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1131,17 +1178,17 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                         </TableCell>
                         <TableCell className="text-xs">
                           {submission.indexedByBing === true ? (
-                            <Badge className="bg-green-100 text-green-700">
+                            <Badge className="bg-green-100 text-green-700 whitespace-nowrap">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               已收录
                             </Badge>
                           ) : submission.indexedByBing === false ? (
-                            <Badge className="bg-red-100 text-red-700">
+                            <Badge className="bg-red-100 text-red-700 whitespace-nowrap">
                               <XCircle className="h-3 w-3 mr-1" />
                               未收录
                             </Badge>
                           ) : (
-                            <Badge className="bg-gray-100 text-gray-700">
+                            <Badge className="bg-gray-100 text-gray-700 whitespace-nowrap">
                               <Clock className="h-3 w-3 mr-1" />
                               未检查
                             </Badge>
@@ -1151,6 +1198,24 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                           {submission.bingSubmitStatus
                             ? new Date(submission.createdAt).toLocaleDateString('zh-CN')
                             : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePushSingleSubmit(submission.id)}
+                            disabled={isSubmitting}
+                            className="h-8"
+                          >
+                            {isSubmitting ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <Send className="h-3 w-3 mr-1" />
+                                推送
+                              </>
+                            )}
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

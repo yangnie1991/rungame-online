@@ -229,6 +229,140 @@ export async function markGoogleUrlsAsSubmitted(
 }
 
 /**
+ * Bing: 直接推送指定的 URLs（通过 IndexNow）
+ * 用于从 URL 列表中直接推送已存在的 submission
+ */
+export async function submitBingUrlsDirect(
+  submissionIds: string[]
+): Promise<{ success: boolean; message: string; stats?: any }> {
+  try {
+    if (submissionIds.length === 0) {
+      return {
+        success: false,
+        message: '请选择要推送的 URL',
+      }
+    }
+
+    // 获取 Bing IndexNow 配置
+    const bingConfig = await prisma.searchEngineConfig.findFirst({
+      where: { type: 'indexnow' },
+    })
+
+    if (!bingConfig || !bingConfig.isEnabled) {
+      return {
+        success: false,
+        message: 'Bing IndexNow 配置未启用',
+      }
+    }
+
+    if (!bingConfig.apiKey) {
+      return {
+        success: false,
+        message: 'Bing IndexNow API Key 未配置',
+      }
+    }
+
+    // 1. 从数据库获取所有选中的 submissions
+    const submissions = await prisma.urlSubmission.findMany({
+      where: { id: { in: submissionIds } },
+      select: { id: true, url: true },
+    })
+
+    if (submissions.length === 0) {
+      return {
+        success: false,
+        message: '未找到选中的 URL',
+      }
+    }
+
+    // 2. 更新状态为 PENDING
+    await prisma.urlSubmission.updateMany({
+      where: { id: { in: submissionIds } },
+      data: { bingSubmitStatus: 'PENDING' },
+    })
+
+    // 3. 调用 IndexNow API
+    try {
+      const urlList = submissions.map((s) => s.url)
+
+      const results = await submitToIndexNow(
+        urlList,
+        {
+          apiKey: bingConfig.apiKey,
+          keyLocation: bingConfig.extraConfig?.keyLocation || '',
+          host: new URL(bingConfig.siteUrl!).hostname,
+          apiEndpoint: bingConfig.apiEndpoint,
+        },
+        100 // 每批 100 个 URL
+      )
+
+      // 4. 更新提交记录状态
+      let successCount = 0
+      let failedCount = 0
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i]
+        const submission = submissions[i]
+
+        if (submission) {
+          await prisma.urlSubmission.update({
+            where: { id: submission.id },
+            data: {
+              bingSubmitStatus: result.success ? 'SUCCESS' : 'FAILED',
+              bingSubmitStatusMessage: result.message,
+              bingSubmitHttpStatus: result.statusCode,
+              bingSubmitResponseTime: result.responseTime,
+              bingSubmittedAt: new Date(),
+            },
+          })
+
+          if (result.success) {
+            successCount++
+          } else {
+            failedCount++
+          }
+        }
+      }
+
+      revalidatePath('/admin/seo-submissions/bing')
+
+      return {
+        success: true,
+        message: `成功推送 ${successCount} 个 URL，失败 ${failedCount} 个`,
+        stats: {
+          total: submissions.length,
+          success: successCount,
+          failed: failedCount,
+        },
+      }
+    } catch (error) {
+      console.error('[Bing推送] IndexNow API 错误:', error)
+
+      // 标记所有为失败
+      await prisma.urlSubmission.updateMany({
+        where: { id: { in: submissionIds } },
+        data: {
+          bingSubmitStatus: 'FAILED',
+          bingSubmitStatusMessage:
+            error instanceof Error ? error.message : '推送过程中发生错误',
+        },
+      })
+
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'IndexNow 推送失败',
+      }
+    }
+  } catch (error) {
+    console.error('[Bing推送] 错误:', error)
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '推送过程中发生错误',
+    }
+  }
+}
+
+/**
  * Bing: 自动推送URLs（通过IndexNow）
  */
 export async function submitBingUrls(
