@@ -93,7 +93,13 @@ export async function getPageTypeGames(
           },
           skip,
           take: limit,
-          include: {
+          select: {
+            slug: true,
+            thumbnail: true,
+            // 主表的英文字段（作为回退值）
+            title: true,
+            description: true,
+            // 翻译表
             translations: {
               where: buildLocaleCondition(locale),
               select: { title: true, description: true, locale: true },
@@ -136,7 +142,13 @@ export async function getPageTypeGames(
             slug: { notIn: Array.from(existingSlugs) },
           },
           take: neededCount,
-          include: {
+          select: {
+            slug: true,
+            thumbnail: true,
+            // 主表的英文字段（作为回退值）
+            title: true,
+            description: true,
+            // 翻译表
             translations: {
               where: buildLocaleCondition(locale),
               select: { title: true, description: true, locale: true },
@@ -170,8 +182,8 @@ export async function getPageTypeGames(
         }
       }
 
-      // 获取翻译版 pageInfo（如果存在）
-      const translationPageInfo = pageType.translations.find((t: any) => t.locale === locale)?.pageInfo
+      // 获取当前语言的翻译对象
+      const pageTypeTranslation = pageType.translations.find((t: any) => t.locale === locale)
 
       // 组装并返回结果
       return {
@@ -179,17 +191,21 @@ export async function getPageTypeGames(
           slug: pageType.slug,
           type: pageType.type,
           icon: pageType.icon,
-          title: getTranslatedField(pageType.translations, locale, "title", pageType.title),
-          description: getTranslatedField(pageType.translations, locale, "description", pageType.description || ""),
-          metaTitle: getTranslatedField(pageType.translations, locale, "metaTitle", pageType.metaTitle || ""),
-          metaDescription: getTranslatedField(
-            pageType.translations,
-            locale,
-            "metaDescription",
-            pageType.metaDescription || ""
-          ),
+          // ✨ 修复：对于英语，直接使用主表字段；其他语言使用翻译并回退到主表
+          title: locale === "en"
+            ? pageType.title
+            : (pageTypeTranslation?.title || pageType.title),
+          description: locale === "en"
+            ? (pageType.description || "")
+            : (pageTypeTranslation?.description || pageType.description || ""),
+          metaTitle: locale === "en"
+            ? (pageType.metaTitle || "")
+            : (pageTypeTranslation?.metaTitle || pageType.metaTitle || ""),
+          metaDescription: locale === "en"
+            ? (pageType.metaDescription || "")
+            : (pageTypeTranslation?.metaDescription || pageType.metaDescription || ""),
           pageInfo: pageType.pageInfo, // ✨ 主表的 pageInfo
-          translationPageInfo, // ✨ 翻译版的 pageInfo
+          translationPageInfo: pageTypeTranslation?.pageInfo, // ✨ 翻译版的 pageInfo
         },
         games: games.map((game) => {
           // 获取子分类和主分类信息
@@ -200,11 +216,23 @@ export async function getPageTypeGames(
           const subCategoryInfo = subCategoryId ? Object.values(categoriesDataMap).find(cat => cat.id === subCategoryId) : undefined
           const mainCategoryInfo = mainCategoryId ? Object.values(categoriesDataMap).find(cat => cat.id === mainCategoryId) : undefined
 
+          // ✨ 修复：获取当前语言的翻译对象
+          const gameTranslation = game.translations.find((t: any) => t.locale === locale)
+
+          // ✨ 修复：对于英语，直接使用主表字段；其他语言使用翻译并回退到主表
+          const gameTitle = locale === "en"
+            ? game.title
+            : (gameTranslation?.title || game.title)
+
+          const gameDescription = locale === "en"
+            ? (game.description || "")
+            : (gameTranslation?.description || game.description || "")
+
           return {
             slug: game.slug,
             thumbnail: game.thumbnail,
-            title: getTranslatedField(game.translations, locale, "title", "Untitled"),
-            description: getTranslatedField(game.translations, locale, "description", ""),
+            title: gameTitle,
+            description: gameDescription,
             category: categoryTranslations[subCategoryId || ""] || "",
             categorySlug: subCategoryInfo?.slug,
             mainCategorySlug: mainCategoryInfo?.slug,
