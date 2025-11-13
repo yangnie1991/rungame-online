@@ -88,8 +88,8 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
       site: '@rungame',
     },
     alternates: {
-      // 首页canonical: 英文是 /，其他语言是 /{locale} （不带尾部斜杠）
-      canonical: `${siteUrl}${locale === 'en' ? '/' : `/${locale}`}`,
+      // 首页canonical: 所有语言都不带尾部斜杠
+      canonical: `${siteUrl}${locale === 'en' ? '' : `/${locale}`}`,
       languages: generateAlternateLanguages('/'),
     },
   }
@@ -242,7 +242,7 @@ export default async function HomePage({ params }: HomePageProps) {
         subtitleDetailed={locale === 'zh' ? '抢先体验新鲜玩法' : 'Be the first to try new gameplay'}
         icon="🆕"
         games={formatGames(newestGames)}
-        viewAllLink="/collection/newest"
+        viewAllLink="/collection/new-games"
         locale={locale}
         enableCategoryLink={false}
         enableTagLinks={false}

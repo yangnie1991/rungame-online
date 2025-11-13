@@ -1,0 +1,219 @@
+// ==================== SEO URL提交系统 ====================
+// 此文件包含搜索引擎URL提交功能所需的数据模型
+// 使用时需要将这些模型添加到主 schema.prisma 文件中
+
+// ==================== 枚举定义 ====================
+
+// URL提交状态枚举
+enum SubmissionStatus {
+  PENDING    // 待提交
+  SUBMITTED  // 已提交（等待响应）
+  SUCCESS    // 成功
+  FAILED     // 失败
+  RETRYING   // 重试中
+}
+
+// 批量提交任务状态枚举
+enum BatchStatus {
+  PENDING    // 待处理
+  PROCESSING // 处理中
+  COMPLETED  // 已完成
+  FAILED     // 失败
+  CANCELLED  // 已取消
+}
+
+// ==================== 数据模型 ====================
+
+// 搜索引擎配置表
+model SearchEngineConfig {
+  id       String  @id @default(cuid())
+
+  // ========== 基本信息 ==========
+  name     String  // 搜索引擎名称：Bing, Baidu, Yandex, Google
+  slug     String  @unique // 标识符：bing-indexnow, baidu, yandex, google
+  type     String  // 类型：indexnow, baidu, google, custom
+  icon     String? // 图标URL或emoji (🔍, 🌐)
+
+  description String? // 描述信息
+
+  // ========== API配置 ==========
+  apiEndpoint String  @map("api_endpoint") // API端点URL
+  apiKey      String? @map("api_key")      // API密钥（需加密存储）
+  apiToken    String? @map("api_token")    // API令牌（百度使用）
+  siteUrl     String? @map("site_url")     // 网站URL（百度需要）
+
+  // ========== 额外配置（JSON）==========
+  extraConfig Json? @default("{}") @map("extra_config")
+  // 结构示例：
+  // {
+  //   "keyLocation": "https://rungame.online/{api-key}.txt",  // IndexNow验证文件位置
+  //   "dailyQuota": 500,         // 每日配额限制
+  //   "batchSize": 100,          // 单次批量提交大小
+  //   "timeout": 30000,          // API超时时间（ms）
+  //   "retryDelay": 60000,       // 重试延迟时间（ms）
+  //   "userAgent": "RunGame Bot" // 自定义User-Agent
+  // }
+
+  // ========== 状态配置 ==========
+  isEnabled    Boolean @default(true) @map("is_enabled")     // 是否启用
+  autoSubmit   Boolean @default(false) @map("auto_submit")   // 是否自动提交（内容发布时）
+  sortOrder    Int     @default(0) @map("sort_order")         // 显示排序
+
+  // ========== 统计数据 ==========
+  totalSubmitted Int       @default(0) @map("total_submitted") // 总提交URL数
+  totalSuccess   Int       @default(0) @map("total_success")   // 总成功数
+  totalFailed    Int       @default(0) @map("total_failed")    // 总失败数
+  lastSubmitAt   DateTime? @map("last_submit_at")              // 最后提交时间
+
+  // ========== 时间戳 ==========
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // ========== 关联关系 ==========
+  submissions UrlSubmission[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([isEnabled])
+  @@index([autoSubmit])
+  @@index([sortOrder])
+  @@map("search_engine_configs")
+}
+
+// URL提交记录表
+model UrlSubmission {
+  id       String @id @default(cuid())
+
+  // ========== 提交信息 ==========
+  url        String // 完整URL：https://rungame.online/games/play/puzzle-game
+  urlType    String @map("url_type") // URL类型：game, category, tag, pagetype, sitemap, other
+  entityId   String? @map("entity_id") // 关联实体ID（游戏ID、分类ID等）
+  locale     String? // 语言代码：en, zh, es（用于多语言URL）
+
+  // ========== 搜索引擎信息 ==========
+  searchEngineConfigId String @map("search_engine_config_id")
+  searchEngineName     String @map("search_engine_name") // 冗余字段，便于查询和展示
+
+  // ========== 提交状态 ==========
+  status        SubmissionStatus @default(PENDING)
+  statusMessage String?          @map("status_message") // 状态描述/错误信息
+
+  // ========== HTTP响应信息 ==========
+  httpStatus    Int?    @map("http_status")     // HTTP状态码：200, 400, 500
+  responseBody  String? @map("response_body")   // 响应内容（JSON或文本）
+  responseTime  Int?    @map("response_time")   // 响应时间（毫秒）
+
+  // ========== 重试信息 ==========
+  retryCount    Int       @default(0) @map("retry_count")    // 当前重试次数
+  maxRetries    Int       @default(3) @map("max_retries")    // 最大重试次数
+  nextRetryAt   DateTime? @map("next_retry_at")              // 下次重试时间
+  lastRetryAt   DateTime? @map("last_retry_at")              // 最后重试时间
+
+  // ========== 提交方式 ==========
+  submitMethod  String   @default("manual") @map("submit_method") // manual, auto, batch, cron
+  submittedBy   String?  @map("submitted_by") // 提交人（管理员ID或 "system"）
+  batchId       String?  @map("batch_id")     // 所属批次ID（如果是批量提交）
+
+  // ========== 时间戳 ==========
+  createdAt   DateTime  @default(now()) @map("created_at")  // 记录创建时间
+  submittedAt DateTime? @map("submitted_at")                // 实际提交时间
+  completedAt DateTime? @map("completed_at")                // 完成时间（成功或永久失败）
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // ========== 关联关系 ==========
+  searchEngineConfig SearchEngineConfig @relation(fields: [searchEngineConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([url, searchEngineConfigId, locale], name: "unique_url_engine_locale") // 防止重复提交
+  @@index([url])
+  @@index([status])
+  @@index([urlType])
+  @@index([entityId])
+  @@index([searchEngineConfigId])
+  @@index([batchId])
+  @@index([createdAt])
+  @@index([submittedAt])
+  @@index([nextRetryAt])
+  @@index([submitMethod])
+  @@map("url_submissions")
+}
+
+// 批量提交任务表
+model SubmissionBatch {
+  id String @id @default(cuid())
+
+  // ========== 批次信息 ==========
+  name        String      // 批次名称：如 "发布所有游戏到Bing"
+  description String?     // 批次描述
+  status      BatchStatus @default(PENDING)
+
+  // ========== 统计信息 ==========
+  totalUrls     Int @default(0) @map("total_urls")     // 总URL数
+  processedUrls Int @default(0) @map("processed_urls") // 已处理数
+  successUrls   Int @default(0) @map("success_urls")   // 成功数
+  failedUrls    Int @default(0) @map("failed_urls")    // 失败数
+  pendingUrls   Int @default(0) @map("pending_urls")   // 待处理数
+
+  // ========== 配置信息 ==========
+  searchEngineConfigIds String[] @default([]) @map("search_engine_config_ids") // 目标搜索引擎ID列表
+
+  // URL筛选条件（JSON）
+  urlFilters Json? @default("{}") @map("url_filters")
+  // 结构示例：
+  // {
+  //   "urlTypes": ["game", "category"],           // URL类型筛选
+  //   "locales": ["en", "zh"],                     // 语言筛选
+  //   "entityStatus": "PUBLISHED",                // 实体状态筛选
+  //   "entityIds": ["id1", "id2"],                // 指定实体ID
+  //   "dateRange": {                               // 时间范围筛选
+  //     "from": "2025-01-01",
+  //     "to": "2025-01-31",
+  //     "field": "createdAt"                       // createdAt, updatedAt
+  //   }
+  // }
+
+  // ========== 执行信息 ==========
+  startedAt   DateTime? @map("started_at")   // 开始处理时间
+  completedAt DateTime? @map("completed_at") // 完成时间
+  cancelledAt DateTime? @map("cancelled_at") // 取消时间
+
+  errorMessage String?  @map("error_message") // 错误信息（如果失败）
+
+  createdBy String @map("created_by") // 创建人（管理员ID或 "system"）
+
+  // ========== 时间戳 ==========
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([createdBy])
+  @@map("submission_batches")
+}
+
+// ==================== 说明 ====================
+
+// 1. 如何添加到主schema:
+//    - 复制上述枚举和模型定义到 prisma/schema.prisma
+//    - 运行 `npx prisma format` 格式化
+//    - 运行 `npx prisma db push` 推送到数据库
+//    - 运行 `npx prisma generate` 生成客户端
+
+// 2. 数据安全:
+//    - apiKey 和 apiToken 字段应该加密存储
+//    - 建议使用环境变量或专用的密钥管理服务
+//    - 在显示时只展示部分字符（如：sk-***123）
+
+// 3. 索引优化:
+//    - 为常用查询字段添加了索引
+//    - unique约束防止重复提交
+//    - 可根据实际查询模式进一步优化
+
+// 4. JSON字段说明:
+//    - extraConfig: 存储搜索引擎特定的配置
+//    - urlFilters: 存储批量提交的筛选条件
+//    - 使用JSON提供灵活性，支持未来扩展
+
+// 5. 关联关系:
+//    - SearchEngineConfig -> UrlSubmission (一对多)
+//    - UrlSubmission 通过 batchId 关联到 SubmissionBatch
+//    - 使用 onDelete: Cascade 自动清理关联数据

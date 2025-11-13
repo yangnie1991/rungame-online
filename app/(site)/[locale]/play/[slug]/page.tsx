@@ -210,7 +210,7 @@ export default async function GamePage({ params }: GamePageProps) {
         </Link>
         <span>/</span>
         <Link
-          href={`/${game.category.slug}`}
+          href={`/category/${game.category.slug}`}
           className="hover:text-foreground transition-colors"
         >
           {game.category.name}

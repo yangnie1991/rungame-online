@@ -14,16 +14,23 @@ export function getSiteUrl(): string {
 
 /**
  * 语言到 hreflang 代码的映射
- * 使用 ISO 639-1 语言代码 + ISO 3166-1 Alpha 2 地区代码
+ * 使用 ISO 639-1 语言代码（纯语言，不含地区）
  * 符合 Google hreflang 最佳实践
+ *
+ * Google 建议：
+ * - 内容无地区差异时 → 使用纯语言代码（en, zh）
+ * - 内容有地区差异时 → 使用语言+地区代码（en-us, zh-cn）
+ *
+ * 我们的网站内容无地区差异（无价格、货币、法律差异），因此使用纯语言代码
  */
 const LOCALE_TO_HREFLANG: Record<string, string> = {
-  'en': 'en-US',  // 英文（美国）
-  'zh': 'zh-CN',  // 简体中文（中国大陆）
-  // 未来可以添加更多地区：
-  // 'zh-TW': 'zh-TW',  // 繁体中文（台湾）
-  // 'zh-HK': 'zh-HK',  // 繁体中文（香港）
-  // 'en-GB': 'en-GB',  // 英文（英国）
+  'en': 'en',  // 英文
+  'zh': 'zh',  // 中文（简体）
+  // 未来如有地区差异，可改用：
+  // 'en': 'en-us',  // 英文（美国）
+  // 'zh': 'zh-cn',  // 简体中文（中国大陆）
+  // 'zh-tw': 'zh-tw',  // 繁体中文（台湾）
+  // 'en-gb': 'en-gb',  // 英文（英国）
 }
 
 /**
@@ -35,13 +42,13 @@ const LOCALE_TO_HREFLANG: Record<string, string> = {
  * @example
  * generateAlternateLanguages('/play/snake-game')
  * // 返回: {
- * //   'en-US': 'https://rungame.online/play/snake-game',
- * //   'zh-CN': 'https://rungame.online/zh/play/snake-game',
+ * //   'en': 'https://rungame.online/play/snake-game',
+ * //   'zh': 'https://rungame.online/zh/play/snake-game',
  * //   'x-default': 'https://rungame.online/play/snake-game'
  * // }
  *
  * **重要说明：**
- * - 使用 ISO 639-1 + ISO 3166-1 Alpha 2 格式（如 en-US, zh-CN）
+ * - 使用 ISO 639-1 纯语言代码（en, zh）- 因内容无地区差异
  * - x-default 指向默认语言版本
  * - 每个 URL 都是完全限定的（包含协议和域名）
  * - 符合 Google hreflang 最佳实践
@@ -73,7 +80,9 @@ export function generateAlternateLanguages(path: string): Record<string, string>
 
     if (locale === defaultLocale) {
       // 默认语言不带前缀
-      languages[hreflangCode] = `${siteUrl}${cleanPath}`
+      // 特殊处理：首页不需要尾部斜杠（统一不带斜杠）
+      const defaultPath = cleanPath === '/' ? '' : cleanPath
+      languages[hreflangCode] = `${siteUrl}${defaultPath}`
     } else {
       // 其他语言带前缀
       // 特殊处理：非默认语言的首页不需要尾部斜杠（/zh 而不是 /zh/）
@@ -83,7 +92,9 @@ export function generateAlternateLanguages(path: string): Record<string, string>
   }
 
   // x-default 指向默认语言（作为未匹配语言的后备）
-  languages['x-default'] = `${siteUrl}${cleanPath}`
+  // 首页统一不带尾部斜杠
+  const xDefaultPath = cleanPath === '/' ? '' : cleanPath
+  languages['x-default'] = `${siteUrl}${xDefaultPath}`
 
   return languages
 }
@@ -93,4 +104,31 @@ export function generateAlternateLanguages(path: string): Record<string, string>
  */
 export function getHreflangCode(locale: string): string {
   return LOCALE_TO_HREFLANG[locale] || locale
+}
+
+/**
+ * Open Graph locale 映射
+ * OG 使用下划线格式（zh_CN），不同于 hreflang 的连字符格式（zh-cn）
+ */
+const LOCALE_TO_OG: Record<string, string> = {
+  'en': 'en_US',
+  'zh': 'zh_CN',
+  // 未来可以添加更多地区：
+  // 'zh-tw': 'zh_TW',
+  // 'zh-hk': 'zh_HK',
+  // 'en-gb': 'en_GB',
+}
+
+/**
+ * 根据 locale 获取 Open Graph locale 代码
+ *
+ * @param locale - 应用的 locale 代码（如 'en', 'zh'）
+ * @returns Open Graph locale 代码（如 'en_US', 'zh_CN'）
+ *
+ * @example
+ * getOgLocale('en')  // 返回: 'en_US'
+ * getOgLocale('zh')  // 返回: 'zh_CN'
+ */
+export function getOgLocale(locale: string): string {
+  return LOCALE_TO_OG[locale] || 'en_US'
 }

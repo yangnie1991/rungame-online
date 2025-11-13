@@ -12,6 +12,7 @@ import {
   type GameContentPromptVariables
 } from '@/lib/ai-prompt-templates'
 import { getDecryptedAiConfig } from '@/lib/ai-config'
+import { parseAIJsonResponse } from '@/lib/ai-json-parser'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // Pro 计划有效，Hobby 计划忽略（但保留配置）
@@ -263,9 +264,9 @@ export async function GET(request: NextRequest) {
             const content = data.choices?.[0]?.message?.content || '{}'
 
             try {
-              generatedContent = JSON.parse(content)
+              generatedContent = parseAIJsonResponse(content)
             } catch (error) {
-              console.error('[JSON 解析] 失败:', content)
+              console.error('[JSON 解析] 失败:', content.substring(0, 500))
               throw new Error('AI 返回的内容格式无效')
             }
 
@@ -302,7 +303,7 @@ export async function GET(request: NextRequest) {
 
             const analysisData = await analysisResponse.json()
             const analysisContent = analysisData.choices?.[0]?.message?.content || '{}'
-            const analysis = JSON.parse(analysisContent)
+            const analysis = parseAIJsonResponse(analysisContent)
 
             sendProgress({
               phase: 'generating',
@@ -347,9 +348,9 @@ export async function GET(request: NextRequest) {
             const content = generationData.choices?.[0]?.message?.content || '{}'
 
             try {
-              generatedContent = JSON.parse(content)
+              generatedContent = parseAIJsonResponse(content)
             } catch (error) {
-              console.error('[JSON 解析] 失败:', content)
+              console.error('[JSON 解析] 失败:', content.substring(0, 500))
               throw new Error('AI 返回的内容格式无效')
             }
           }

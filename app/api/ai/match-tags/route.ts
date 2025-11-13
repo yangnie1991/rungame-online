@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { parseAIJsonResponse } from '@/lib/ai-json-parser'
 
 /**
  * AI Match Tags API
@@ -135,9 +136,9 @@ ${tagsText}
     // 解析 JSON 响应
     let result
     try {
-      result = JSON.parse(content)
+      result = parseAIJsonResponse(content, 'match-tags')
     } catch (e) {
-      console.error('解析 AI 响应失败:', content)
+      console.error('解析 AI 响应失败:', content.substring(0, 500))
       return Response.json({ error: '解析 AI 响应失败' }, { status: 500 })
     }
 
