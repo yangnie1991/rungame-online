@@ -8,12 +8,25 @@
 import { google } from 'googleapis'
 import { createGoogleOAuth2Client } from './google-oauth-refresh'
 
+// Google API 原始状态信息
+export interface GoogleIndexStatusRaw {
+  verdict?: string // PASS, FAIL, NEUTRAL
+  indexingState?: string // INDEXING_ALLOWED, BLOCKED_BY_META_TAG, etc.
+  coverageState?: string // "Submitted and indexed", etc.
+  pageFetchState?: string
+  robotsTxtState?: string
+  lastCrawlTime?: string
+  [key: string]: any // 允许存储其他字段
+}
+
 export interface GoogleIndexCheckResult {
   url: string
   isIndexed: boolean
   checkedAt: Date
   method: 'search' | 'api'
   error?: string
+  // API 方法返回的完整状态信息
+  statusRaw?: GoogleIndexStatusRaw
 }
 
 /**
@@ -200,11 +213,15 @@ export async function checkGoogleIndexWithAPI(
       }
     }
 
+    const verdict = indexStatusResult.verdict || ''
+    const indexingState = indexStatusResult.indexingState || ''
+    const coverageState = indexStatusResult.coverageState || ''
+
     console.log('[Google Search Console API] 索引状态详情:', {
       url,
-      verdict: indexStatusResult.verdict,
-      indexingState: indexStatusResult.indexingState,
-      coverageState: indexStatusResult.coverageState,
+      verdict,
+      indexingState,
+      coverageState,
       pageFetchState: indexStatusResult.pageFetchState,
       robotsTxtState: indexStatusResult.robotsTxtState,
       lastCrawlTime: indexStatusResult.lastCrawlTime,
@@ -212,38 +229,53 @@ export async function checkGoogleIndexWithAPI(
       referringUrls: indexStatusResult.referringUrls?.slice(0, 3),
     })
 
-    // 判断是否已被索引
+    // 判断详细收录状态
     // 根据 Google Search Console API 文档和实际测试结果：
     //
-    // verdict 判定结果（最重要）：
-    // - PASS: 有效（已收录）
-    // - FAIL: 错误/无效（未收录）
-    // - NEUTRAL: 已排除（未收录）
+    // 1. verdict 判定结果（最重要）：
+    //    - PASS: 有效（已收录）
+    //    - FAIL: 错误/无效（未收录）
+    //    - NEUTRAL: 已排除（未收录）
     //
-    // indexingState 只表示是否"允许"索引，不表示是否"已经"索引：
-    // - INDEXING_ALLOWED: 允许编入索引（但不一定已索引）
-    // - BLOCKED_BY_META_TAG: 被 noindex 阻止
+    // 2. indexingState 索引状态（综合判断）：
+    //    - INDEXING_ALLOWED: 允许编入索引（但不一定已索引）
+    //    - BLOCKED_BY_META_TAG: 被 meta 标签阻止（noindex）
+    //    - BLOCKED_BY_HTTP_HEADER: 被 HTTP 头阻止（X-Robots-Tag）
+    //    - BLOCKED_BY_ROBOTS_TXT: 被 robots.txt 阻止
     //
-    // coverageState 覆盖状态：
-    // - "Submitted and indexed": 已提交并已索引
-    // - "Crawled - currently not indexed": 已抓取但未索引
+    // 3. coverageState 覆盖状态（描述性信息）：
+    //    - "Submitted and indexed": 已提交并已索引
+    //    - "Crawled - currently not indexed": 已抓取但未索引
     //
-    // 正确的判断：使用 verdict === 'PASS' 来判断是否已收录
-    const verdict = indexStatusResult.verdict || ''
+    // 判断优先级：
+    // 1. 首先检查 indexingState，如果被阻止则返回 BLOCKED
+    // 2. 然后根据 verdict 判断收录状态
+
+    // 构建完整的状态信息对象（保存原始API数据）
+    const statusRaw: GoogleIndexStatusRaw = {
+      verdict: indexStatusResult.verdict || '',
+      indexingState: indexStatusResult.indexingState,
+      coverageState: indexStatusResult.coverageState,
+      pageFetchState: indexStatusResult.pageFetchState,
+      robotsTxtState: indexStatusResult.robotsTxtState,
+      lastCrawlTime: indexStatusResult.lastCrawlTime,
+      crawledAs: indexStatusResult.crawledAs,
+      referringUrls: indexStatusResult.referringUrls,
+    }
+
+    // 判断是否已收录（verdict === 'PASS'）
     const isIndexed = verdict === 'PASS'
 
-    console.log('[Google Search Console API] ⚡ 收录判断:', {
+    console.log('[Google Search Console API] ✅ 收录状态:', {
       url,
-      verdict,
-      coverageState: indexStatusResult.coverageState,
-      indexingState: indexStatusResult.indexingState,
       isIndexed,
-      判断逻辑: `verdict === 'PASS': ${isIndexed}`,
+      ...statusRaw,
     })
 
     return {
       url,
       isIndexed,
+      statusRaw,
       checkedAt,
       method: 'api',
     }
@@ -289,3 +321,4 @@ export async function checkGoogleIndexWithAPI(
     }
   }
 }
+

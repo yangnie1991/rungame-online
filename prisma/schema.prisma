@@ -48,6 +48,8 @@ enum BatchStatus {
   CANCELLED // 已取消
 }
 
+// 删除枚举，改用 String 字段存储原始 API 返回值
+
 // ==================== 数据模型 ====================
 
 // 游戏分类（主表）
@@ -699,18 +701,27 @@ model UrlSubmission {
   bingSubmittedAt         DateTime?         @map("bing_submitted_at")
 
   // ========== Google 收录状态 ==========
-  indexedByGoogle    Boolean?  @map("indexed_by_google")
-  googleIndexedAt    DateTime? @map("google_indexed_at")
-  googleLastCheckAt  DateTime? @map("google_last_check_at")
-  googleCheckStatus  String?   @map("google_check_status") // indexed, not_indexed, error
-  googleCheckMessage String?   @map("google_check_message")
+  indexedByGoogle      Boolean?  @map("indexed_by_google") // 快速查询字段（verdict === 'PASS'）
+  googleIndexedAt      DateTime? @map("google_indexed_at")
+  googleLastCheckAt    DateTime? @map("google_last_check_at")
+  googleCheckMessage   String?   @map("google_check_message")
+  googleIndexStatusRaw Json?     @map("google_index_status_raw") // 存储完整的 API 响应信息
+  // googleIndexStatusRaw 结构示例:
+  // {
+  //   "verdict": "PASS" | "FAIL" | "NEUTRAL",
+  //   "indexingState": "INDEXING_ALLOWED" | "BLOCKED_BY_META_TAG" | "BLOCKED_BY_HTTP_HEADER",
+  //   "coverageState": "Submitted and indexed" | "Crawled - currently not indexed",
+  //   "pageFetchState": "...",
+  //   "robotsTxtState": "...",
+  //   "lastCrawlTime": "..."
+  // }
 
   // ========== Bing 收录状态 ==========
-  indexedByBing    Boolean?  @map("indexed_by_bing")
-  bingIndexedAt    DateTime? @map("bing_indexed_at")
-  bingLastCheckAt  DateTime? @map("bing_last_check_at")
-  bingCheckStatus  String?   @map("bing_check_status") // indexed, not_indexed, error
-  bingCheckMessage String?   @map("bing_check_message")
+  indexedByBing      Boolean?  @map("indexed_by_bing") // 快速查询字段
+  bingIndexedAt      DateTime? @map("bing_indexed_at")
+  bingLastCheckAt    DateTime? @map("bing_last_check_at")
+  bingCheckMessage   String?   @map("bing_check_message")
+  bingIndexStatusRaw Json?     @map("bing_index_status_raw") // 存储完整的 API 响应信息
 
   // ========== 时间戳 ==========
   createdAt DateTime @default(now()) @map("created_at")

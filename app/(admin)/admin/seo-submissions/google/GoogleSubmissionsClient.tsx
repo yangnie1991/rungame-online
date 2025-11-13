@@ -24,7 +24,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Copy, Check, Plus, Download, ChevronLeft, ChevronRight, Loader2, TestTube } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Copy, Check, Plus, Download, ChevronLeft, ChevronRight, Loader2, TestTube, Info } from 'lucide-react'
 import { checkGoogleIndexStatus, checkGoogleIndexBatch } from '../index-check-actions'
 import { generateGoogleUrls, markGoogleUrlsAsSubmitted, markGoogleUrlsAsSubmittedByIds, type GeneratedUrl } from '../submit-engine-actions'
 import { generateAllUrlsToDatabase } from '../url-management-actions'
@@ -52,6 +54,7 @@ interface Submission {
   indexedByGoogle: boolean | null
   googleIndexedAt: Date | null
   googleLastCheckAt: Date | null
+  googleIndexStatusRaw: any | null // Google API 原始响应数据 (JSON)
   createdAt: Date
 }
 
@@ -61,6 +64,67 @@ interface GoogleStats {
   notIndexed: number
   unchecked: number
   indexRate: string
+}
+
+// Google Search Console API 枚举值中文翻译
+const verdictTranslations: Record<string, string> = {
+  'VERDICT_UNSPECIFIED': '❓ 未知判定结果',
+  'PASS': '✅ 有效 (已收录)',
+  'PARTIAL': '⚠️ 部分 (已弃用)',
+  'FAIL': '❌ 错误/无效',
+  'NEUTRAL': '⊘ 已排除',
+}
+
+const indexingStateTranslations: Record<string, string> = {
+  'INDEXING_ALLOWED': '允许索引',
+  'BLOCKED_BY_META_TAG': '被 meta 标签阻止',
+  'BLOCKED_BY_HTTP_HEADER': '被 HTTP 头阻止',
+  'BLOCKED_BY_ROBOTS_TXT': '被 robots.txt 阻止',
+}
+
+const coverageStateTranslations: Record<string, string> = {
+  'Submitted and indexed': '已提交并收录',
+  'Crawled - currently not indexed': '已抓取 - 暂未收录',
+  'Discovered - currently not indexed': '已发现 - 暂未收录',
+  'Page with redirect': '页面重定向',
+  'Duplicate without user-selected canonical': '重复页面（无用户指定规范）',
+  'Duplicate, Google chose different canonical than user': '重复页面（Google 选择了不同规范）',
+  'Not found (404)': '未找到 (404)',
+  'Soft 404': '软 404',
+  'Blocked by robots.txt': '被 robots.txt 阻止',
+  'Blocked due to access forbidden (403)': '被禁止访问 (403)',
+  'Blocked due to other 4xx issue': '被其他 4xx 错误阻止',
+  'Server error (5xx)': '服务器错误 (5xx)',
+}
+
+const pageFetchStateTranslations: Record<string, string> = {
+  'SUCCESSFUL': '成功',
+  'SOFT_404': '软 404',
+  'BLOCKED_ROBOTS_TXT': '被 robots.txt 阻止',
+  'NOT_FOUND': '未找到',
+  'ACCESS_DENIED': '拒绝访问',
+  'SERVER_ERROR': '服务器错误',
+  'REDIRECT_ERROR': '重定向错误',
+  'ACCESS_FORBIDDEN': '禁止访问',
+  'BLOCKED_4XX': '被 4xx 阻止',
+  'INTERNAL_CRAWL_ERROR': '内部抓取错误',
+  'INVALID_URL': '无效 URL',
+}
+
+const robotsTxtStateTranslations: Record<string, string> = {
+  'ALLOWED': '允许',
+  'DISALLOWED': '不允许',
+}
+
+const crawledAsTranslations: Record<string, string> = {
+  'DESKTOP': '桌面端',
+  'MOBILE': '移动端',
+}
+
+// 翻译辅助函数
+function translateValue(value: string | undefined, translations: Record<string, string>): string {
+  if (!value) return '-'
+  return translations[value] || value
 }
 
 interface GoogleSubmissionsClientProps {
@@ -291,6 +355,9 @@ export function GoogleSubmissionsClient({ config, submissions: initialSubmission
 
       if (result.success) {
         toast.success(result.message)
+
+        // 刷新页面以获取最新的 googleIndexStatusRaw 数据
+        router.refresh()
 
         // 乐观更新：只更新对应的 submission 数据
         setSubmissions(prev => {
@@ -831,6 +898,7 @@ export function GoogleSubmissionsClient({ config, submissions: initialSubmission
                         <TableHead>类型</TableHead>
                         <TableHead>语言</TableHead>
                         <TableHead>收录状态</TableHead>
+                        <TableHead>详细状态</TableHead>
                         <TableHead>收录时间</TableHead>
                         <TableHead>最后检查</TableHead>
                         <TableHead>操作</TableHead>
@@ -847,12 +915,13 @@ export function GoogleSubmissionsClient({ config, submissions: initialSubmission
                               }
                             />
                           </TableCell>
-                          <TableCell className="font-mono text-xs max-w-md truncate">
+                          <TableCell className="font-mono text-xs max-w-xs truncate">
                             <a
                               href={submission.url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:underline"
+                              title={submission.url}
                             >
                               {submission.url}
                             </a>
@@ -885,14 +954,134 @@ export function GoogleSubmissionsClient({ config, submissions: initialSubmission
                               </Badge>
                             )}
                           </TableCell>
+                          <TableCell className="text-xs">
+                            {/* 只在未收录时显示详细状态 */}
+                            {submission.indexedByGoogle === false && submission.googleIndexStatusRaw ? (
+                              <Dialog>
+                                <TooltipProvider>
+                                  <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                      <DialogTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs"
+                                        >
+                                          <Info className="h-3 w-3 mr-1" />
+                                          详细
+                                        </Button>
+                                      </DialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs bg-white text-gray-900 border-gray-200 shadow-lg">
+                                      <div className="space-y-1 text-xs">
+                                        <div><span className="font-semibold">判定结果:</span> {translateValue(submission.googleIndexStatusRaw.verdict, verdictTranslations)}</div>
+                                        <div><span className="font-semibold">索引状态:</span> {translateValue(submission.googleIndexStatusRaw.indexingState, indexingStateTranslations)}</div>
+                                        <div><span className="font-semibold">覆盖状态:</span> {translateValue(submission.googleIndexStatusRaw.coverageState, coverageStateTranslations)}</div>
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>Google 收录详细状态</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      {/* URL */}
+                                      <div>
+                                        <div className="font-semibold text-sm text-gray-900">URL</div>
+                                        <div className="text-sm text-gray-600 break-all">{submission.url}</div>
+                                      </div>
+
+                                      {/* Verdict */}
+                                      <div>
+                                        <div className="font-semibold text-sm text-gray-900">判定结果 (Verdict)</div>
+                                        <div className="text-sm text-gray-700">
+                                          {translateValue(submission.googleIndexStatusRaw.verdict, verdictTranslations)}
+                                        </div>
+                                      </div>
+
+                                      {/* Indexing State */}
+                                      <div>
+                                        <div className="font-semibold text-sm text-gray-900">索引状态 (Indexing State)</div>
+                                        <div className="text-sm text-gray-700">
+                                          {translateValue(submission.googleIndexStatusRaw.indexingState, indexingStateTranslations)}
+                                        </div>
+                                      </div>
+
+                                      {/* Coverage State */}
+                                      <div>
+                                        <div className="font-semibold text-sm text-gray-900">覆盖状态 (Coverage State)</div>
+                                        <div className="text-sm text-gray-700">
+                                          {translateValue(submission.googleIndexStatusRaw.coverageState, coverageStateTranslations)}
+                                        </div>
+                                      </div>
+
+                                      {/* Page Fetch State */}
+                                      {submission.googleIndexStatusRaw.pageFetchState && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">页面抓取状态 (Page Fetch State)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {translateValue(submission.googleIndexStatusRaw.pageFetchState, pageFetchStateTranslations)}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Robots.txt State */}
+                                      {submission.googleIndexStatusRaw.robotsTxtState && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">Robots.txt 状态 (Robots.txt State)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {translateValue(submission.googleIndexStatusRaw.robotsTxtState, robotsTxtStateTranslations)}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Last Crawl Time */}
+                                      {submission.googleIndexStatusRaw.lastCrawlTime && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">最后抓取时间 (Last Crawl Time)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {new Date(submission.googleIndexStatusRaw.lastCrawlTime).toLocaleString('zh-CN')}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Crawled As */}
+                                      {submission.googleIndexStatusRaw.crawledAs && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">抓取身份 (Crawled As)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {translateValue(submission.googleIndexStatusRaw.crawledAs, crawledAsTranslations)}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Referring URLs */}
+                                      {submission.googleIndexStatusRaw.referringUrls && submission.googleIndexStatusRaw.referringUrls.length > 0 && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">Referring URLs (引用链接)</div>
+                                          <div className="text-sm text-gray-700 space-y-1">
+                                            {submission.googleIndexStatusRaw.referringUrls.map((url: string, idx: number) => (
+                                              <div key={idx} className="break-all">{url}</div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                </DialogContent>
+                              </Dialog>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {submission.googleIndexedAt
                               ? new Date(submission.googleIndexedAt).toLocaleDateString('zh-CN')
                               : '-'}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {submission.lastIndexCheckAt
-                              ? new Date(submission.lastIndexCheckAt).toLocaleDateString('zh-CN')
+                            {submission.googleLastCheckAt
+                              ? new Date(submission.googleLastCheckAt).toLocaleDateString('zh-CN')
                               : '-'}
                           </TableCell>
                           <TableCell>

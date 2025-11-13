@@ -69,6 +69,7 @@ async function getGoogleSubmissions() {
       indexedByGoogle: true,
       googleIndexedAt: true,
       googleLastCheckAt: true,
+      googleIndexStatusRaw: true, // 添加完整的 API 响应数据
       createdAt: true,
     },
   })
