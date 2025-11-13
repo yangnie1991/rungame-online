@@ -25,7 +25,7 @@ import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Loader2, Plus, TestTube, Info } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Loader2, TestTube, Info } from 'lucide-react'
 import { checkBingIndexStatus, checkBingIndexBatch } from '../index-check-actions'
 import { submitBingUrls, submitBingUrlsDirect } from '../submit-engine-actions'
 import { generateAllUrlsToDatabase } from '../url-management-actions'
@@ -262,48 +262,6 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     }
   }
 
-  // 提交到 Bing (IndexNow)
-  const handleSubmitBing = async () => {
-    const totalSelected =
-      selectedGames.length +
-      selectedCategories.length +
-      selectedTags.length +
-      selectedPageTypes.length
-
-    if (totalSelected === 0) {
-      toast.error('请至少选择一个内容')
-      return
-    }
-
-    try {
-      setIsSubmitting(true)
-      toast.info('正在推送到 Bing...')
-
-      const result = await submitBingUrls({
-        games: selectedGames,
-        categories: selectedCategories,
-        tags: selectedTags,
-        pageTypes: selectedPageTypes,
-      })
-
-      if (result.success) {
-        toast.success(result.message)
-        // 清空选择
-        setSelectedGames([])
-        setSelectedCategories([])
-        setSelectedTags([])
-        setSelectedPageTypes([])
-        // 刷新页面
-        setTimeout(() => window.location.reload(), 1000)
-      } else {
-        toast.error(result.message)
-      }
-    } catch (error) {
-      toast.error('推送失败，请稍后重试')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   // 生成所有 URL 列表
   const handleGenerateAllUrls = async () => {
@@ -341,40 +299,6 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     }
   }
 
-  // 批量更新已收录 URL 的收录状态
-  const handleBatchCheckIndexed = async () => {
-    const indexedSubmissions = submissions.filter((s) => s.indexedByBing === true)
-
-    if (indexedSubmissions.length === 0) {
-      toast.error('没有已收录的 URL 需要检查')
-      return
-    }
-
-    const toCheck = indexedSubmissions.slice(0, 20) // 限制一次最多检查 20 个
-    const confirmed = window.confirm(
-      `确定要重新检查 ${toCheck.length} 个已收录 URL 的收录状态吗？\n\n这将调用 Bing Webmaster API 进行批量检查。`
-    )
-
-    if (!confirmed) return
-
-    try {
-      setIsBatchChecking(true)
-      toast.info(`正在检查 ${toCheck.length} 个 URL...`)
-
-      const result = await checkBingIndexBatch(toCheck.map((s) => s.id))
-
-      if (result.success) {
-        toast.success(result.message)
-        setTimeout(() => window.location.reload(), 1000)
-      } else {
-        toast.error(result.message)
-      }
-    } catch (error) {
-      toast.error('批量检查失败，请稍后重试')
-    } finally {
-      setIsBatchChecking(false)
-    }
-  }
 
   // 保存 Bing Webmaster API 配置
   const handleSaveBingConfig = async () => {
@@ -525,44 +449,41 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     }
   }
 
-  // 旧的批量推送函数（保留用于选择内容推送）
-  const handlePushSelectedContent = async () => {
+  // URL 推送页面：批量检查选中的 URL 收录状态
+  const handlePushBatchCheck = async () => {
     if (pushSelectedIds.length === 0) {
-      toast.error('请选择要推送的 URL')
+      toast.error('请选择要检查的 URL')
       return
     }
 
-    setIsSubmitting(true)
+    // 限制一次最多检查 20 个
+    const toCheckIds = pushSelectedIds.slice(0, 20)
+    const confirmed = window.confirm(
+      `确定要检查 ${toCheckIds.length} 个 URL 的收录状态吗？\n\n这将调用 Bing Webmaster API 进行批量检查。`
+    )
+
+    if (!confirmed) return
+
     try {
-      const selectedSubmissions = submissions.filter(s => pushSelectedIds.includes(s.id))
+      setIsBatchChecking(true)
+      toast.info(`正在检查 ${toCheckIds.length} 个 URL...`)
 
-      // 按类型分组
-      const selectionByType = selectedSubmissions.reduce((acc, s) => {
-        if (!acc[s.urlType]) acc[s.urlType] = []
-        acc[s.urlType].push(s.id.split('_')[0]) // 提取实体ID
-        return acc
-      }, {} as Record<string, string[]>)
-
-      const result = await submitBingUrls({
-        games: selectionByType['game'] || [],
-        categories: selectionByType['category'] || [],
-        tags: selectionByType['tag'] || [],
-        pageTypes: selectionByType['pagetype'] || [],
-      })
+      const result = await checkBingIndexBatch(toCheckIds)
 
       if (result.success) {
         toast.success(result.message)
         setPushSelectedIds([])
-        window.location.reload()
+        setTimeout(() => window.location.reload(), 1000)
       } else {
         toast.error(result.message)
       }
     } catch (error) {
-      toast.error('推送失败，请稍后重试')
+      toast.error('批量检查失败，请稍后重试')
     } finally {
-      setIsSubmitting(false)
+      setIsBatchChecking(false)
     }
   }
+
 
   return (
     <>
@@ -606,30 +527,9 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.indexed}</div>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-xs text-muted-foreground">
               收录率: {stats.indexRate}%
             </p>
-            {stats.indexed > 0 && (
-              <Button
-                onClick={handleBatchCheckIndexed}
-                disabled={isBatchChecking}
-                size="sm"
-                variant="outline"
-                className="w-full"
-              >
-                {isBatchChecking ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                    检查中...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2" />
-                    批量更新收录
-                  </>
-                )}
-              </Button>
-            )}
           </CardContent>
         </Card>
 
@@ -985,7 +885,7 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                   <Button
                     onClick={handlePushBatchSubmit}
                     size="sm"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isBatchChecking}
                   >
                     {isSubmitting ? (
                       <>
@@ -995,7 +895,25 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
-                        推送选中
+                        批量推送
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handlePushBatchCheck}
+                    size="sm"
+                    variant="outline"
+                    disabled={isSubmitting || isBatchChecking}
+                  >
+                    {isBatchChecking ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        检查中...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        批量检查收录
                       </>
                     )}
                   </Button>
