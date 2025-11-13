@@ -149,6 +149,8 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
   const [pushSelectedIds, setPushSelectedIds] = useState<string[]>([]) // 推送页面选中的IDs
   const [pushCurrentPage, setPushCurrentPage] = useState(1) // 当前页码
   const [pushPageSize, setPushPageSize] = useState(50) // 每页数量
+  const [pushingSingleId, setPushingSingleId] = useState<string | null>(null) // 正在单独推送的 ID
+  const [pushingBatchIds, setPushingBatchIds] = useState<string[]>([]) // 正在批量推送的 IDs
 
   // 获取所有唯一的语言列表
   const availableLocales = Array.from(new Set(submissions.map(s => s.locale).filter(Boolean)))
@@ -409,6 +411,7 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     }
 
     setIsSubmitting(true)
+    setPushingBatchIds(pushSelectedIds) // 标记正在批量推送的 IDs
     try {
       // 直接传递选中的 submission IDs
       const result = await submitBingUrlsDirect(pushSelectedIds)
@@ -417,6 +420,7 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
         toast.success(result.message)
         // 清空选中
         setPushSelectedIds([])
+        setPushingBatchIds([])
         // 刷新页面
         window.location.reload()
       } else {
@@ -426,12 +430,13 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
       toast.error(error instanceof Error ? error.message : '推送失败')
     } finally {
       setIsSubmitting(false)
+      setPushingBatchIds([]) // 清空批量推送标记
     }
   }
 
   // URL 推送页面：单独推送一个 URL
   const handlePushSingleSubmit = async (submissionId: string) => {
-    setIsSubmitting(true)
+    setPushingSingleId(submissionId)
     try {
       const result = await submitBingUrlsDirect([submissionId])
 
@@ -445,7 +450,7 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '推送失败')
     } finally {
-      setIsSubmitting(false)
+      setPushingSingleId(null)
     }
   }
 
@@ -1122,10 +1127,10 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                             size="sm"
                             variant="outline"
                             onClick={() => handlePushSingleSubmit(submission.id)}
-                            disabled={isSubmitting}
+                            disabled={pushingSingleId !== null || pushingBatchIds.length > 0}
                             className="h-8"
                           >
-                            {isSubmitting ? (
+                            {pushingSingleId === submission.id || pushingBatchIds.includes(submission.id) ? (
                               <Loader2 className="h-3 w-3 animate-spin" />
                             ) : (
                               <>
