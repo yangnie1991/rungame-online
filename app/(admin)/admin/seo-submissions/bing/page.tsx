@@ -67,6 +67,7 @@ async function getBingSubmissions() {
       indexedByBing: true,
       bingIndexedAt: true,
       bingLastCheckAt: true,
+      bingIndexStatusRaw: true, // Bing API 原始响应数据
       createdAt: true,
     },
   })

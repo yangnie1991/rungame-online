@@ -23,7 +23,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Loader2, Plus, TestTube } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { CheckCircle2, XCircle, Clock, RefreshCw, Settings, ExternalLink, Send, FileText, Loader2, Plus, TestTube, Info } from 'lucide-react'
 import { checkBingIndexStatus, checkBingIndexBatch } from '../index-check-actions'
 import { submitBingUrls } from '../submit-engine-actions'
 import { generateAllUrlsToDatabase } from '../url-management-actions'
@@ -45,10 +47,11 @@ interface Submission {
   url: string
   urlType: string
   locale: string | null
-  status: string
+  bingSubmitStatus: string | null
   indexedByBing: boolean | null
   bingIndexedAt: Date | null
-  lastIndexCheckAt: Date | null
+  bingLastCheckAt: Date | null
+  bingIndexStatusRaw: any | null // Bing API 原始响应数据 (JSON)
   createdAt: Date
 }
 
@@ -627,6 +630,7 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                         <TableHead>类型</TableHead>
                         <TableHead>语言</TableHead>
                         <TableHead>收录状态</TableHead>
+                        <TableHead>详细状态</TableHead>
                         <TableHead>收录时间</TableHead>
                         <TableHead>最后检查</TableHead>
                         <TableHead>操作</TableHead>
@@ -681,14 +685,128 @@ export function BingSubmissionsClient({ config, submissions: initialSubmissions,
                               </Badge>
                             )}
                           </TableCell>
+                          <TableCell className="text-xs">
+                            {/* 只在有 API 响应数据时显示详细状态 */}
+                            {submission.bingIndexStatusRaw ? (
+                              <Dialog>
+                                <TooltipProvider>
+                                  <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                      <DialogTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs"
+                                        >
+                                          <Info className="h-3 w-3 mr-1" />
+                                          详细
+                                        </Button>
+                                      </DialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs bg-white text-gray-900 border-gray-200 shadow-lg">
+                                      <div className="space-y-1 text-xs">
+                                        <div><span className="font-semibold">最后抓取:</span> {submission.bingIndexStatusRaw.LastCrawledDate ? new Date(submission.bingIndexStatusRaw.LastCrawledDate).toLocaleDateString('zh-CN') : '-'}</div>
+                                        <div><span className="font-semibold">发现日期:</span> {submission.bingIndexStatusRaw.DiscoveryDate ? new Date(submission.bingIndexStatusRaw.DiscoveryDate).toLocaleDateString('zh-CN') : '-'}</div>
+                                        <div><span className="font-semibold">HTTP状态:</span> {submission.bingIndexStatusRaw.HttpStatus || '-'}</div>
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>Bing 收录详细状态</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      {/* URL */}
+                                      <div>
+                                        <div className="font-semibold text-sm text-gray-900">URL</div>
+                                        <div className="text-sm text-gray-600 break-all">{submission.url}</div>
+                                      </div>
+
+                                      {/* 最后抓取时间 */}
+                                      {submission.bingIndexStatusRaw.LastCrawledDate && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">最后抓取时间 (Last Crawled Date)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {new Date(submission.bingIndexStatusRaw.LastCrawledDate).toLocaleString('zh-CN')}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 发现日期 */}
+                                      {submission.bingIndexStatusRaw.DiscoveryDate && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">发现日期 (Discovery Date)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {new Date(submission.bingIndexStatusRaw.DiscoveryDate).toLocaleString('zh-CN')}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* HTTP 状态码 */}
+                                      {submission.bingIndexStatusRaw.HttpStatus && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">HTTP 状态码 (HTTP Status)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {submission.bingIndexStatusRaw.HttpStatus}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 文档大小 */}
+                                      {submission.bingIndexStatusRaw.DocumentSize && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">文档大小 (Document Size)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {(submission.bingIndexStatusRaw.DocumentSize / 1024).toFixed(2)} KB
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 锚文本数量 */}
+                                      {submission.bingIndexStatusRaw.AnchorCount !== undefined && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">锚文本数量 (Anchor Count)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {submission.bingIndexStatusRaw.AnchorCount}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 子 URL 数量 */}
+                                      {submission.bingIndexStatusRaw.TotalChildUrlCount !== undefined && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">子 URL 数量 (Total Child URL Count)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {submission.bingIndexStatusRaw.TotalChildUrlCount}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* 是否为页面 */}
+                                      {submission.bingIndexStatusRaw.IsPage !== undefined && (
+                                        <div>
+                                          <div className="font-semibold text-sm text-gray-900">是否为页面 (Is Page)</div>
+                                          <div className="text-sm text-gray-700">
+                                            {submission.bingIndexStatusRaw.IsPage ? '是' : '否'}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                </DialogContent>
+                              </Dialog>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {submission.bingIndexedAt
                               ? new Date(submission.bingIndexedAt).toLocaleDateString('zh-CN')
                               : '-'}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {submission.lastIndexCheckAt
-                              ? new Date(submission.lastIndexCheckAt).toLocaleDateString('zh-CN')
+                            {submission.bingLastCheckAt
+                              ? new Date(submission.bingLastCheckAt).toLocaleDateString('zh-CN')
                               : '-'}
                           </TableCell>
                           <TableCell>

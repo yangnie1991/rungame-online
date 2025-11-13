@@ -168,7 +168,7 @@ export async function checkBingIndexStatus(
         indexedByBing: result.isIndexed,
         bingIndexedAt: result.isIndexed ? (submission.bingIndexedAt || new Date()) : null,
         bingLastCheckAt: new Date(),
-        // bingIndexStatusRaw: result.statusRaw || null, // TODO: 确认 Bing API 返回数据后添加
+        bingIndexStatusRaw: result.statusRaw || null, // 保存完整的 API 响应数据
         bingCheckMessage: result.error || null,
       },
     })
