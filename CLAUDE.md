@@ -19,6 +19,10 @@ npm run dev                    # 启动开发服务器（Turbopack），端口 :
 # 数据库
 npm run db:push                # 将 Prisma schema 推送到数据库
 npm run db:seed                # 填充数据库初始数据（管理员、分类、游戏）
+npm run db:generate            # 生成 Prisma 客户端（主数据库 + 缓存数据库）
+npm run db:studio              # 打开 Prisma Studio（数据库管理界面）
+npm run db:push:cache          # 推送缓存数据库 schema（GamePix 缓存）
+npm run db:studio:cache        # 打开缓存数据库 Prisma Studio
 
 # 生产
 npm run build                  # 使用 Turbopack 构建生产版本
@@ -47,7 +51,11 @@ app/
 │       ├── categories/       # 分类管理
 │       ├── tags/             # 标签管理
 │       ├── languages/        # 语言管理
-│       └── page-types/       # PageType 管理
+│       ├── page-types/       # PageType 管理
+│       ├── import-games/     # 游戏导入（GamePix 等平台）
+│       ├── ai-config/        # AI 配置管理
+│       ├── site-config/      # 网站全局配置
+│       └── seo-submissions/  # SEO URL 提交管理
 │
 ├── (site)/                   # 公开网站 - 完全国际化
 │   ├── layout.tsx           # 最小包装器
@@ -80,9 +88,10 @@ app/
 - [i18n/messages/](i18n/messages/) - JSON 翻译文件 (en.json, zh.json)
 - [middleware.ts](middleware.ts) - 处理语言路由和管理员身份验证
 
-**支持的语言**: en (默认), zh
+**当前支持的语言**: en (默认), zh
 - 默认语言 (en) 无 URL 前缀: `/games`
 - 其他语言有前缀: `/zh/games`
+- 注意：虽然数据库和组件支持更多语言（es, fr 等），但 [i18n/routing.ts](i18n/routing.ts) 当前仅启用了 en 和 zh
 
 **导航规则**:
 - 始终从 `@/i18n/routing` 导入: `import { Link, useRouter, usePathname } from "@/i18n/routing"`
@@ -103,10 +112,16 @@ app/
 - `Category` + `CategoryTranslation` - 游戏分类（每个语言的名称、描述、元标签）
 - `Tag` + `TagTranslation` - 游戏标签（每个语言的名称）
 - `Game` + `GameTranslation` - 游戏（每个语言的标题、描述、说明）
-- `Language` - 系统中可用的语言（包含 nameCn 字段用于中文名称）
+- `GameVote` - 游戏投票记录（赞/踩，防重复投票）
+- `Language` + `LanguageTranslation` - 系统中可用的语言配置
 - `PageType` + `PageTypeTranslation` - 动态页面类型（见下文 PageType 系统）
 - `Admin` - 管理员用户，使用 bcrypt 密码
-- `ApiKey` - API 密钥管理，包含作用域和速率限制
+- `ImportPlatform` - 游戏导入平台配置（GamePix、CrazyGames 等）
+- `AiConfig` - AI 服务配置（OpenRouter、OpenAI 等，API Key 加密存储）
+- `SiteConfig` + `SiteConfigTranslation` - 网站全局配置（单例模式）
+- `SearchEngineConfig` - 搜索引擎配置（Bing、Google 等）
+- `UrlSubmission` - URL 提交记录（跟踪提交和收录状态）
+- `SubmissionBatch` - 批量提交任务
 
 **重要索引**:
 - 所有翻译表都有 `@@unique([entityId, locale])` 和 `@@index([locale])`
@@ -326,10 +341,33 @@ return (
 
 ## 配置说明
 
+### 基础配置
+
 - **路径别名**: `@/*` 映射到根目录（见 [tsconfig.json](tsconfig.json)）
-- **图片域名**: 在 [next.config.ts](next.config.ts) 中配置游戏缩略图（gamedistribution.com, gamepix.com 等）
+- **图片域名**: 在 [next.config.ts](next.config.ts) 中配置游戏缩略图（gamedistribution.com, gamepix.com, Cloudflare R2 等）
 - **Turbopack**: 构建和开发使用 `--turbopack` 标志以获得更快性能
 - **数据库**: 需要 PostgreSQL（在 `.env` 中设置 `DATABASE_URL`）
+- **部署输出**: `output: 'standalone'` - 优化的 Docker/容器部署模式
+
+### 环境变量
+
+参考 [.env.example](.env.example) 文件，关键环境变量包括：
+
+**必需**：
+- `DATABASE_URL` - 主数据库连接字符串
+- `NEXTAUTH_SECRET` - NextAuth.js 会话加密密钥（使用 `openssl rand -base64 32` 生成）
+- `NEXTAUTH_URL` - 应用完整 URL
+- `NEXT_PUBLIC_SITE_URL` - 网站 URL（用于 SEO、sitemap）
+- `ENCRYPTION_KEY` - AI 配置加密密钥（使用 `openssl rand -base64 48` 生成）
+
+**可选**：
+- `CACHE_DATABASE_URL` - GamePix 缓存数据库（用于 GamePix 导入功能）
+- `NEXT_PUBLIC_GA_ID` - Google Analytics ID
+- `NEXT_PUBLIC_ADSENSE_ID` - Google AdSense ID
+- `R2_*` - Cloudflare R2 CDN 配置（见 [docs/R2-CDN-SETUP.md](docs/R2-CDN-SETUP.md)）
+- `GOOGLE_SEARCH_API_KEY` + `GOOGLE_SEARCH_ENGINE_ID` - Google 搜索 API（用于内容增强）
+
+**注意**：AI 配置（OpenRouter、OpenAI 等）已迁移至数据库管理，在管理后台 → AI 配置中设置
 
 ## 关键约束
 
@@ -365,6 +403,8 @@ return (
 
 ## 数据库连接最佳实践
 
+### 主数据库
+
 **使用连接池**（必需）：
 
 ```env
@@ -379,6 +419,19 @@ DATABASE_URL="postgresql://game:password@host:6432/game?schema=public&pgbouncer=
 ```
 总连接数 = 应用实例数 × connection_limit
 ```
+
+### 缓存数据库
+
+**GamePix 缓存数据库**（可选，用于存储 GamePix 游戏列表缓存）：
+
+```env
+# 使用 Neon 等云数据库服务
+CACHE_DATABASE_URL="postgresql://user:password@ep-xxxxx.us-east-2.aws.neon.tech/gamepix_cache?sslmode=require"
+```
+
+- Schema: [prisma/schema-cache.prisma](prisma/schema-cache.prisma)
+- 用途: 缓存 GamePix API 响应，减少外部 API 调用
+- 可选: 不配置此变量不影响核心功能
 
 更多详情见 [docs/DATABASE.md](docs/DATABASE.md)
 
@@ -436,12 +489,22 @@ DATABASE_URL="postgresql://game:password@host:6432/game?schema=public&pgbouncer=
 - 对于页面功能的调试、测试必须优先使用browsermcp进行，如果该工具未连接，提示用户进行mcp工具连接后，再进行功能调试、测试工作
 - 在修改完功能且测试通过之后提交到git，但是不进行远程推送，只有当用户明确说明推送到远程的时候才进行推送操作
 
-**最后更新**: 2025-01-30
-**项目版本**: v1.0
+**最后更新**: 2025-11-15
+**项目版本**: v1.1
 
 ---
 
 ## 📝 更新日志
+
+### 2025-11-15
+- 📝 完善 CLAUDE.md 文档：
+  - 补充缺失的管理后台路由（ai-config, import-games, seo-submissions, site-config）
+  - 添加完整的数据库命令（db:generate, db:studio, db:push:cache 等）
+  - 更新核心模型列表（ImportPlatform, AiConfig, SiteConfig, GameVote, SEO 相关模型）
+  - 添加缓存数据库配置说明
+  - 完善环境变量配置说明
+  - 修正支持语言的描述（当前仅 en 和 zh）
+  - 添加部署配置说明（standalone 模式）
 
 ### 2025-11-01
 - 🧹 第三轮项目清理：删除 34 个临时分析文档

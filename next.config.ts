@@ -60,10 +60,10 @@ const nextConfig: NextConfig = {
       },
       // Cloudflare R2 CDN (自定义域名)
       // 部署时取消注释并替换为您的域名
-      // {
-      //   protocol: "https",
-      //   hostname: "cdn.yourdomain.com",
-      // },
+      {
+        protocol: "https",
+        hostname: "cdn.rungame.online",
+      },
       // Cloudflare R2 公共域名 (r2.dev)
       {
         protocol: "https",
